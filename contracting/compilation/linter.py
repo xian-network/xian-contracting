@@ -227,6 +227,19 @@ class Linter(ast.NodeVisitor):
             else:
                 self.return_annotation.add((None, node.lineno))
 
+        # Check for argument type annotations
+        for arg in node.args.args:
+            if not arg.annotation:
+                str = "Line {}: Missing type annotation for argument '{}' in function '{}'".format(node.lineno, arg.arg, node.name)
+                self._violations.append(str)
+                self._is_success = False
+
+        # Check for return type annotation
+        if not node.returns:
+            str = "Line {}: Missing return type annotation in function '{}'".format(node.lineno, node.name)
+            self._violations.append(str)
+            self._is_success = False
+
         self.generic_visit(node)
         return node
 
@@ -303,8 +316,3 @@ class Linter(ast.NodeVisitor):
         import pprint
         pp = pprint.PrettyPrinter(indent = 4)
         pp.pprint(self._violations)
-
-
-
-
-
