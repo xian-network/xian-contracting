@@ -1,5 +1,4 @@
-# Contracting - Smart Contracts on Lamden
-![Contracting](img/title.png)
+# Contracting - Smart Contracts in Python
 
 Contracting is the name of Lamden's smart contracting library. Unlike Bitcoin and Ethereum, Lamden leverages the existing PythonVM to create a system that allows developers to write small applications for the  types of logic we see in smart contracts today. This generally has to do with simple logical transactions. Contracting focuses on making standard CRUD operations extremely easy with full support for JSON objects and dynamic storage sizing so you spend less time with lower level computer science details and more time coding.
 
