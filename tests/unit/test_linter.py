@@ -1,7 +1,7 @@
 from unittest import TestCase
 from contracting.compilation.linter import Linter
 import ast
-from contracting.compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTAION_TYPES, VIOLATION_TRIGGERS
+from contracting.compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTATION_TYPES, VIOLATION_TRIGGERS
 
 
 class TestLinter(TestCase):

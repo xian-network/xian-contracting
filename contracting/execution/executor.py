@@ -15,6 +15,7 @@ import traceback
 
 DEFAULT_STAMPS = 1000000
 
+
 class Executor:
     def __init__(self, production=False, driver=None, metering=True,
                  currency_contract='currency', balances_hash='balances', bypass_privates=False):
@@ -90,7 +91,10 @@ class Executor:
 
             runtime.rt.env.update(environment)
             status_code = 0
-            runtime.rt.set_up(stmps=stamps * 1000, meter=metering) # Multiply stamps by 1000 because we divide by it later
+
+            # TODO: Why do we do this?
+            # Multiply stamps by 1000 because we divide by it later
+            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
 
             runtime.rt.context._base_state = {
                 'signer': sender,
@@ -109,7 +113,7 @@ class Executor:
             module = importlib.import_module(contract_name)
             func = getattr(module, function_name)
 
-            ## add the contract name to the context on a submission call
+            # Add the contract name to the context on a submission call
             if contract_name == config.SUBMISSION_CONTRACT_NAME:
                 runtime.rt.context._base_state['submission_name'] = kwargs.get('name')
 
@@ -181,13 +185,11 @@ class Executor:
 
         return output
 
-    def simulate_execute_without_writing(self, contract_name, function_name, kwargs,
-                                     environment={},
-                                     auto_commit=False,
-                                     driver=None,
-                                     stamps=DEFAULT_STAMPS,
-                                     stamp_cost=config.STAMPS_PER_TAU,
-                                     metering=None) -> dict:
+    def simulate(self, contract_name, function_name, kwargs,
+                 environment={},
+                 driver=None,
+                 stamps=DEFAULT_STAMPS,
+                 metering=None) -> dict:
         """
             Simulate an execution without writing to the database. This is useful for stamp estimation.
         """

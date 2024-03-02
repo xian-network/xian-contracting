@@ -68,6 +68,7 @@ _context = Context({
 
 WRITE_MAX = 1024 * 128
 
+
 class Runtime:
     cu_path = contracting.__path__[0]
     cu_path = os.path.join(cu_path, 'execution', 'metering', 'cu_costs.const')

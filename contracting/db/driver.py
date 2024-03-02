@@ -11,8 +11,6 @@ import requests
 import os
 from pathlib import Path
 import shutil
-import hashlib
-import asyncio
 import logging
 from contracting.db.hdf5 import h5c
 import warnings
@@ -376,9 +374,6 @@ class FSDriver:
             filename, _ = self.__parse_key(prefix)
         except Exception:
             return self.keys(prefix=prefix, length=length)
-            raise ValueError(
-                'Must provide "contract.variable" at minimum as prefix to iter.'
-            )
 
         if not self.is_file(filename=filename):
             return []
@@ -400,7 +395,7 @@ class FSDriver:
                     elif not prefix:
                         keys.add(key)
 
-                    if length > 0 and len(keys) >= length:
+                    if 0 < length <= len(keys):
                         raise AssertionError(
                             "Length threshold has been hit. Continuing."
                         )
@@ -842,14 +837,11 @@ class AsyncContractDriver:
         return self.keys(name)
 
 
+# TODO: Needs to be switched to some other DB once we have a block service again
 class BlockserviceDriver(Driver):
     # conn_str see https://www.mongodb.com/docs/manual/reference/connection-string/
-    def __init__(
-        self,
-        conn_str="mongodb://localhost:27017",
-        db="lamden",
-        collection="currentState",
-    ):
+    def __init__(self, conn_str="mongodb://localhost:27017", db="lamden", collection="currentState"):
+        super().__init__(db, collection)
         self.client = pymongo.MongoClient(conn_str)
         self.db = self.client[db][collection]
 

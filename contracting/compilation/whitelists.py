@@ -36,7 +36,7 @@ ILLEGAL_AST_TYPES = {
     ast.YieldFrom,
 }
 
-ALLOWED_ANNOTAION_TYPES = {'dict', 'list', 'str', 'int', 'float', 'bool', 'datetime.timedelta', 'datetime.datetime', 'Any'}
+ALLOWED_ANNOTATION_TYPES = {'dict', 'list', 'str', 'int', 'float', 'bool', 'datetime.timedelta', 'datetime.datetime', 'Any'}
 
 VIOLATION_TRIGGERS = [
     "S1- Illegal contracting syntax type used",

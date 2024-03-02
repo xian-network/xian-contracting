@@ -3,7 +3,7 @@ import sys
 
 from .. import config
 
-from ..compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTAION_TYPES, VIOLATION_TRIGGERS, ILLEGAL_BUILTINS, ILLEGAL_AST_TYPES
+from ..compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTATION_TYPES, VIOLATION_TRIGGERS, ILLEGAL_BUILTINS, ILLEGAL_AST_TYPES
 
 from contracting.db.driver import ContractDriver
 
@@ -235,7 +235,7 @@ class Linter(ast.NodeVisitor):
             str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[16]
             self._violations.append(str)
             self._is_success = False
-        elif t not in ALLOWED_ANNOTAION_TYPES:
+        elif t not in ALLOWED_ANNOTATION_TYPES:
             str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[15] + " : {}" .format(t)
             self._violations.append(str)
             self._is_success = False
@@ -274,7 +274,6 @@ class Linter(ast.NodeVisitor):
 
         for t, lineno in self.return_annotation:
             self.check_return_types(t,lineno)
-
 
     def _collect_function_defs(self, root):
         for node in ast.walk(root):

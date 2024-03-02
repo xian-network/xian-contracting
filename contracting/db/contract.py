@@ -1,7 +1,6 @@
 from contracting.compilation.compiler import ContractingCompiler
 from contracting.db.driver import ContractDriver
 from contracting.execution.runtime import rt
-from types import ModuleType
 from contracting.stdlib import env
 from contracting import config
 
@@ -9,7 +8,7 @@ _driver = rt.env.get('__Driver') or ContractDriver()
 
 
 class Contract:
-    def __init__(self, driver: ContractDriver=_driver):
+    def __init__(self, driver: ContractDriver = _driver):
         self._driver = driver
 
     def submit(self, name, code, owner=None, constructor_args={}, developer=None):
@@ -33,6 +32,19 @@ class Contract:
 
         now = scope.get('now')
         if now is not None:
-            self._driver.set_contract(name=name, code=code_obj, owner=owner, overwrite=False, timestamp=now, developer=developer)
+            self._driver.set_contract(
+                name=name,
+                code=code_obj,
+                owner=owner,
+                overwrite=False,
+                timestamp=now,
+                developer=developer
+            )
         else:
-            self._driver.set_contract(name=name, code=code_obj, owner=owner, overwrite=False, developer=developer)
+            self._driver.set_contract(
+                name=name,
+                code=code_obj,
+                owner=owner,
+                overwrite=False,
+                developer=developer
+            )

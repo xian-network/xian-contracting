@@ -7,7 +7,6 @@ from contracting.compilation.linter import Linter
 
 class ContractingCompiler(ast.NodeTransformer):
     def __init__(self, module_name='__main__', linter=Linter()):
-        #self.log = get_logger('Contracting.Compiler')
         self.module_name = module_name
         self.linter = linter
         self.lint_alerts = None
@@ -33,7 +32,7 @@ class ContractingCompiler(ast.NodeTransformer):
         # check all visited nodes and see if they are actually private
 
         # An Expr node can have a value func of compilation.Name, or compilation.Attribute which you much access the value of.
-        # This code branching is not ideal and should be investigated for simplicity.
+        # TODO: This code branching is not ideal and should be investigated for simplicity.
         for node in self.visited_names:
             if node.id in self.private_names or node.id in self.orm_names:
                 node.id = self.privatize(node.id)
