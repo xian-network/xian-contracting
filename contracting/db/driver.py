@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 FILE_EXT = ".d"
 HASH_EXT = ".x"
 
-STORAGE_HOME = Path().home().joinpath(".tendermint/xian")
+STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
 
 # DB maps bytes to bytes
 # Driver maps string to python object
