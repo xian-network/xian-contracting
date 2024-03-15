@@ -39,5 +39,5 @@ def token_contract():
 
 
 ### Docs & More
-Official docs and walkthrough are available [here]([[http://contracting.lamden.io](https://github.com/xian-network/smart-contracts-docs)](https://github.com/xian-network/smart-contracts-docs)).
+Official docs and walkthrough are available at https://github.com/xian-network/smart-contracts-docs
 
