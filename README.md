@@ -1,6 +1,6 @@
 # Contracting - Smart Contracts in Python
 
-Contracting is the name of Lamden's smart contracting library. Unlike Bitcoin and Ethereum, Lamden leverages the existing PythonVM to create a system that allows developers to write small applications for the  types of logic we see in smart contracts today. This generally has to do with simple logical transactions. Contracting focuses on making standard CRUD operations extremely easy with full support for JSON objects and dynamic storage sizing so you spend less time with lower level computer science details and more time coding.
+Contracting is a smart contracting library. Unlike Bitcoin and Ethereum, Contracting leverages the existing PythonVM to create a system that allows developers to write small applications for the  types of logic we see in smart contracts today. This generally has to do with simple logical transactions. Contracting focuses on making standard CRUD operations extremely easy with full support for JSON objects and dynamic storage sizing so you spend less time with lower level computer science details and more time coding.
 
 ### Example
 ```python
@@ -34,11 +34,9 @@ def token_contract():
 
 ### Installing
 
-`pip install contracting`
+`pip install -e .`
 
 
-### Prerequisites
-Contracting assumes you have a MongoDB instance running with total open access. If you are running Contracting in production, do not expose the MongoDB or modify the code so that you have tighter controls over who uses the system. Contracting was made for developing smart contracts and pushing them to Lamden's blockchain first. Alternative applications may have security risks associated with it.
 
 ### Docs & More
 Official docs and walkthrough are available [here](http://contracting.lamden.io).
