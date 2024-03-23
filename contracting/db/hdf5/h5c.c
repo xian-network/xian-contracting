@@ -11,26 +11,51 @@
 #define ATTR_VALUE "value"
 #define ATTR_BLOCK "block"
 #define LOCK_SUFFIX "-lock"
+#define LOCK_TIMEOUT 10 // Timeout in seconds
 
 static char dirname_buf[PATH_MAX + 1];
 
-static void
-lock_acquire(char *filepath)
-{
+static void lock_acquire(char *filepath) {
+    char dirname_buf[PATH_MAX] = {0}; // Ensure dirname_buf is defined locally or is reset before use
+
+    // Construct the lock directory path
     strcat(dirname_buf, filepath);
     strcat(dirname_buf, LOCK_SUFFIX);
-    while(mkdir(dirname_buf, S_IRWXU) != 0)
-        ;
-    memset(dirname_buf, 0, sizeof(dirname_buf));
+
+    // Try to acquire the lock normally first
+    if (mkdir(dirname_buf, S_IRWXU) == 0) {
+        printf("Lock acquired normally for %s\n", filepath);
+        return; // Lock acquired successfully
+    } else if (errno == EEXIST) {
+        // The lock is already held, attempt to break it
+        printf("Force acquiring lock, removing existing lock for %s\n", filepath);
+        if (rmdir(dirname_buf) == 0) {
+            // Successfully removed the existing lock, try to acquire again
+            if (mkdir(dirname_buf, S_IRWXU) == 0) {
+                printf("Lock force acquired for %s\n", filepath);
+                return; // Lock acquired successfully after force
+            } else {
+                perror("Error force acquiring lock: ");
+            }
+        } else {
+            perror("Error removing existing lock: ");
+        }
+    } else {
+        perror("Error acquiring lock: ");
+    }
 }
 
-static void
-lock_release(char *filepath)
-{
+static void lock_release(char *filepath) {
+    char dirname_buf[PATH_MAX] = {0}; // Reset dirname_buf before use
+
     strcat(dirname_buf, filepath);
     strcat(dirname_buf, LOCK_SUFFIX);
-    rmdir(dirname_buf);
-    memset(dirname_buf, 0, sizeof(dirname_buf));
+
+    if (rmdir(dirname_buf) != 0) {
+        perror("Error releasing lock: ");
+    }
+
+    // No need to memset dirname_buf here if it's defined locally or properly managed
 }
 
 static void

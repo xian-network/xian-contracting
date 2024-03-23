@@ -463,7 +463,7 @@ class CacheDriver:
         return None
 
     def get(self, key: str, save: bool = True):
-        value = self.find(key)
+        value = self.driver.get(key) or None
 
         if save:
             if self.pending_reads.get(key) is None:

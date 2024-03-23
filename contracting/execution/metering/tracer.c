@@ -59,7 +59,7 @@ typedef struct {
   long total_mem_usage;
   int started;
   char * cu_cost_fname;
-
+  unsigned long long call_count; // Add this line to track call counts
 }
 Tracer;
 
@@ -101,6 +101,16 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
+    self->call_count++;
+    printf("Call count: %llu\n", self->call_count);
+    if (self->call_count > 1000) {
+        PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
+        PyEval_SetTrace(NULL, NULL); // Stop tracing
+        self->started = 0; // Mark tracer as stopped
+        return RET_ERROR; // Use an appropriate return code
+    }
+
+
     unsigned long long estimate = 0;
     unsigned long long factor = 1000;
     const char * str;
@@ -176,7 +186,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
       Tracer_start(Tracer * self, PyObject * args) {
         PyEval_SetTrace((Py_tracefunc) Tracer_trace, (PyObject * ) self);
         self -> cost = 0;
-
+        self->call_count = 0;
         self -> started = 1;
         return Py_BuildValue("");
       }
