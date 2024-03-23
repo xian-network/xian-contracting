@@ -103,7 +103,7 @@ static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     self->call_count++;
     printf("Call count: %llu\n", self->call_count);
-    if (self->call_count > 150000) {
+    if (self->call_count > 400000) {
         PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
         PyEval_SetTrace(NULL, NULL); // Stop tracing
         self->started = 0; // Mark tracer as stopped
