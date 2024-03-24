@@ -113,7 +113,7 @@ class Hash(Datum):
         return self._get(key)
 
     def __contains__(self, key):
-        raise Exception('Cannot use "in" with a Hash. Use the .all() method instead.')
+        raise Exception('Cannot use "in" with a Hash.')
 
 class ForeignVariable(Variable):
     def __init__(self, contract, name, foreign_contract, foreign_name, driver: ContractDriver=driver):
