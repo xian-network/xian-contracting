@@ -113,10 +113,8 @@ class Hash(Datum):
         return self._get(key)
 
     def __contains__(self, key):
-        formatted_key = self._validate_key(key)
-        value = self._get(formatted_key)
-        return value != self._default_value
-        
+        raise Exception('Cannot use "in" with a Hash. Use the .all() method instead.')
+
 class ForeignVariable(Variable):
     def __init__(self, contract, name, foreign_contract, foreign_name, driver: ContractDriver=driver):
         super().__init__(contract, name, driver=driver)
