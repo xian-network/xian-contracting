@@ -24,7 +24,6 @@ static void lock_acquire(char *filepath) {
 
     // Try to acquire the lock normally first
     if (mkdir(dirname_buf, S_IRWXU) == 0) {
-        printf("Lock acquired normally for %s\n", filepath);
         return; // Lock acquired successfully
     } else if (errno == EEXIST) {
         // The lock is already held, attempt to break it
