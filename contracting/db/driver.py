@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import logging
-from contracting.db.hdf5 import h5c
+from contracting.db.hdf5 import hdf5 as h5c
 import warnings
 
 
