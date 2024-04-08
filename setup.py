@@ -15,6 +15,7 @@ requirements = [
     "autopep8==1.5.7",
     "motor==2.5.1",
     "iso8601",
+    "h5py"
 ]
 
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
@@ -105,11 +106,6 @@ setup(
         Extension(
             "contracting.execution.metering.tracer",
             sources=["contracting/execution/metering/tracer.c"],
-        ),
-        Extension(
-            "contracting.db.hdf5.h5c",
-            sources=["contracting/db/hdf5/h5c.c"],
-            **pkgconfig("hdf5"),
         ),
     ],
     cmdclass={
