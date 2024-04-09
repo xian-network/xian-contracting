@@ -119,6 +119,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     PyObject * globals = PyFrame_GetGlobals(frame);
     int t = PyDict_Contains(globals, kv);
     Py_DECREF(globals);
+    Py_DECREF(kv);
 
     if (t != 1) {
       return RET_OK;
