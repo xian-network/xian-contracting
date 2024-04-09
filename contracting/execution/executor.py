@@ -126,11 +126,6 @@ class Executor:
             result = func(**kwargs)
             disable_restricted_imports()
 
-            # Delete references to the function and module to allow for garbage collection
-            del func
-            del module
-            gc.collect()
-
             if auto_commit:
                 driver.commit()
 
@@ -143,6 +138,13 @@ class Executor:
             status_code = 1
             if auto_commit:
                 driver.clear_pending_state()
+
+        finally:
+            if "func" in locals():
+                del func
+            if "module" in locals():
+                del module
+            gc.collect()
 
         runtime.rt.tracer.stop()
 
