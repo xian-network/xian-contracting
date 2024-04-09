@@ -9,6 +9,7 @@ from contracting import config
 from copy import deepcopy
 import decimal
 from logging import getLogger
+import gc
 
 log = getLogger('CONTRACTING')
 import traceback
@@ -46,7 +47,6 @@ class Executor:
                 stamps=DEFAULT_STAMPS,
                 stamp_cost=config.STAMPS_PER_TAU,
                 metering=None) -> dict:
-
         if not self.bypass_privates:
             assert not function_name.startswith(config.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
 
@@ -63,6 +63,7 @@ class Executor:
         install_database_loader(driver=driver)
 
         balances_key = None
+
         try:
             if metering:
                 balances_key = '{}{}{}{}{}'.format(self.currency_contract,
@@ -125,8 +126,14 @@ class Executor:
             result = func(**kwargs)
             disable_restricted_imports()
 
+            # Delete references to the function and module to allow for garbage collection
+            del func
+            del module
+            gc.collect()
+
             if auto_commit:
                 driver.commit()
+
 
         except Exception as e:
             result = e
@@ -182,5 +189,4 @@ class Executor:
         }
 
         disable_restricted_imports()
-
         return output
