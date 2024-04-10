@@ -139,13 +139,6 @@ class Executor:
             if auto_commit:
                 driver.clear_pending_state()
 
-        finally:
-            if "func" in locals():
-                del func
-            if "module" in locals():
-                del module
-            gc.collect()
-
         runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
