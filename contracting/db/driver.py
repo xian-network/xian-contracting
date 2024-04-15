@@ -456,6 +456,9 @@ class ContractDriver(CacheDriver):
     def get_contract(self, name):
         return self.get_var(name, CODE_KEY)
 
+    def get_contracts(self):
+        return self.driver.get_contracts()
+
     def get_owner(self, name):
         owner = self.get_var(name, OWNER_KEY)
         if owner == "":
