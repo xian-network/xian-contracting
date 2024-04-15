@@ -199,8 +199,7 @@ class FSDriver:
         return keys
 
     def get_contracts(self):
-        contracts = os.listdir(self.contract_state)
-        return sorted(contracts, key=lambda x: os.stat(os.path.join(self.contract_state, x)).st_ctime)
+        return sorted(os.listdir(self.contract_state))
 
 class CacheDriver:
     def __init__(self, driver=None):
