@@ -53,6 +53,9 @@ class Driver:
         self.__build_directories()
 
     def get(self, key: str, save: bool = True):
+        """
+        Get a value of a key from the cache. If the key is not in the cache, it will be read from disk.
+        """
         value = self.find(key)
 
         if save:
@@ -65,6 +68,9 @@ class Driver:
         return value
 
     def set(self, key, value):
+        """
+        Set a value of a key in the cache. It will be written to disk on commit.
+        """
         rt.deduct_write(*encode_kv(key, value))
 
         if self.pending_reads.get(key) is None:
@@ -293,6 +299,9 @@ class Driver:
             self.set_var(name, DEVELOPER_KEY, value=developer)
 
     def delete_contract(self, name):
+        """
+        Fully delete a contract from the caches and disk
+        """
         for key in self.keys(name):
             if self.cache.get(key) is not None:
                 del self.cache[key]
@@ -303,16 +312,28 @@ class Driver:
             self.delete_key_from_disk(key)
 
     def full_flush(self):
+        """
+        Flush all caches and disk
+        """
         self.flush_disk()
         self.clear_pending_state()
 
     def get_nanos(self, timestamp):
+        """
+        Convert a timestamp to nanoseconds
+        """
         # Convert timestamp to HLC clock then to nanoseconds
         temp_hlc = self.hlc.from_str(timestamp)
         timestamp_nanoseconds, _ = temp_hlc.tuple()
         return timestamp_nanoseconds
 
     def find(self, key: str):
+        """
+        Find a key in the caches and disk. Uses the following order of precedence:
+        1. Pending writes
+        2. Cache
+        3. Disk
+        """
         value = self.pending_writes.get(key) # Try to find in pending writes
         if value is not None:
             return value
@@ -328,9 +349,16 @@ class Driver:
         return None # Not found
 
     def delete(self, key):
+        """
+        Delete a key fully from the caches and disk
+        """
         self.set(key, None)
 
     def hard_apply(self, hlc):
+        """
+        Save the current state to disk and L1 cache and clear the L2 cache
+        """
+
         deltas = {}
         for k, v in self.pending_writes.items():
             current = self.pending_reads.get(k)
@@ -372,6 +400,9 @@ class Driver:
         [self.pending_deltas.pop(key) for key in to_delete]
 
     def bust_cache(self, writes: dict):
+        """
+        Remove specific write deltas from the cache
+        """
         if not writes:
             return
 
@@ -386,9 +417,16 @@ class Driver:
                 self.cache.pop(key, None)
 
     def reset_cache(self):
+        """
+        Reset the L1 cache
+        """
         self.cache = {}
 
     def rollback(self, hlc=None):
+        """
+        Rollback to a given HLC in L2 cache or if no HLC is given, rollback to the latest state on disk (does not do block rollback)
+        """
+
         if hlc is None:
             # Returns to disk state which should be whatever it was prior to any write sessions
             self.cache.clear()
@@ -418,6 +456,9 @@ class Driver:
             [self.pending_deltas.pop(key) for key in to_delete]
 
     def commit(self):
+        """
+        Save the current state to disk and clear the L1 cache and L2 cache
+        """
         self.cache.update(self.pending_writes)
 
         for k, v in self.cache.items():
