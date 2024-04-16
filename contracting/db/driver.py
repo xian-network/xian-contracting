@@ -311,6 +311,15 @@ class Driver:
 
             self.delete_key_from_disk(key)
 
+    def clear_pending_state(self):
+        """
+        Clear everything that is in the caches, so it wont be written to disk
+        """
+        self.pending_writes.clear()
+        self.pending_reads.clear()
+        self.pending_deltas.clear()
+        self.cache.clear()
+
     def full_flush(self):
         """
         Flush all caches and disk
