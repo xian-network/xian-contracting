@@ -13,6 +13,12 @@ import shutil
 import logging
 from contracting.db.hdf5 import hdf5
 
+# Logging
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG
+)
+logger = logging.getLogger(__name__)
+
 FILE_EXT = ".d"
 HASH_EXT = ".x"
 
@@ -30,7 +36,7 @@ DEVELOPER_KEY = "__developer__"
 class Driver:
     def __init__(self):
         self.hlc = HLC() # Hybrid Logical Clock
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("Driver")
 
         # L2 cache (memory)
         self.pending_deltas = {}
