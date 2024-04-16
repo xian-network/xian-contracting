@@ -359,7 +359,7 @@ class Driver:
 
     def delete(self, key):
         """
-        Delete a key fully from the caches and disk
+        Delete a key fully from the caches and queue it for deletion from disk on commit
         """
         self.set(key, None)
 
