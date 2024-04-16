@@ -3,7 +3,6 @@ from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting import config
-from contracting.hlcpy import HLC
 from datetime import datetime
 import marshal
 import decimal
@@ -35,7 +34,6 @@ DEVELOPER_KEY = "__developer__"
 
 class Driver:
     def __init__(self):
-        self.hlc = HLC() # Hybrid Logical Clock
         self.log = logging.getLogger("Driver")
 
         # L2 cache (memory)
@@ -327,15 +325,6 @@ class Driver:
         self.flush_disk()
         self.clear_pending_state()
 
-    def get_nanos(self, timestamp):
-        """
-        Convert a timestamp to nanoseconds
-        """
-        # Convert timestamp to HLC clock then to nanoseconds
-        temp_hlc = self.hlc.from_str(timestamp)
-        timestamp_nanoseconds, _ = temp_hlc.tuple()
-        return timestamp_nanoseconds
-
     def find(self, key: str):
         """
         Find a key in the caches and disk. Uses the following order of precedence:
@@ -363,7 +352,7 @@ class Driver:
         """
         self.set(key, None)
 
-    def hard_apply(self, hlc):
+    def hard_apply(self, nanos):
         """
         Save the current state to disk and L1 cache and clear the L2 cache
         """
@@ -375,34 +364,27 @@ class Driver:
 
             self.cache[k] = v
 
-        self.pending_deltas[hlc] = {"writes": deltas, "reads": self.pending_reads}
+        self.pending_deltas[nanos] = {"writes": deltas, "reads": self.pending_reads}
 
         # Clear the top cache
         self.pending_reads = {}
         self.pending_writes.clear()
 
         # see if the HCL even exists
-        if self.pending_deltas.get(hlc) is None:
+        if self.pending_deltas.get(nanos) is None:
             return
 
         # Run through the sorted HCLs from oldest to newest applying each one until the hcl committed is
 
         to_delete = []
-        for _hlc, _deltas in sorted(self.pending_deltas.items()):
+        for _nanos, _deltas in sorted(self.pending_deltas.items()):
             # Run through all state changes, taking the second value, which is the post delta
             for key, delta in _deltas["writes"].items():
-                try:
-                    _block_num = self.get_nanos(_hlc)
-                    self.set_value_to_disk(key=key, value=delta[1], block_num=str(_block_num))
-                except (TypeError, ValueError):
-                    # Safe set not supported on selected driver
-                    self.set_value_to_disk(key=key, value=delta[1])
-
-                # self.cache[key] = delta[1]
+                self.set_value_to_disk(key=key, value=delta[1])
 
             # Add the key (
-            to_delete.append(_hlc)
-            if _hlc == hlc:
+            to_delete.append(_nanos)
+            if _nanos == nanos:
                 break
 
         # Remove the deltas from the set
@@ -431,12 +413,12 @@ class Driver:
         """
         self.cache = {}
 
-    def rollback(self, hlc=None):
+    def rollback(self, nanos=None):
         """
-        Rollback to a given HLC in L2 cache or if no HLC is given, rollback to the latest state on disk (does not do block rollback)
+        Rollback to a given Nanoseconds in L2 cache or if no Nanoseconds is given, rollback to the latest state on disk (does not do block rollback)
         """
 
-        if hlc is None:
+        if nanos is None:
             # Returns to disk state which should be whatever it was prior to any write sessions
             self.cache.clear()
             self.pending_reads = {}
@@ -444,18 +426,18 @@ class Driver:
             self.pending_deltas.clear()
         else:
             to_delete = []
-            for _hlc, _deltas in sorted(self.pending_deltas.items())[::-1]:
+            for _nanos, _deltas in sorted(self.pending_deltas.items())[::-1]:
                 # Clears the current reads/writes, and the reads/writes that get made when rolling back from the
-                # last HLC
+                # last nanos
                 self.pending_reads = {}
                 self.pending_writes.clear()
 
-                if _hlc < hlc:
-                    # if we are less than the HLC then top processing anymore, this is our rollback point
+                if _nanos < nanos:
+                    # if we are less than the nanos then top processing anymore, this is our rollback point
                     break
                 else:
                     # if we are still greater than or equal to then mark this as delete and rollback its changes
-                    to_delete.append(_hlc)
+                    to_delete.append(_nanos)
                     # Run through all state changes, taking the second value, which is the post delta
                     for key, delta in _deltas["writes"].items():
                         # self.set(key, delta[0])
