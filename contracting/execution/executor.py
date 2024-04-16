@@ -1,7 +1,7 @@
 import builtins
 import importlib
 from contracting.execution import runtime
-from contracting.db.driver import ContractDriver
+from contracting.db.driver import Driver
 from contracting.execution.module import install_database_loader, uninstall_builtins, enable_restricted_imports, disable_restricted_imports
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
@@ -26,7 +26,7 @@ class Executor:
         self.driver = driver
 
         if not self.driver:
-            self.driver = ContractDriver()
+            self.driver = Driver()
         self.production = production
 
         self.currency_contract = currency_contract

@@ -2,7 +2,7 @@ import importlib
 from types import FunctionType, ModuleType
 from contracting.config import PRIVATE_METHOD_PREFIX
 from contracting.db.orm import Datum
-from contracting.db.driver import ContractDriver, OWNER_KEY
+from contracting.db.driver import Driver, OWNER_KEY
 from contracting.execution.runtime import rt
 import sys
 
@@ -48,7 +48,7 @@ def import_module(name):
     assert not name.isdigit() and all(c.isalnum() or c == '_' for c in name), 'Invalid contract name!'
     assert name.islower(), 'Name must be lowercase!'
 
-    _driver = rt.env.get('__Driver') or ContractDriver()
+    _driver = rt.env.get('__Driver') or Driver()
 
     if name in set(list(sys.stdlib_module_names) + list(sys.builtin_module_names)):
         raise ImportError
@@ -84,7 +84,7 @@ def enforce_interface(m: ModuleType, interface: list):
 
 
 def owner_of(m: ModuleType):
-    _driver = rt.env.get('__Driver') or ContractDriver()
+    _driver = rt.env.get('__Driver') or Driver()
     owner = _driver.get_var(m.__name__, OWNER_KEY)
     return owner
 

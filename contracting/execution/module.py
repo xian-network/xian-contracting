@@ -4,7 +4,7 @@ import importlib.util
 from importlib.abc import Loader, MetaPathFinder, PathEntryFinder
 from importlib import invalidate_caches, __import__
 from importlib.machinery import ModuleSpec
-from contracting.db.driver import ContractDriver
+from contracting.db.driver import Driver
 from contracting.stdlib import env
 from contracting.execution.runtime import rt
 from types import ModuleType
@@ -53,7 +53,7 @@ def uninstall_builtins():
     invalidate_caches()
 
 
-def install_database_loader(driver=ContractDriver()):
+def install_database_loader(driver=Driver()):
     DatabaseFinder.driver = driver
     if DatabaseFinder not in sys.meta_path:
         sys.meta_path.insert(0, DatabaseFinder)
@@ -76,7 +76,7 @@ def install_system_contracts(directory=''):
 
 
 class DatabaseFinder:
-    driver = ContractDriver()
+    driver = Driver()
 
     def find_spec(self, fullname, path=None, target=None):
         if MODULE_CACHE.get(self) is None:
@@ -89,7 +89,7 @@ MODULE_CACHE = {}
 
 
 class DatabaseLoader(Loader):
-    def __init__(self, d=ContractDriver()):
+    def __init__(self, d=Driver()):
         self.d = d
 
     def create_module(self, spec):

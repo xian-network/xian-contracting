@@ -1,14 +1,14 @@
 from contracting.compilation.compiler import ContractingCompiler
-from contracting.db.driver import ContractDriver
+from contracting.db.driver import Driver
 from contracting.execution.runtime import rt
 from contracting.stdlib import env
 from contracting import config
 
-_driver = rt.env.get('__Driver') or ContractDriver()
+_driver = rt.env.get('__Driver') or Driver()
 
 
 class Contract:
-    def __init__(self, driver: ContractDriver = _driver):
+    def __init__(self, driver: Driver = _driver):
         self._driver = driver
 
     def submit(self, name, code, owner=None, constructor_args={}, developer=None):

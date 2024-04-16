@@ -1,18 +1,18 @@
-from contracting.db.driver import ContractDriver
+from contracting.db.driver import Driver
 from contracting.execution.runtime import rt
 from contracting import config
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 
-driver = rt.env.get('__Driver') or ContractDriver()
+driver = rt.env.get('__Driver') or Driver()
 
 class Datum:
-    def __init__(self, contract, name, driver: ContractDriver):
+    def __init__(self, contract, name, driver: Driver):
         self._driver = driver
         self._key = self._driver.make_key(contract, name)
 
 
 class Variable(Datum):
-    def __init__(self, contract, name, driver: ContractDriver=driver, t=None):
+    def __init__(self, contract, name, driver: Driver=driver, t=None):
         self._type = None
 
         if isinstance(t, type) or None:
@@ -34,7 +34,7 @@ class Variable(Datum):
 
 
 class Hash(Datum):
-    def __init__(self, contract, name, driver: ContractDriver=driver, default_value=None):
+    def __init__(self, contract, name, driver: Driver=driver, default_value=None):
         super().__init__(contract, name, driver=driver)
         self._delimiter = config.DELIMITER
         self._default_value = default_value
@@ -116,7 +116,7 @@ class Hash(Datum):
         raise Exception('Cannot use "in" with a Hash.')
 
 class ForeignVariable(Variable):
-    def __init__(self, contract, name, foreign_contract, foreign_name, driver: ContractDriver=driver):
+    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver=driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
@@ -125,7 +125,7 @@ class ForeignVariable(Variable):
 
 
 class ForeignHash(Hash):
-    def __init__(self, contract, name, foreign_contract, foreign_name, driver: ContractDriver=driver):
+    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver=driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 

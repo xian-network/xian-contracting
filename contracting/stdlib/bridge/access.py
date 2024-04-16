@@ -1,6 +1,6 @@
 from contracting.execution.runtime import rt
 from contextlib import ContextDecorator
-from contracting.db.driver import ContractDriver
+from contracting.db.driver import Driver
 from typing import Any
 
 class __export(ContextDecorator):
@@ -8,7 +8,7 @@ class __export(ContextDecorator):
         self.contract = contract
 
     def __enter__(self, *args, **kwargs):
-        driver = rt.env.get('__Driver') or ContractDriver()
+        driver = rt.env.get('__Driver') or Driver()
 
         if rt.context._context_changed(self.contract):
             current_state = rt.context._get_state()

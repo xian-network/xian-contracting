@@ -1,5 +1,5 @@
 from contracting.execution.executor import Executor, DEFAULT_STAMPS
-from contracting.db.driver import ContractDriver, FSDriver
+from contracting.db.driver import Driver
 from contracting.compilation.compiler import ContractingCompiler
 from contracting.stdlib.bridge.time import Datetime
 from datetime import datetime
@@ -164,7 +164,7 @@ class AbstractContract:
 class ContractingClient:
     def __init__(self, signer='sys',
                  submission_filename=os.path.join(os.path.dirname(__file__), 'contracts/submission.s.py'),
-                 driver=ContractDriver(),
+                 driver=Driver(),
                  metering=False,
                  compiler=ContractingCompiler(),
                  environment={}):
@@ -310,9 +310,6 @@ class ContractingClient:
                                                  metering=metering, signer=signer)
 
     def get_contracts(self):
-        if isinstance(self.raw_driver.driver, FSDriver):
-            return self.raw_driver.driver.get_contracts()
-
         contracts = []
         for key in self.raw_driver.keys():
             if key.endswith('.__code__'):
