@@ -389,9 +389,8 @@ class Driver:
 
         # Remove the deltas from the set
         [self.pending_deltas.pop(key) for key in to_delete]
-
         
-        self.log.info(f"Cache stats: {len(self.cache)} items, {len(self.pending_writes)} pending writes, {len(self.pending_deltas)} pending deltas, {len(self.pending_reads)} pending reads after saving state to disk.")
+        self.reset_cache()
 
     def bust_cache(self, writes: dict):
         """
