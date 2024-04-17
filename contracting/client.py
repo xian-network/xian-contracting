@@ -45,7 +45,7 @@ class AbstractContract:
                                         **default_kwargs))
 
     def keys(self):
-        return self.executor.driver.get_contract_keys(self.name)
+        return self.executor.driver.keys(self.name)
 
     # a variable contains a DOT, but no __, and no :
     # a hash contains a DOT, no __, and a :
