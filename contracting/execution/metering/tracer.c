@@ -10,7 +10,15 @@
 
 #include "frameobject.h"
 
+/* Conditional inclusion of sys/resource.h for Unix-like systems */
+#ifndef _WIN32
 #include <sys/resource.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 #include "Python.h"
 
@@ -90,13 +98,17 @@ Tracer_dealloc(Tracer * self) {
  * The Trace Function
  */
 
+/* Function to get memory usage */
 static long get_memory_usage() {
-  struct rusage r_usage;
-  getrusage(RUSAGE_SELF, & r_usage);
-
-  //    printf("%ld\n", r_usage.ru_maxrss);
-
-  return r_usage.ru_maxrss;
+#ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+    return (long)pmc.PrivateUsage;  // Returns the Private Usage in bytes
+#else
+    struct rusage r_usage;
+    getrusage(RUSAGE_SELF, &r_usage);
+    return (long)r_usage.ru_maxrss;  // max resident set size
+#endif
 }
 
 static int

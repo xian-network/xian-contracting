@@ -75,7 +75,15 @@ def pkgconfig(package):
                 res.setdefault(key, []).append(token[2:])
 
     elif platform == "win32":
-        raise NotImplementedError("Cannot install on Windows")
+        try:
+            output = subprocess.getoutput("pkg-config --cflags --libs {}".format(package))
+            for token in output.strip().split():
+                key = flag_map.get(token[:2])
+                if key:
+                    res.setdefault(key, []).append(token[2:])
+        except Exception:
+            # Fallback if pkg-config is not installed
+            raise NotImplementedError("pkg-config is not configured for Windows. Install or configure pkg-config.")
 
     # Convert values to strings
     res = {key: [str(value) for value in values] for key, values in res.items()}
