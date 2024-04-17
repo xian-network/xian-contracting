@@ -413,6 +413,15 @@ class Driver:
         """
         self.cache = {}
 
+    def rollback_one_block_on_disk(self):
+        """
+        Rollback one block on disk
+        """
+        for key in self.keys():
+            block_num = self.get_block_from_disk(key)
+            if block_num is not None:
+                self.set_value_to_disk(key, self.get_value_from_disk(key), block_num - 1)
+
     def rollback(self, nanos=None):
         """
         Rollback to a given Nanoseconds in L2 cache or if no Nanoseconds is given, rollback to the latest state on disk (does not do block rollback)
