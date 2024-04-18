@@ -1,5 +1,5 @@
 # from unittest import TestCase
-# from contracting.db.driver import RedisDriver, ContractDriver, DBMDriver, RocksDriver
+# from contracting.storage.driver import RedisDriver, ContractDriver, DBMDriver, RocksDriver
 # from contracting import config
 # import random
 #
@@ -10,7 +10,7 @@
 # class TestLevelDBDriver(TestCase):
 #     # Flush this sucker every test
 #     def setUp(self):
-#         self.d = LevelDBDriver(db=1)
+#         self.d = LevelDBDriver(storage=1)
 #         self.d.flush()
 #
 #     def tearDown(self):
@@ -147,7 +147,7 @@
 # class TestRedisDatabaseDriver(TestCase):
 #     # Flush this sucker every test
 #     def setUp(self):
-#         self.d = RedisDriver(db=1)
+#         self.d = RedisDriver(storage=1)
 #         self.d.flush()
 #
 #     def tearDown(self):
@@ -446,7 +446,7 @@
 # class TestDBMDatabaseDriver(TestCase):
 #     # Flush this sucker every test
 #     def setUp(self):
-#         self.d = DBMDriver(db=1)
+#         self.d = DBMDriver(storage=1)
 #         self.d.flush()
 #
 #     def tearDown(self):
@@ -574,7 +574,7 @@
 # class TestContractDriver(TestCase):
 #     # Flush this sucker every test
 #     def setUp(self):
-#         self.d = ContractDriver(db=1)
+#         self.d = ContractDriver(storage=1)
 #         self.d.flush()
 #
 #     def tearDown(self):

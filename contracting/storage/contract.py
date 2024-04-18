@@ -1,5 +1,5 @@
 from contracting.compilation.compiler import ContractingCompiler
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
 from contracting.stdlib import env
 from contracting import config

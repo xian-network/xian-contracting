@@ -1,4 +1,4 @@
-# from contracting.db._driver import Driver
+# from contracting.storage._driver import Driver
 # from unittest import TestCase
 # from contracting.config import MASTER_DB, DB_PORT
 # from contracting.interpreter.parser import Parser
@@ -16,7 +16,7 @@
 # #
 # #     @classmethod
 # #     def setUpClass(cls):
-# #         cls.r = Driver(host='localhost', port=DB_PORT, db=MASTER_DB)
+# #         cls.r = Driver(host='localhost', port=DB_PORT, storage=MASTER_DB)
 # #         cls.r.flush()
 # #         cls.reset()
 # #
@@ -36,7 +36,7 @@
 #
 # class MockExecutor:
 #     def __init__(self, *args, **kwargs):
-#         self._driver = Driver(host='localhost', port=DB_PORT, db=MASTER_DB)
+#         self._driver = Driver(host='localhost', port=DB_PORT, storage=MASTER_DB)
 #         self._driver.flush()
 #         Parser.executor = self
 #         if not Parser.parser_scope.get('rt'):

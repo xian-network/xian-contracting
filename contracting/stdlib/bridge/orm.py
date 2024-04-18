@@ -1,5 +1,5 @@
-from contracting.db.orm import Variable, Hash, ForeignVariable, ForeignHash
-from contracting.db.contract import Contract
+from contracting.storage.orm import Variable, Hash, ForeignVariable, ForeignHash
+from contracting.storage.contract import Contract
 from contracting.execution.runtime import rt
 
 
