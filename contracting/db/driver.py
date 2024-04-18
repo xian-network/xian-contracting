@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import logging
-from contracting.db.hdf5 import hdf5
+from contracting.db import hdf5
 
 # Logging
 logging.basicConfig(
