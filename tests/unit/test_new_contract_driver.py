@@ -12,7 +12,7 @@ class TestContractDriver(TestCase):
         self.d.flush()
 
         self.c = ContractDriver(self.d)
-        self.c.clear_pending_state()
+        self.c.flush_cache()
 
     def test_values_returns_values_for_keys(self):
         kvs = [('899af0b15aa0f227e658c96a24fa890e', 'ece22e0f19e822908b136e391d488ba5'),

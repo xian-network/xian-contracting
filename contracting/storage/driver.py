@@ -150,22 +150,9 @@ class Driver:
         if len(filename) < config.FILENAME_LEN_MAX:
             hdf5.delete(self.__filename_to_path(filename), variable)
 
-    def flush_disk(self):
-        if self.run_state.is_dir():
-            shutil.rmtree(self.run_state)
-        if self.contract_state.is_dir():
-            shutil.rmtree(self.contract_state)
-
-        self.__build_directories()
-
     def is_file(self, filename):
         file_path = Path(self.__filename_to_path(filename))
         return file_path.is_file()
-
-    def flush_file(self, filename):
-        file = Path(self.__filename_to_path(filename))
-        if file.is_file():
-            file.unlink()
 
     def iter_from_disk(self, prefix="", length=0):
         try:
@@ -309,7 +296,7 @@ class Driver:
 
             self.delete_key_from_disk(key)
 
-    def clear_pending_state(self):
+    def flush_cache(self):
         """
         Clear everything that is in the caches, so it wont be written to disk
         """
@@ -318,12 +305,25 @@ class Driver:
         self.pending_deltas.clear()
         self.cache.clear()
 
-    def full_flush(self):
+    def flush_disk(self):
+        if self.run_state.is_dir():
+            shutil.rmtree(self.run_state)
+        if self.contract_state.is_dir():
+            shutil.rmtree(self.contract_state)
+
+        self.__build_directories()
+
+    def flush_file(self, filename):
+        file = Path(self.__filename_to_path(filename))
+        if file.is_file():
+            file.unlink()
+
+    def flush_full(self):
         """
         Flush all caches and disk
         """
         self.flush_disk()
-        self.clear_pending_state()
+        self.flush_cache()
 
     def find(self, key: str):
         """

@@ -214,8 +214,8 @@ class ContractingClient:
 
     def flush(self):
         # flushes storage and resubmits genesis contracts
-        self.raw_driver.full_flush()
-        self.raw_driver.clear_pending_state()
+        self.raw_driver.flush_full()
+        self.raw_driver.flush_cache()
 
         if self.submission_filename is not None:
             self.set_submission_contract()

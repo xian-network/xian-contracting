@@ -2,7 +2,7 @@ import importlib
 from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
-from contracting.db.driver import FSDriver, ContractDriver
+from contracting.storage.driver import Driver
 
 
 def too_many_writes():
@@ -482,7 +482,7 @@ class TestFixed(TestCase):
         self.c.submit(test_fixed)
 
         self.c.raw_driver.commit()
-        self.c.raw_driver.clear_pending_state()
+        self.c.raw_driver.flush_cache()
         f = self.c.get_contract('test_fixed')
 
         z = f.multiply()

@@ -137,7 +137,7 @@ class Executor:
             log.error(tb)
             status_code = 1
             if auto_commit:
-                driver.clear_pending_state()
+                driver.flush_cache()
 
         runtime.rt.tracer.stop()
 
