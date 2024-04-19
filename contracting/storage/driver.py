@@ -9,8 +9,10 @@ import decimal
 import os
 from pathlib import Path
 import shutil
+import datetime
 import logging
 from contracting.storage import hdf5
+from cachetools import TTLCache
 
 # Logging
 logging.basicConfig(
@@ -42,7 +44,7 @@ class Driver:
         self.pending_reads = {}
 
         # L1 cache (memory)
-        self.cache = {}
+        self.cache = TTLCache(maxsize=1000, ttl=6*3600)
 
         # L0 cache (disk)
         self.contract_state = STORAGE_HOME.joinpath("contract_state")
@@ -390,8 +392,6 @@ class Driver:
         # Remove the deltas from the set
         [self.pending_deltas.pop(key) for key in to_delete]
         
-        self.reset_cache()
-
     def bust_cache(self, writes: dict):
         """
         Remove specific write deltas from the cache
