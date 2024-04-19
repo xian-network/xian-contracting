@@ -1,6 +1,6 @@
 from contracting.execution.runtime import rt
 from contextlib import ContextDecorator
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 from typing import Any
 
 class __export(ContextDecorator):

@@ -1,5 +1,5 @@
 from contracting.execution.executor import Executor, DEFAULT_STAMPS
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 from contracting.compilation.compiler import ContractingCompiler
 from contracting.stdlib.bridge.time import Datetime
 from datetime import datetime
@@ -13,8 +13,8 @@ import os
 
 from . import config
 
-from .db.orm import Variable
-from .db.orm import Hash
+from .storage.orm import Variable
+from .storage.orm import Hash
 
 
 class AbstractContract:
@@ -213,9 +213,9 @@ class ContractingClient:
 
 
     def flush(self):
-        # flushes db and resubmits genesis contracts
-        self.raw_driver.full_flush()
-        self.raw_driver.clear_pending_state()
+        # flushes storage and resubmits genesis contracts
+        self.raw_driver.flush_full()
+        self.raw_driver.flush_cache()
 
         if self.submission_filename is not None:
             self.set_submission_contract()

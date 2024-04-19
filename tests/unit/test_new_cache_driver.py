@@ -1,12 +1,14 @@
 from unittest import TestCase
-from contracting.db.driver import CacheDriver, Driver
+from contracting.storage.driver import Driver
 
 
 class TestCacheDriver(TestCase):
     def setUp(self):
         self.d = Driver()
+        # FIXME: Doesn't exist anymore
         self.d.flush()
 
+        # FIXME: Doesn't exist anymore
         self.c = CacheDriver(self.d)
 
     def test_get_adds_to_read(self):
@@ -43,7 +45,7 @@ class TestCacheDriver(TestCase):
         self.assertEqual(self.d.get('thing4'), 1237)
         self.assertEqual(self.d.get('thing5'), 1238)
 
-    def test_clear_pending_state_resets_all_variables(self):
+    def test_flush_cache_resets_all_variables(self):
         self.c.set('thing1', 1234)
         self.c.set('thing2', 1235)
         self.c.get('something')

@@ -1,13 +1,15 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
-from contracting.db.driver import InMemDriver, ContractDriver
+from contracting.storage.driver import Driver
 import os
 from pathlib import Path
 
 class TestClient(TestCase):
     def setUp(self):
         self.client = None
+        # FIXME: Doesn't exist anymore
         self.raw_driver = InMemDriver()
+        # FIXME: Doesn't exist anymore
         self.contract_driver = ContractDriver(driver=self.raw_driver)
 
         submission_file_path = f'{Path.cwd().parent.parent}/contracting/contracts/submission.s.py'
@@ -49,7 +51,7 @@ class TestClient(TestCase):
         self.client = ContractingClient(driver=self.contract_driver)
 
         self.client.raw_driver.flush()
-        self.client.raw_driver.clear_pending_state()
+        self.client.raw_driver.flush_cache()
         self.client.submission_contract = None
 
         contract = self.client.raw_driver.get_contract('submission')
@@ -66,7 +68,7 @@ class TestClient(TestCase):
         self.client = ContractingClient(driver=self.contract_driver)
 
         self.client.raw_driver.flush()
-        self.client.raw_driver.clear_pending_state()
+        self.client.raw_driver.flush_cache()
         self.client.submission_contract = None
 
         contract = self.client.raw_driver.get_contract('submission')
@@ -86,7 +88,7 @@ class TestClient(TestCase):
         self.client = ContractingClient(driver=self.contract_driver)
 
         self.client.raw_driver.flush()
-        self.client.raw_driver.clear_pending_state()
+        self.client.raw_driver.flush_cache()
         self.client.submission_filename = None
 
         with self.assertRaises(AssertionError):

@@ -4,7 +4,7 @@ import importlib.util
 from importlib.abc import Loader, MetaPathFinder, PathEntryFinder
 from importlib import invalidate_caches, __import__
 from importlib.machinery import ModuleSpec
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 from contracting.stdlib import env
 from contracting.execution.runtime import rt
 from types import ModuleType

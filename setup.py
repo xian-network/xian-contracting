@@ -14,7 +14,8 @@ requirements = [
     "autopep8==1.5.7",
     "motor==2.5.1",
     "iso8601",
-    "h5py"
+    "h5py",
+    "cachetools"
 ]
 
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)

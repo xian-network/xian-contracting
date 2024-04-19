@@ -5,7 +5,7 @@ from .. import config
 
 from ..compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTATION_TYPES, VIOLATION_TRIGGERS, ILLEGAL_BUILTINS, ILLEGAL_AST_TYPES
 
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 
 
 class Linter(ast.NodeVisitor):

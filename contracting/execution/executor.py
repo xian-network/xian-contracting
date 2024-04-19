@@ -1,7 +1,7 @@
 import builtins
 import importlib
 from contracting.execution import runtime
-from contracting.db.driver import Driver
+from contracting.storage.driver import Driver
 from contracting.execution.module import install_database_loader, uninstall_builtins, enable_restricted_imports, disable_restricted_imports
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
@@ -137,7 +137,7 @@ class Executor:
             log.error(tb)
             status_code = 1
             if auto_commit:
-                driver.clear_pending_state()
+                driver.flush_cache()
 
         runtime.rt.tracer.stop()
 
