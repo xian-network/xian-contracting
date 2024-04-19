@@ -9,7 +9,6 @@ import decimal
 import os
 from pathlib import Path
 import shutil
-import datetime
 import logging
 from contracting.storage import hdf5
 from cachetools import TTLCache
