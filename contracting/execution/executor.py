@@ -139,7 +139,7 @@ class Executor:
                 filename, line, func, text = tb_info[-2]
             line += 1
 
-            result = f'Line {line}: {str(e)}'
+            result = f'Line {line}: {str(e.__class__.__name__)} ({str(e)})'
             log.error(str(e))
             log.error(tb)
             status_code = 1
