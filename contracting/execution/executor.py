@@ -134,6 +134,7 @@ class Executor:
             tb = traceback.format_exc()
             tb_info = traceback.extract_tb(e.__traceback__)
             if contract_name == config.SUBMISSION_CONTRACT_NAME:
+                filename, line, func, text = tb_info[-1]
                 line += 1
             else:
                 filename, line, func, text = tb_info[-1]
