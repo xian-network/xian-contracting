@@ -131,11 +131,19 @@ class Executor:
 
 
         except Exception as e:
-            result = e
             tb = traceback.format_exc()
+            tb_info = traceback.extract_tb(e.__traceback__)
+            if contract_name == config.SUBMISSION_CONTRACT_NAME:
+                filename, line, func, text = tb_info[-1]
+            else:
+                filename, line, func, text = tb_info[-2]
+            line += 1
+
+            result = f'Line {line}: {str(e)}'
             log.error(str(e))
             log.error(tb)
             status_code = 1
+            
             if auto_commit:
                 driver.flush_cache()
 
@@ -174,7 +182,6 @@ class Executor:
         Seeded.s = False
         runtime.rt.clean_up()
         runtime.rt.env.update({'__Driver': driver})
-
         output = {
             'status_code': status_code,
             'result': result,
