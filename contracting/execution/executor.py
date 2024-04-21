@@ -133,10 +133,7 @@ class Executor:
         except Exception as e:
             tb = traceback.format_exc()
             tb_info = traceback.extract_tb(e.__traceback__)
-            if contract_name == config.SUBMISSION_CONTRACT_NAME:
-                filename, line, func, text = tb_info[-1]
-            else:
-                filename, line, func, text = tb_info[-2]
+            filename, line, func, text = tb_info[-1]
             line += 1
 
             result = f'Line {line}: {str(e.__class__.__name__)} ({str(e)})'
