@@ -24,6 +24,7 @@ HASH_EXT = ".x"
 
 STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
 DELIMITER = "."
+HASH_DEPTH_DELIMITER = ":"
 
 CODE_KEY = "__code__"
 TYPE_KEY = "__type__"
@@ -235,6 +236,20 @@ class Driver:
     def values(self, prefix=""):
         l = list(self.items(prefix).values())
         return list(self.items(prefix).values())
+
+    def key_values(self, prefix="", max_depth=1, max_length=10000):
+        if max_length > 1000000:
+            raise ValueError("Max length is too high")
+        result = dict()
+        keys = self.keys(prefix=prefix)
+        for key in keys:
+            depth = key.count(HASH_DEPTH_DELIMITER)
+            if depth > max_depth:
+                continue
+            if len(result) >= max_length:
+                break
+            result[key.replace(prefix, "")] = self.get(key)
+        return result
 
     def make_key(self, contract, variable, args=[]):
         contract_variable = DELIMITER.join((contract, variable))
