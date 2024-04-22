@@ -254,7 +254,7 @@ class Driver:
     def make_key(self, contract, variable, args=[]):
         contract_variable = DELIMITER.join((contract, variable))
         if args:
-            return ":".join((contract_variable, *[str(arg) for arg in args]))
+            return HASH_DEPTH_DELIMITER.join((contract_variable, *[str(arg) for arg in args]))
         return contract_variable
 
     def get_var(self, contract, variable, arguments=[], mark=True):
