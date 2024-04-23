@@ -93,6 +93,10 @@ class Hash(Datum):
         prefix = self._prefix_for_args(args)
         return self._driver.values(prefix=prefix)
 
+    def as_dict(self, *args):
+        prefix = self._prefix_for_args(args)
+        return self._driver.key_values(prefix=prefix, max_depth=1)
+
     def _items(self, *args):
         prefix = self._prefix_for_args(args)
         return self._driver.items(prefix=prefix)
