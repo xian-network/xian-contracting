@@ -4,11 +4,12 @@ from contracting.compilation.compiler import ContractingCompiler
 from contracting.stdlib.bridge.time import Datetime
 from datetime import datetime
 from functools import partial
+from types import FunctionType
+
 import ast
 import inspect
 import astor
 import autopep8
-from types import FunctionType
 import os
 
 from . import config

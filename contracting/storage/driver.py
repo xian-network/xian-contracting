@@ -3,15 +3,17 @@ from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting import config
+from contracting.storage import hdf5
 from datetime import datetime
+from pathlib import Path
+from cachetools import TTLCache
+
 import marshal
 import decimal
 import os
-from pathlib import Path
 import shutil
 import logging
-from contracting.storage import hdf5
-from cachetools import TTLCache
+
 
 # Logging
 logging.basicConfig(
@@ -32,6 +34,7 @@ OWNER_KEY = "__owner__"
 TIME_KEY = "__submitted__"
 COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
+
 
 class Driver:
     def __init__(self):

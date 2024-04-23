@@ -1,10 +1,12 @@
-import importlib
 from types import FunctionType, ModuleType
 from contracting.config import PRIVATE_METHOD_PREFIX
 from contracting.storage.orm import Datum
 from contracting.storage.driver import Driver, OWNER_KEY
 from contracting.execution.runtime import rt
+
+import importlib
 import sys
+
 
 def extract_closure(fn):
     closure = fn.__closure__[0]

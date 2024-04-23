@@ -3,6 +3,7 @@ from contextlib import ContextDecorator
 from contracting.storage.driver import Driver
 from typing import Any
 
+
 class __export(ContextDecorator):
     def __init__(self, contract):
         self.contract = contract
