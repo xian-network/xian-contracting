@@ -496,8 +496,8 @@ class Driver:
             filename = file_path.name
             items = self.get_items_from_file_path(file_path)
             for i in items:
-                key = i.replace(config.HDF5_GROUP_SEPARATOR, config.DELIMITER)
-                full_key = f"{filename}.{key}"
+                key = i.replace(config.HDF5_GROUP_SEPARATOR, DELIMITER)
+                full_key = f"{filename}{DELIMITER}{key}"
                 value = self.get_value_from_disk(full_key)
                 all_contract_state[full_key] = value
         return all_contract_state
@@ -511,15 +511,15 @@ class Driver:
             filename = file_path.name
             items = self.get_items_from_file_path(file_path)
             for i in items:
-                key = i.replace(config.HDF5_GROUP_SEPARATOR, config.DELIMITER)
-                full_key = f"{filename}.{key}"
+                key = i.replace(config.HDF5_GROUP_SEPARATOR, DELIMITER)
+                full_key = f"{filename}{DELIMITER}{key}"
                 value = self.get_value_from_disk(full_key)
                 run_state[full_key] = value
         return run_state
 
     def get_items_from_file_path(self, file_path):
         items = []
-        
+
         def collect_items(name, obj):
             items.append(name)
         with h5py.File(file_path, 'r') as file:
