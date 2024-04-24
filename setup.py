@@ -2,7 +2,8 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 from sys import platform
-import sys, subprocess, pathlib
+
+import sys, subprocess
 
 major = 0
 

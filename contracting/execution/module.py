@@ -1,15 +1,14 @@
-import sys
-
-import importlib.util
-from importlib.abc import Loader, MetaPathFinder, PathEntryFinder
+from importlib.abc import Loader
 from importlib import invalidate_caches, __import__
 from importlib.machinery import ModuleSpec
 from contracting.storage.driver import Driver
 from contracting.stdlib import env
 from contracting.execution.runtime import rt
-from types import ModuleType
+
 import marshal
 import builtins
+import sys
+import importlib.util
 
 # This function overrides the __import__ function, which is the builtin function that is called whenever Python runs
 # an 'import' statement. If the globals dictionary contains {'__contract__': True}, then this function will make sure
@@ -18,7 +17,6 @@ import builtins
 # For all exec statements, we add the {'__contract__': True} _key to the globals to protect against unwanted imports.
 #
 # Note: anything installed with pip or in site-packages will also not work, so contract package names *must* be unique.
-#
 
 
 def is_valid_import(name):

@@ -1,5 +1,3 @@
-import builtins
-import importlib
 from contracting.execution import runtime
 from contracting.storage.driver import Driver
 from contracting.execution.module import install_database_loader, uninstall_builtins, enable_restricted_imports, disable_restricted_imports
@@ -7,12 +5,13 @@ from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import config
 from copy import deepcopy
-import decimal
 from logging import getLogger
-import gc
+
+import importlib
+import decimal
+import traceback
 
 log = getLogger('CONTRACTING')
-import traceback
 
 DEFAULT_STAMPS = 1000000
 
