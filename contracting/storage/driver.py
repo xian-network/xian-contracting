@@ -14,6 +14,9 @@ import os
 import shutil
 import logging
 
+from contracting.storage import hdf5
+import h5py
+from cachetools import TTLCache
 
 # Logging
 logging.basicConfig(
@@ -26,6 +29,7 @@ HASH_EXT = ".x"
 
 STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
 DELIMITER = "."
+HASH_DEPTH_DELIMITER = ":"
 
 CODE_KEY = "__code__"
 TYPE_KEY = "__type__"
@@ -68,6 +72,7 @@ class Driver:
                 rt.deduct_read(*encode_kv(key, value))
 
         return value
+
 
     def set(self, key, value):
         """
@@ -239,10 +244,20 @@ class Driver:
         l = list(self.items(prefix).values())
         return list(self.items(prefix).values())
 
+    def key_values(self, prefix="", max_depth=16):
+        result = dict()
+        keys = self.keys(prefix=prefix)
+        for key in keys:
+            depth = key.count(HASH_DEPTH_DELIMITER)
+            if depth > max_depth:
+                continue
+            result[key.replace(prefix, "")] = self.get(key)
+        return result
+
     def make_key(self, contract, variable, args=[]):
         contract_variable = DELIMITER.join((contract, variable))
         if args:
-            return ":".join((contract_variable, *[str(arg) for arg in args]))
+            return HASH_DEPTH_DELIMITER.join((contract_variable, *[str(arg) for arg in args]))
         return contract_variable
 
     def get_var(self, contract, variable, arguments=[], mark=True):
@@ -474,3 +489,43 @@ class Driver:
         self.cache.clear()
         self.pending_writes.clear()
         self.pending_reads = {}
+
+    def get_all_contract_state(self) -> dict:
+        """
+        Queries the HDF5 based storage and returns a dict with all the state from the files
+        in the file-based storage directory.
+        """
+        all_contract_state = {}
+        for file_path in self.contract_state.iterdir():
+            filename = file_path.name
+            items = self.get_items_from_file_path(file_path)
+            for i in items:
+                key = i.replace(config.HDF5_GROUP_SEPARATOR, DELIMITER)
+                full_key = f"{filename}{DELIMITER}{key}"
+                value = self.get_value_from_disk(full_key)
+                all_contract_state[full_key] = value
+        return all_contract_state
+
+    def get_run_state(self) -> dict:
+        """
+        Retrieves the latest block_num + block_hash
+        """
+        run_state = {}
+        for file_path in self.run_state.iterdir():
+            filename = file_path.name
+            items = self.get_items_from_file_path(file_path)
+            for i in items:
+                key = i.replace(config.HDF5_GROUP_SEPARATOR, DELIMITER)
+                full_key = f"{filename}{DELIMITER}{key}"
+                value = self.get_value_from_disk(full_key)
+                run_state[full_key] = value
+        return run_state
+
+    def get_items_from_file_path(self, file_path):
+        items = []
+
+        def collect_items(name, obj):
+            items.append(name)
+        with h5py.File(file_path, 'r') as file:
+            file.visititems(collect_items)  # Pass the collecting function to visititems
+        return items
