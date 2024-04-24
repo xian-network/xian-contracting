@@ -1,8 +1,9 @@
-import sys
 from contracting import config
-import contracting
-import os
 from contracting.execution.metering.tracer import Tracer
+
+import contracting
+import sys
+import os
 
 
 class Context:

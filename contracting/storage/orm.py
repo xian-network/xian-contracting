@@ -5,6 +5,7 @@ from contracting.stdlib.bridge.decimal import ContractingDecimal
 
 driver = rt.env.get('__Driver') or Driver()
 
+
 class Datum:
     def __init__(self, contract, name, driver: Driver):
         self._driver = driver

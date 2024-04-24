@@ -12,6 +12,7 @@
 '''
 
 import random
+
 from types import ModuleType
 from contracting.execution.runtime import rt
 

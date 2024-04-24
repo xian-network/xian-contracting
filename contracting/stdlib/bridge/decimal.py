@@ -1,15 +1,16 @@
 from decimal import Decimal
+
 import decimal
-import math
 
 MAX_UPPER_PRECISION = 30
 MAX_LOWER_PRECISION = 30
-CONTEXT = decimal.Context(prec=MAX_UPPER_PRECISION + MAX_LOWER_PRECISION, rounding=decimal.ROUND_FLOOR, Emin=-100,
-                          Emax=100)
+CONTEXT = decimal.Context(
+    prec=MAX_UPPER_PRECISION + MAX_LOWER_PRECISION,
+    rounding=decimal.ROUND_FLOOR,
+    Emin=-100,
+    Emax=100
+)
 decimal.setcontext(CONTEXT)
-
-
-# There is a much better way to do this...
 
 
 def make_min_decimal_str(prec):
@@ -185,5 +186,5 @@ class ContractingDecimal:
 
 
 exports = {
-    'decimal': ContractingDecimal,
+    'decimal': ContractingDecimal
 }

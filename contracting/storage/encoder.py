@@ -1,5 +1,6 @@
 import json
 import decimal
+
 from contracting.stdlib.bridge.time import Datetime, Timedelta
 from contracting.stdlib.bridge.decimal import ContractingDecimal, MAX_LOWER_PRECISION, fix_precision
 from contracting.config import INDEX_SEPARATOR, DELIMITER
@@ -14,6 +15,7 @@ MONGO_MAX_INT = 2 ** 63 - 1
 # and stored as dicts. Is there a better way? I don't know, maybe.
 ##
 
+
 def safe_repr(obj, max_len=1024):
     try:
         r = obj.__repr__()
@@ -23,6 +25,7 @@ def safe_repr(obj, max_len=1024):
         return rr[0][:max_len]
     except:
         return None
+
 
 class Encoder(json.JSONEncoder):
     def default(self, o, *args):
@@ -53,6 +56,7 @@ class Encoder(json.JSONEncoder):
         #    return safe_repr(o)
         return super().default(o)
 
+
 def encode_int(value: int):
     if MONGO_MIN_INT < value and value < MONGO_MAX_INT:
         return value
@@ -60,6 +64,7 @@ def encode_int(value: int):
     return {
         '__big_int__': str(value)
     }
+
 
 def encode_ints_in_dict(data: dict):
     d = dict()
@@ -82,6 +87,7 @@ def encode_ints_in_dict(data: dict):
 
     return d
 
+
 # JSON library from Python 3 doesn't let you instantiate your custom Encoder. You have to pass it as an obj to json
 def encode(data: str):
     """ NOTE:
@@ -97,6 +103,7 @@ def encode(data: str):
         data = encode_ints_in_dict(data)
 
     return json.dumps(data, cls=Encoder, separators=(',', ':'))
+
 
 def as_object(d):
     if '__time__' in d:
@@ -155,6 +162,8 @@ def decode_kv(key, value):
 
 
 TYPES = {'__fixed__', '__delta__', '__bytes__', '__time__', '__big_int__'}
+
+
 def convert(k, v):
     if k == '__fixed__':
         return ContractingDecimal(v)
