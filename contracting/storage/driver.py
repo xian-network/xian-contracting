@@ -39,8 +39,6 @@ DEVELOPER_KEY = "__developer__"
 
 class Driver:
     def __init__(self):
-        self.log = logging.getLogger("Driver")
-
         # L2 cache (memory)
         self.pending_deltas = {}
         self.pending_writes = {}
