@@ -13,10 +13,7 @@ import decimal
 import os
 import shutil
 import logging
-
-from contracting.storage import hdf5
 import h5py
-from cachetools import TTLCache
 
 # Logging
 logging.basicConfig(
