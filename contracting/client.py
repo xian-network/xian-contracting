@@ -11,11 +11,14 @@ import inspect
 import astor
 import autopep8
 import os
+import re
 
 from . import constants
 
 from .storage.orm import Variable
 from .storage.orm import Hash
+
+import builtins as ___builtins___
 
 
 class AbstractContract:
@@ -157,7 +160,14 @@ class AbstractContract:
             executor.sandbox.terminate()
 
         if output['status_code'] == 1:
-            raise output['result']
+            matches = re.match(r"Line \d+: (?P<exception_type>\w+) \(", output['result'])
+            try:
+                exception_type = matches.group('exception_type')
+                exception_class = getattr(___builtins___, exception_type)
+                raise exception_class(output['result'])
+            except AttributeError:
+                # If the exception type is not found, raise the output['result'] as a generic Exception.
+                raise Exception(output['result'])
 
         return output['result']
 
@@ -211,7 +221,6 @@ class ContractingClient:
                 self.raw_driver.commit()
 
         self.submission_contract = self.get_contract('submission')
-
 
     def flush(self):
         # flushes storage and resubmits genesis contracts
