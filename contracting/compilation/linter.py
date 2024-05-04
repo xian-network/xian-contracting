@@ -3,7 +3,13 @@ import sys
 
 from .. import config
 
-from ..compilation.whitelists import ALLOWED_AST_TYPES, ALLOWED_ANNOTATION_TYPES, VIOLATION_TRIGGERS, ILLEGAL_BUILTINS, ILLEGAL_AST_TYPES
+from ..compilation.whitelists import (
+    ALLOWED_AST_TYPES,
+    ALLOWED_ANNOTATION_TYPES,
+    VIOLATION_TRIGGERS,
+    ILLEGAL_BUILTINS,
+    ILLEGAL_AST_TYPES
+)
 
 from contracting.storage.driver import Driver
 
@@ -81,9 +87,7 @@ class Linter(ast.NodeVisitor):
         self._violations.append(str)
         self._is_success = False
 
-    '''
-    Why are we even doing any logic instead of just failing on visiting these?
-    '''
+    # TODO: Why are we even doing any logic instead of just failing on visiting these?
     def visit_ClassDef(self, node):
         # self.log.error("Classes are not allowed in Seneca contracts")
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[5]
@@ -158,9 +162,9 @@ class Linter(ast.NodeVisitor):
         return super().generic_visit(node)
 
     def visit_Num(self, node):
-        # NOTE: Integers are important for indexing and slicing so we cannot replace them. They also will not suffer
-        #       from rounding issues.
-        # are any types we don't allow right now? raghu todo
+        # NOTE: Integers are important for indexing and slicing so we cannot replace them.
+        # They also will not suffer from rounding issues.
+        # TODO: are any types we don't allow right now?
         self.generic_visit(node)
         return node
 
@@ -302,8 +306,3 @@ class Linter(ast.NodeVisitor):
         import pprint
         pp = pprint.PrettyPrinter(indent = 4)
         pp.pprint(self._violations)
-
-
-
-
-
