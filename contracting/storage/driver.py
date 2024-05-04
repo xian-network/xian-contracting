@@ -68,7 +68,6 @@ class Driver:
 
         return value
 
-
     def set(self, key, value):
         """
         Set a value of a key in the cache. It will be written to disk on commit.
@@ -278,6 +277,7 @@ class Driver:
     def get_compiled(self, name):
         return self.get_var(name, COMPILED_KEY)
 
+    # TODO: Remove 'overwrite' param since it's not being used
     def set_contract(
         self,
         name,
@@ -522,5 +522,6 @@ class Driver:
         def collect_items(name, obj):
             items.append(name)
         with h5py.File(file_path, 'r') as file:
-            file.visititems(collect_items)  # Pass the collecting function to visititems
+            # Pass the collecting function to visititems
+            file.visititems(collect_items)
         return items
