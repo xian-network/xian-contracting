@@ -1,9 +1,10 @@
 from unittest import TestCase
 from contracting.compilation.compiler import ContractingCompiler
 from contracting.stdlib import env
+from contracting import constants
+
 import re
 import astor
-from contracting import config
 
 
 class TestSenecaCompiler(TestCase):
@@ -136,8 +137,7 @@ def e():
         comp = c.parse(code, lint=False)
         code_str = astor.to_source(comp)
 
-        self.assertEqual(len([m.start() for m in re.finditer(config.PRIVATE_METHOD_PREFIX, code_str)]), 9)
-
+        self.assertEqual(len([m.start() for m in re.finditer(constants.PRIVATE_METHOD_PREFIX, code_str)]), 9)
 
     def test_construct_renames_properly(self):
         code = '''

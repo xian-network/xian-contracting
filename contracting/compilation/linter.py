@@ -1,7 +1,7 @@
 import ast
 import sys
 
-from .. import config
+from .. import constants
 
 from ..compilation.whitelists import (
     ALLOWED_AST_TYPES,
@@ -115,7 +115,10 @@ class Linter(ast.NodeVisitor):
                 str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[13]
                 self._violations.append(str)
 
-        if isinstance(node.value, ast.Call) and not isinstance(node.value.func, ast.Attribute) and node.value.func.id in config.ORM_CLASS_NAMES:
+        if (isinstance(node.value, ast.Call) and not
+            isinstance(node.value.func, ast.Attribute) and
+            node.value.func.id in constants.ORM_CLASS_NAMES):
+
             if node.value.func.id in ['Variable', 'Hash']:
                 kwargs = [k.arg for k in node.value.keywords]
                 if 'contract' in kwargs or 'name' in kwargs:
@@ -190,17 +193,17 @@ class Linter(ast.NodeVisitor):
         export_decorator = False
         for d in node.decorator_list:
             # Only allow decorators from the allowed set.
-            if d.id not in config.VALID_DECORATORS:
+            if d.id not in constants.VALID_DECORATORS:
                 str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[7] + \
-                      ": valid list: {}".format(d.id, config.VALID_DECORATORS)
+                      ": valid list: {}".format(d.id, constants.VALID_DECORATORS)
                 self._violations.append(str)
                 self._is_success = False
 
-            if d.id == config.EXPORT_DECORATOR_STRING:
+            if d.id == constants.EXPORT_DECORATOR_STRING:
                 self._is_one_export = True
                 export_decorator = True
 
-            if d.id == config.INIT_DECORATOR_STRING:
+            if d.id == constants.INIT_DECORATOR_STRING:
                 if self._constructor_visited:
                     str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[8]
                     self._violations.append(str)

@@ -2,7 +2,7 @@ from contracting.storage.encoder import encode, decode, encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
-from contracting import config
+from contracting import constants
 from contracting.storage import hdf5
 from datetime import datetime
 from pathlib import Path
@@ -88,11 +88,11 @@ class Driver:
 
     def __parse_key(self, key):
         try:
-            filename, variable = key.split(config.INDEX_SEPARATOR, 1)
-            variable = variable.replace(config.DELIMITER, config.HDF5_GROUP_SEPARATOR)
+            filename, variable = key.split(constants.INDEX_SEPARATOR, 1)
+            variable = variable.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
         except:
             filename = "__misc"
-            variable = key.replace(config.DELIMITER, config.HDF5_GROUP_SEPARATOR)
+            variable = key.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
 
         return filename, variable
 
@@ -109,8 +109,8 @@ class Driver:
     def __get_keys_from_file(self, filename):
         return [
             filename
-            + config.INDEX_SEPARATOR
-            + g.replace(config.HDF5_GROUP_SEPARATOR, config.DELIMITER)
+            + constants.INDEX_SEPARATOR
+            + g.replace(constants.HDF5_GROUP_SEPARATOR, constants.DELIMITER)
             for g in hdf5.get_groups(self.__filename_to_path(filename))
         ]
 
@@ -119,7 +119,7 @@ class Driver:
 
         return (
             decode(hdf5.get_value(self.__filename_to_path(filename), variable))
-            if len(filename) < config.FILENAME_LEN_MAX
+            if len(filename) < constants.FILENAME_LEN_MAX
             else None
         )
 
@@ -127,11 +127,11 @@ class Driver:
         filename, variable = self.__parse_key(item)
         block_num = (
             hdf5.get_block(self.__filename_to_path(filename), variable)
-            if len(filename) < config.FILENAME_LEN_MAX
+            if len(filename) < constants.FILENAME_LEN_MAX
             else None
         )
 
-        return config.BLOCK_NUM_DEFAULT if block_num is None else int(block_num)
+        return constants.BLOCK_NUM_DEFAULT if block_num is None else int(block_num)
 
     def set_value_to_disk(self, key: str, value, block_num=None):
         if block_num:
@@ -140,7 +140,7 @@ class Driver:
 
         filename, variable = self.__parse_key(key)
 
-        if len(filename) < config.FILENAME_LEN_MAX:
+        if len(filename) < constants.FILENAME_LEN_MAX:
             hdf5.set(
                 self.__filename_to_path(filename),
                 variable,
@@ -150,7 +150,7 @@ class Driver:
     
     def delete_key_from_disk(self, key):
         filename, variable = self.__parse_key(key)
-        if len(filename) < config.FILENAME_LEN_MAX:
+        if len(filename) < constants.FILENAME_LEN_MAX:
             hdf5.delete(self.__filename_to_path(filename), variable)
 
     def is_file(self, filename):
@@ -495,7 +495,7 @@ class Driver:
             filename = file_path.name
             items = self.get_items_from_file_path(file_path)
             for i in items:
-                key = i.replace(config.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
+                key = i.replace(constants.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = self.get_value_from_disk(full_key)
                 all_contract_state[full_key] = value
@@ -510,7 +510,7 @@ class Driver:
             filename = file_path.name
             items = self.get_items_from_file_path(file_path)
             for i in items:
-                key = i.replace(config.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
+                key = i.replace(constants.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = self.get_value_from_disk(full_key)
                 run_state[full_key] = value

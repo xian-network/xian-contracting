@@ -12,7 +12,7 @@ import astor
 import autopep8
 import os
 
-from . import config
+from . import constants
 
 from .storage.orm import Variable
 from .storage.orm import Hash
@@ -89,8 +89,8 @@ class AbstractContract:
         self.executor.bypass_privates = True
 
         # Append private method prefix to function name if it isn't there already
-        if not f.startswith(config.PRIVATE_METHOD_PREFIX):
-            f = '{}{}'.format(config.PRIVATE_METHOD_PREFIX, f)
+        if not f.startswith(constants.PRIVATE_METHOD_PREFIX):
+            f = '{}{}'.format(constants.PRIVATE_METHOD_PREFIX, f)
 
         # Execute
         result = self._abstract_function_call(signer=signer, executor=self.executor, contract_name=self.name,

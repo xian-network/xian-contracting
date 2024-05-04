@@ -1,6 +1,6 @@
 from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
-from contracting import config
+from contracting import constants
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 
 driver = rt.env.get('__Driver') or Driver()
@@ -37,7 +37,7 @@ class Variable(Datum):
 class Hash(Datum):
     def __init__(self, contract, name, driver: Driver=driver, default_value=None):
         super().__init__(contract, name, driver=driver)
-        self._delimiter = config.DELIMITER
+        self._delimiter = constants.DELIMITER
         self._default_value = default_value
 
     def _set(self, key, value):
@@ -57,8 +57,8 @@ class Hash(Datum):
 
     def _validate_key(self, key):
         if isinstance(key, tuple):
-            assert len(key) <= config.MAX_HASH_DIMENSIONS, 'Too many dimensions ({}) for hash. Max is {}'.format(
-                len(key), config.MAX_HASH_DIMENSIONS
+            assert len(key) <= constants.MAX_HASH_DIMENSIONS, 'Too many dimensions ({}) for hash. Max is {}'.format(
+                len(key), constants.MAX_HASH_DIMENSIONS
             )
 
             new_key_str = ''
@@ -67,8 +67,8 @@ class Hash(Datum):
 
                 k = str(k)
 
-                assert config.DELIMITER not in k, 'Illegal delimiter in key.'
-                assert config.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
+                assert constants.DELIMITER not in k, 'Illegal delimiter in key.'
+                assert constants.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
 
                 new_key_str += '{}{}'.format(k, self._delimiter)
 
@@ -76,10 +76,10 @@ class Hash(Datum):
         else:
             key = str(key)
 
-            assert config.DELIMITER not in key, 'Illegal delimiter in key.'
-            assert config.INDEX_SEPARATOR not in key, 'Illegal separator in key.'
+            assert constants.DELIMITER not in key, 'Illegal delimiter in key.'
+            assert constants.INDEX_SEPARATOR not in key, 'Illegal separator in key.'
 
-        assert len(key) <= config.MAX_KEY_SIZE, 'Key is too long ({}). Max is {}.'.format(len(key), config.MAX_KEY_SIZE)
+        assert len(key) <= constants.MAX_KEY_SIZE, 'Key is too long ({}). Max is {}.'.format(len(key), constants.MAX_KEY_SIZE)
         return key
 
     def _prefix_for_args(self, args):

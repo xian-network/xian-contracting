@@ -1,5 +1,5 @@
 from types import FunctionType, ModuleType
-from contracting.config import PRIVATE_METHOD_PREFIX
+from contracting.constants import PRIVATE_METHOD_PREFIX
 from contracting.storage.orm import Datum
 from contracting.storage.driver import Driver, OWNER_KEY
 from contracting.execution.runtime import rt

@@ -1,9 +1,10 @@
 from unittest import TestCase
 from contracting.db.driver import ContractDriver
 from contracting.execution.executor import Executor
-from contracting.config import STAMPS_PER_TAU
-from contracting.execution import runtime
+from contracting.constants import STAMPS_PER_TAU
+
 import contracting
+
 
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories

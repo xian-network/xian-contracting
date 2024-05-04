@@ -3,7 +3,7 @@ from contracting.storage.driver import Driver
 from contracting.execution.module import install_database_loader, uninstall_builtins, enable_restricted_imports, disable_restricted_imports
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
-from contracting import config
+from contracting import constants
 from copy import deepcopy
 from logging import getLogger
 
@@ -44,10 +44,10 @@ class Executor:
                 auto_commit=False,
                 driver=None,
                 stamps=DEFAULT_STAMPS,
-                stamp_cost=config.STAMPS_PER_TAU,
+                stamp_cost=constants.STAMPS_PER_TAU,
                 metering=None) -> dict:
         if not self.bypass_privates:
-            assert not function_name.startswith(config.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
+            assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
 
         if metering is None:
             metering = self.metering
@@ -66,9 +66,9 @@ class Executor:
         try:
             if metering:
                 balances_key = '{}{}{}{}{}'.format(self.currency_contract,
-                                                   config.INDEX_SEPARATOR,
+                                                   constants.INDEX_SEPARATOR,
                                                    self.balances_hash,
-                                                   config.DELIMITER,
+                                                   constants.DELIMITER,
                                                    sender)
 
                 balance = driver.get(balances_key)
@@ -114,7 +114,7 @@ class Executor:
             func = getattr(module, function_name)
 
             # Add the contract name to the context on a submission call
-            if contract_name == config.SUBMISSION_CONTRACT_NAME:
+            if contract_name == constants.SUBMISSION_CONTRACT_NAME:
                 runtime.rt.context._base_state['submission_name'] = kwargs.get('name')
 
             for k, v in kwargs.items():
@@ -132,7 +132,7 @@ class Executor:
         except Exception as e:
             tb = traceback.format_exc()
             tb_info = traceback.extract_tb(e.__traceback__)
-            if contract_name == config.SUBMISSION_CONTRACT_NAME:
+            if contract_name == constants.SUBMISSION_CONTRACT_NAME:
                 filename, line, func, text = tb_info[-1]
                 line += 1
             else:

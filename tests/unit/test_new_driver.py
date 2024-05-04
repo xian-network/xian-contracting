@@ -1,10 +1,10 @@
-from contracting import config
+from contracting import constants
 from contracting.db.driver import Driver, InMemDriver, FSDriver
 from contracting.db.encoder import MONGO_MAX_INT
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting.stdlib.bridge.time import Datetime, Timedelta
-from decimal import Decimal
 from unittest import TestCase
+
 import random
 
 SAMPLE_STRING = 'beef'
@@ -30,6 +30,7 @@ TEST_DATA = [
     SAMPLE_STRING, SAMPLE_INT, SAMPLE_BIGINT, SAMPLE_DATETIME,
     SAMPLE_CONTRACTING_DECIMAL, SAMPLE_TIMEDELTA, SAMPLE_BYTES, SAMPLE_DICT
 ]
+
 
 class TestDriver(TestCase):
     # Flush this sucker every test
@@ -660,7 +661,7 @@ class TestFSDriver(TestCase):
 
             b = self.d.get('b.b')
             self.assertEqual(v, b) if not isinstance(v, dict) else self.assertDictEqual(v, b)
-            self.assertEqual(self.d.get_block('b.b'), config.BLOCK_NUM_DEFAULT)
+            self.assertEqual(self.d.get_block('b.b'), constants.BLOCK_NUM_DEFAULT)
 
     def test_safe_set(self):
         # should only set the value when the block number is higher or equal
@@ -687,7 +688,7 @@ class TestFSDriver(TestCase):
 
             b = self.d.get(contract + '.b')
             self.assertIsNone(b)
-            self.assertEqual(self.d.get_block('b.b'), config.BLOCK_NUM_DEFAULT)
+            self.assertEqual(self.d.get_block('b.b'), constants.BLOCK_NUM_DEFAULT)
 
     def test_get_set_with_block_num_contract_name_too_long(self):
         contract = 'b' * 256
@@ -696,7 +697,7 @@ class TestFSDriver(TestCase):
 
             b = self.d.get(contract + '.b')
             self.assertIsNone(b)
-            self.assertEqual(self.d.get_block(contract + '.b'), config.BLOCK_NUM_DEFAULT)
+            self.assertEqual(self.d.get_block(contract + '.b'), constants.BLOCK_NUM_DEFAULT)
 
     def test_delete(self):
         for v in TEST_DATA:
@@ -704,13 +705,13 @@ class TestFSDriver(TestCase):
 
             b = self.d.get('b.b')
             self.assertEqual(v, b) if not isinstance(v, dict) else self.assertDictEqual(v, b)
-            self.assertEqual(self.d.get_block('b.b'), config.BLOCK_NUM_DEFAULT)
+            self.assertEqual(self.d.get_block('b.b'), constants.BLOCK_NUM_DEFAULT)
 
             self.d.delete('b.b')
 
             b = self.d.get('b.b')
             self.assertIsNone(b)
-            self.assertEqual(self.d.get_block('b.b'), config.BLOCK_NUM_DEFAULT)
+            self.assertEqual(self.d.get_block('b.b'), constants.BLOCK_NUM_DEFAULT)
 
     def test_delete_contract_name_too_long_doesnt_crash(self):
         contract = 'b' * 256

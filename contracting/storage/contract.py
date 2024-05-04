@@ -2,7 +2,7 @@ from contracting.compilation.compiler import ContractingCompiler
 from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
 from contracting.stdlib import env
-from contracting import config
+from contracting import constants
 
 _driver = rt.env.get('__Driver') or Driver()
 
@@ -25,10 +25,10 @@ class Contract:
 
         exec(code_obj, scope)
 
-        if scope.get(config.INIT_FUNC_NAME) is not None:
+        if scope.get(constants.INIT_FUNC_NAME) is not None:
             if constructor_args is None:
                 constructor_args = {}
-            scope[config.INIT_FUNC_NAME](**constructor_args)
+            scope[constants.INIT_FUNC_NAME](**constructor_args)
 
         now = scope.get('now')
         if now is not None:
