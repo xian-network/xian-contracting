@@ -18,10 +18,9 @@ DEFAULT_STAMPS = 1000000
 
 class Executor:
     def __init__(self, production=False, driver=None, metering=True,
-                 currency_contract='currency', balances_hash='balances', bypass_privates=False):
+                 currency_contract='currency', balances_hash='balances', bypass_privates=False, bypass_balance_amount=False):
 
         self.metering = metering
-
         self.driver = driver
 
         if not self.driver:
@@ -32,6 +31,7 @@ class Executor:
         self.balances_hash = balances_hash
 
         self.bypass_privates = bypass_privates
+        self.bypass_balance_amount = bypass_balance_amount  # For Stamp Estimation
 
         runtime.rt.env.update({'__Driver': self.driver})
 
@@ -70,14 +70,17 @@ class Executor:
                                                    self.balances_hash,
                                                    constants.DELIMITER,
                                                    sender)
+                if self.bypass_balance_amount:
+                    balance = 9999999
 
-                balance = driver.get(balances_key)
+                else:
+                    balance = driver.get(balances_key)
 
-                if type(balance) == dict:
-                    balance = ContractingDecimal(balance.get('__fixed__'))
+                    if type(balance) == dict:
+                        balance = ContractingDecimal(balance.get('__fixed__'))
 
-                if balance is None:
-                    balance = 0
+                    if balance is None:
+                        balance = 0
 
                 log.debug({
                     'balance': balance,
@@ -153,7 +156,7 @@ class Executor:
 
         stamps_used = stamps_used // 1000
         stamps_used += 1
-        #stamps_used *= 1000
+
 
         if stamps_used > stamps:
             stamps_used = stamps
