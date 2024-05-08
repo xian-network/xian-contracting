@@ -2,18 +2,18 @@ from contracting.storage.encoder import encode, decode, encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
-from contracting import constants
-from contracting.storage import hdf5
 from datetime import datetime
 from pathlib import Path
 from cachetools import TTLCache
+from contracting import constants
 
+
+from contracting.storage import hdf5
 import marshal
 import decimal
 import os
 import shutil
 import logging
-import h5py
 
 # Logging
 logging.basicConfig(
@@ -36,51 +36,15 @@ TIME_KEY = "__submitted__"
 COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
 
-
 class Driver:
     def __init__(self):
-        # L2 cache (memory)
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
-
-        # L1 cache (memory)
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
-
-        # L0 cache (disk)
         self.contract_state = STORAGE_HOME.joinpath("contract_state")
         self.run_state = STORAGE_HOME.joinpath("run_state")
-
         self.__build_directories()
-
-    def get(self, key: str, save: bool = True):
-        """
-        Get a value of a key from the cache. If the key is not in the cache, it will be read from disk.
-        """
-        value = self.find(key)
-
-        if save:
-            if self.pending_reads.get(key) is None:
-                self.pending_reads[key] = value
-
-            if value is not None:
-                rt.deduct_read(*encode_kv(key, value))
-
-        return value
-
-    def set(self, key, value):
-        """
-        Set a value of a key in the cache. It will be written to disk on commit.
-        """
-        rt.deduct_write(*encode_kv(key, value))
-
-        if self.pending_reads.get(key) is None:
-            self.get(key)
-
-        if type(value) == decimal.Decimal or type(value) == float:
-            value = ContractingDecimal(str(value))
-
-        self.pending_writes[key] = value
 
     def __build_directories(self):
         self.contract_state.mkdir(exist_ok=True, parents=True)
@@ -90,88 +54,47 @@ class Driver:
         try:
             filename, variable = key.split(constants.INDEX_SEPARATOR, 1)
             variable = variable.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
-        except:
+        except ValueError:
             filename = "__misc"
             variable = key.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
-
         return filename, variable
 
     def __filename_to_path(self, filename):
-        return (
-            str(self.run_state.joinpath(filename))
-            if filename.startswith("__")
-            else str(self.contract_state.joinpath(filename))
-        )
+        return (str(self.run_state.joinpath(filename)) if filename.startswith("__") else str(self.contract_state.joinpath(filename)))
 
     def __get_files(self):
         return sorted(os.listdir(self.contract_state) + os.listdir(self.run_state))
-
-    def __get_keys_from_file(self, filename):
-        return [
-            filename
-            + constants.INDEX_SEPARATOR
-            + g.replace(constants.HDF5_GROUP_SEPARATOR, constants.DELIMITER)
-            for g in hdf5.get_groups(self.__filename_to_path(filename))
-        ]
-
-    def get_value_from_disk(self, item: str):
-        filename, variable = self.__parse_key(item)
-
-        return (
-            decode(hdf5.get_value(self.__filename_to_path(filename), variable))
-            if len(filename) < constants.FILENAME_LEN_MAX
-            else None
-        )
-
-    def get_block_from_disk(self, item: str):
-        filename, variable = self.__parse_key(item)
-        block_num = (
-            hdf5.get_block(self.__filename_to_path(filename), variable)
-            if len(filename) < constants.FILENAME_LEN_MAX
-            else None
-        )
-
-        return constants.BLOCK_NUM_DEFAULT if block_num is None else int(block_num)
-
-    def set_value_to_disk(self, key: str, value, block_num=None):
-        if block_num:
-            self.safe_set(key, value, block_num)
-            return
-
-        filename, variable = self.__parse_key(key)
-
-        if len(filename) < constants.FILENAME_LEN_MAX:
-            hdf5.set(
-                self.__filename_to_path(filename),
-                variable,
-                encode(value) if value is not None else None,
-                None,
-            )
     
-    def delete_key_from_disk(self, key):
-        filename, variable = self.__parse_key(key)
-        if len(filename) < constants.FILENAME_LEN_MAX:
-            hdf5.delete(self.__filename_to_path(filename), variable)
-
     def is_file(self, filename):
         file_path = Path(self.__filename_to_path(filename))
         return file_path.is_file()
 
-    def iter_from_disk(self, prefix="", length=0):
-        try:
-            filename, _ = self.__parse_key(prefix)
-        except Exception:
-            return self.keys(prefix=prefix, length=length)
+    def get(self, key: str, save: bool = True):
+        value = self.find(key)
+        if save and self.pending_reads.get(key) is None:
+            self.pending_reads[key] = value
+        if value is not None:
+            rt.deduct_read(*encode_kv(key, value))
+        return value
 
-        if not self.is_file(filename=filename):
-            return []
+    def set(self, key, value):
+        rt.deduct_write(*encode_kv(key, value))
+        if self.pending_reads.get(key) is None:
+            self.get(key)
+        if type(value) in [decimal.Decimal, float]:
+            value = ContractingDecimal(str(value))
+        self.pending_writes[key] = value
 
-        keys_from_file = self.__get_keys_from_file(filename)
+    def find(self, key: str):
+        value = self.pending_writes.get(key)
+        if value is None:
+            value = self.cache.get(key)
+        if value is None:
+            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+        return value
 
-        keys = [key for key in keys_from_file if key.startswith(prefix)]
-        keys.sort()
-
-        return keys if length == 0 else keys[:length]
+    def __get_keys_from_file(self, filename):
+        return hdf5.get_groups(self.__filename_to_path(filename))
 
     def keys_from_disk(self, prefix=None, length=0):
         """
@@ -197,11 +120,21 @@ class Driver:
         keys.sort()
         return keys
 
-    def get_contract_files(self):
-        """
-        Get all contract files as a list of strings
-        """
-        return sorted(os.listdir(self.contract_state))
+    def iter_from_disk(self, prefix="", length=0):
+        try:
+            filename, _ = self.__parse_key(prefix)
+        except Exception:
+            return self.keys(prefix=prefix, length=length)
+
+        if not self.is_file(filename=filename):
+            return []
+
+        keys_from_file = self.__get_keys_from_file(filename)
+
+        keys = [key for key in keys_from_file if key.startswith(prefix)]
+        keys.sort()
+
+        return keys if length == 0 else keys[:length]
 
     def items(self, prefix=""):
         """
@@ -238,16 +171,6 @@ class Driver:
         l = list(self.items(prefix).values())
         return list(self.items(prefix).values())
 
-    def key_values(self, prefix="", max_depth=16):
-        result = dict()
-        keys = self.keys(prefix=prefix)
-        for key in keys:
-            depth = key.count(HASH_DEPTH_DELIMITER)
-            if depth > max_depth:
-                continue
-            result[key.replace(prefix, "")] = self.get(key)
-        return result
-
     def make_key(self, contract, variable, args=[]):
         contract_variable = DELIMITER.join((contract, variable))
         if args:
@@ -262,9 +185,6 @@ class Driver:
         key = self.make_key(contract, variable, arguments)
         self.set(key, value)
 
-    def get_contract(self, name):
-        return self.get_var(name, CODE_KEY)
-
     def get_owner(self, name):
         owner = self.get_var(name, OWNER_KEY)
         if owner == "":
@@ -277,7 +197,9 @@ class Driver:
     def get_compiled(self, name):
         return self.get_var(name, COMPILED_KEY)
 
-    # TODO: Remove 'overwrite' param since it's not being used
+    def get_contract(self, name):
+        return self.get_var(name, CODE_KEY)
+
     def set_contract(
         self,
         name,
@@ -310,61 +232,80 @@ class Driver:
 
             self.delete_key_from_disk(key)
 
+    def get_contract_files(self):
+        """
+        Get all contract files as a list of strings
+        """
+        return sorted(os.listdir(self.contract_state))
+
+    def delete_key_from_disk(self, key):
+        filename, variable = self.__parse_key(key)
+        if len(filename) < constants.FILENAME_LEN_MAX:
+            hdf5.delete_key_from_disk(self.__filename_to_path(filename), variable)
+
     def flush_cache(self):
-        """
-        Clear everything that is in the caches, so it wont be written to disk
-        """
         self.pending_writes.clear()
         self.pending_reads.clear()
         self.pending_deltas.clear()
         self.cache.clear()
 
     def flush_disk(self):
-        if self.run_state.is_dir():
-            shutil.rmtree(self.run_state)
-        if self.contract_state.is_dir():
-            shutil.rmtree(self.contract_state)
-
+        shutil.rmtree(self.run_state, ignore_errors=True)
+        shutil.rmtree(self.contract_state, ignore_errors=True)
         self.__build_directories()
 
     def flush_file(self, filename):
-        file = Path(self.__filename_to_path(filename))
-        if file.is_file():
-            file.unlink()
+        file_path = self.__filename_to_path(filename)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
 
     def flush_full(self):
         """
-        Flush all caches and disk
+        Flush all caches and disk storage.
         """
         self.flush_disk()
         self.flush_cache()
 
-    def find(self, key: str):
-        """
-        Find a key in the caches and disk. Uses the following order of precedence:
-        1. Pending writes
-        2. Cache
-        3. Disk
-        """
-        value = self.pending_writes.get(key) # Try to find in pending writes
-        if value is not None:
-            return value
-
-        value = self.cache.get(key) # Try to find in cache
-        if value is not None:
-            return value
-
-        value = self.get_value_from_disk(key) # Try to find in disk
-        if value is not None:
-            return value
-
-        return None # Not found
-
     def delete(self, key):
         """
-        Delete a key fully from the caches and queue it for deletion from disk on commit
+        Delete a key fully from the caches and queue it for deletion from disk on commit.
         """
-        self.set(key, None)
+        self.set(key, None)  # Setting the value to None will mark it for deletion
+
+    def rollback(self, nanos=None):
+        """
+        Rollback to a given Nanoseconds in L2 cache or if no Nanoseconds is given, rollback to the latest state on disk.
+        """
+        if nanos is None:
+            # Resets to the latest state on disk
+            self.cache.clear()
+            self.pending_reads.clear()
+            self.pending_writes.clear()
+            self.pending_deltas.clear()
+        else:
+            to_delete = []
+            for _nanos, _deltas in sorted(self.pending_deltas.items(), reverse=True):
+                if _nanos < nanos:
+                    break
+                to_delete.append(_nanos)
+                for key, delta in _deltas['writes'].items():
+                    self.cache[key] = delta[0]  # Restoring the value before the write
+
+            for _nanos in to_delete:
+                self.pending_deltas.pop(_nanos, None)
+
+    def commit(self):
+        """
+        Save the current state to disk and clear the L1 and L2 caches.
+        """
+        for k, v in self.pending_writes.items():
+            if v is None:
+                hdf5.delete_key_from_disk(self.__filename_to_path(k), k)
+            else:
+                hdf5.set_value_to_disk(self.__filename_to_path(k), k, v, None)
+        self.cache.clear()
+        self.pending_writes.clear()
+        self.pending_reads.clear()
 
     def hard_apply(self, nanos):
         """
@@ -394,7 +335,7 @@ class Driver:
         for _nanos, _deltas in sorted(self.pending_deltas.items()):
             # Run through all state changes, taking the second value, which is the post delta
             for key, delta in _deltas["writes"].items():
-                self.set_value_to_disk(key=key, value=delta[1])
+                hdf5.set_value_to_disk(self.__filename_to_path(key), key, delta[1], nanos)
 
             # Add the key (
             to_delete.append(_nanos)
@@ -403,7 +344,38 @@ class Driver:
 
         # Remove the deltas from the set
         [self.pending_deltas.pop(key) for key in to_delete]
-        
+
+    def get_all_contract_state(self):
+        """
+        Queries the disk storage and returns a dictionary with all the state from the contract storage directory.
+        """
+        all_contract_state = {}
+        for file_path in self.contract_state.iterdir():
+            filename = file_path.name
+            keys = hdf5.get_keys_from_file(self.__filename_to_path(filename))
+            for key in keys:
+                full_key = f"{filename}{DELIMITER}{key}"
+                value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
+                all_contract_state[full_key] = value
+        return all_contract_state
+
+    def get_run_state(self):
+        """
+        Retrieves the latest state information from the run state directory.
+        """
+        run_state = {}
+        for file_path in self.run_state.iterdir():
+            filename = file_path.name
+            keys = hdf5.get_keys_from_file(self.__filename_to_path(filename))
+            for key in keys:
+                full_key = f"{filename}{DELIMITER}{key}"
+                value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
+                run_state[full_key] = value
+        return run_state
+
+    def reset_cache(self):
+        self.cache.clear()
+
     def bust_cache(self, writes: dict):
         """
         Remove specific write deltas from the cache
@@ -420,108 +392,3 @@ class Driver:
 
             if should_clear:
                 self.cache.pop(key, None)
-
-    def reset_cache(self):
-        """
-        Reset the L1 cache
-        """
-        self.cache = {}
-
-    def rollback_one_block_on_disk(self):
-        """
-        Rollback one block on disk
-        """
-        for key in self.keys():
-            block_num = self.get_block_from_disk(key)
-            if block_num is not None:
-                self.set_value_to_disk(key, self.get_value_from_disk(key), block_num - 1)
-
-    def rollback(self, nanos=None):
-        """
-        Rollback to a given Nanoseconds in L2 cache or if no Nanoseconds is given, rollback to the latest state on disk (does not do block rollback)
-        """
-
-        if nanos is None:
-            # Returns to disk state which should be whatever it was prior to any write sessions
-            self.cache.clear()
-            self.pending_reads = {}
-            self.pending_writes.clear()
-            self.pending_deltas.clear()
-        else:
-            to_delete = []
-            for _nanos, _deltas in sorted(self.pending_deltas.items())[::-1]:
-                # Clears the current reads/writes, and the reads/writes that get made when rolling back from the
-                # last nanos
-                self.pending_reads = {}
-                self.pending_writes.clear()
-
-                if _nanos < nanos:
-                    # if we are less than the nanos then top processing anymore, this is our rollback point
-                    break
-                else:
-                    # if we are still greater than or equal to then mark this as delete and rollback its changes
-                    to_delete.append(_nanos)
-                    # Run through all state changes, taking the second value, which is the post delta
-                    for key, delta in _deltas["writes"].items():
-                        # self.set(key, delta[0])
-                        self.cache[key] = delta[0]
-
-            # Remove the deltas from the set
-            [self.pending_deltas.pop(key) for key in to_delete]
-
-    def commit(self):
-        """
-        Save the current state to disk and clear the L1 cache and L2 cache
-        """
-        self.cache.update(self.pending_writes)
-
-        for k, v in self.cache.items():
-            if v is None:
-                self.delete_key_from_disk(k)
-            else:
-                self.set_value_to_disk(k, v)
-
-        self.cache.clear()
-        self.pending_writes.clear()
-        self.pending_reads = {}
-
-    def get_all_contract_state(self) -> dict:
-        """
-        Queries the HDF5 based storage and returns a dict with all the state from the files
-        in the file-based storage directory.
-        """
-        all_contract_state = {}
-        for file_path in self.contract_state.iterdir():
-            filename = file_path.name
-            items = self.get_items_from_file_path(file_path)
-            for i in items:
-                key = i.replace(constants.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
-                full_key = f"{filename}{DELIMITER}{key}"
-                value = self.get_value_from_disk(full_key)
-                all_contract_state[full_key] = value
-        return all_contract_state
-
-    def get_run_state(self) -> dict:
-        """
-        Retrieves the latest block_num + block_hash
-        """
-        run_state = {}
-        for file_path in self.run_state.iterdir():
-            filename = file_path.name
-            items = self.get_items_from_file_path(file_path)
-            for i in items:
-                key = i.replace(constants.HDF5_GROUP_SEPARATOR, HASH_DEPTH_DELIMITER)
-                full_key = f"{filename}{DELIMITER}{key}"
-                value = self.get_value_from_disk(full_key)
-                run_state[full_key] = value
-        return run_state
-
-    def get_items_from_file_path(self, file_path):
-        items = []
-
-        def collect_items(name, obj):
-            items.append(name)
-        with h5py.File(file_path, 'r') as file:
-            # Pass the collecting function to visititems
-            file.visititems(collect_items)
-        return items
