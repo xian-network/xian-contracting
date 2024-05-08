@@ -372,3 +372,23 @@ class Driver:
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 run_state[full_key] = value
         return run_state
+
+    def reset_cache(self):
+        self.cache.clear()
+
+    def bust_cache(self, writes: dict):
+        """
+        Remove specific write deltas from the cache
+        """
+        if not writes:
+            return
+
+        for key in writes.keys():
+            should_clear = True
+            for pd in self.pending_deltas.values():
+                should_clear = key not in list(pd["writes"].keys())
+                if not should_clear:
+                    break
+
+            if should_clear:
+                self.cache.pop(key, None)
