@@ -34,6 +34,10 @@ def get_attr(file_path, group_name, attr_name):
         except KeyError:
             return None
 
+def get_groups(file_path):
+    with h5py.File(file_path, 'a') as f:
+        return list(f.keys())
+
 def write_attr(file_or_path, group_name, attr_name, value, timeout=20):
     # Attempt to acquire lock with a timeout to prevent deadlock
     if isinstance(file_or_path, str):

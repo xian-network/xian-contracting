@@ -62,6 +62,13 @@ class Driver:
     def __filename_to_path(self, filename):
         return (str(self.run_state.joinpath(filename)) if filename.startswith("__") else str(self.contract_state.joinpath(filename)))
 
+    def __get_files(self):
+        return sorted(os.listdir(self.contract_state) + os.listdir(self.run_state))
+    
+    def is_file(self, filename):
+        file_path = Path(self.__filename_to_path(filename))
+        return file_path.is_file()
+
     def get(self, key: str, save: bool = True):
         value = self.find(key)
         if save and self.pending_reads.get(key) is None:
@@ -85,6 +92,84 @@ class Driver:
         if value is None:
             value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
         return value
+
+    def __get_keys_from_file(self, filename):
+        return hdf5.get_groups(self.__filename_to_path(filename))
+
+    def keys_from_disk(self, prefix=None, length=0):
+        """
+        Get all keys from disk with a given prefix
+        """
+        keys = set()
+        try:
+            for filename in self.__get_files():
+                for key in self.__get_keys_from_file(filename):
+                    if prefix and key.startswith(prefix):
+                        keys.add(key)
+                    elif not prefix:
+                        keys.add(key)
+
+                    if 0 < length <= len(keys):
+                        raise AssertionError(
+                            "Length threshold has been hit. Continuing."
+                        )
+        except AssertionError:
+            pass
+
+        keys = list(keys)
+        keys.sort()
+        return keys
+
+    def iter_from_disk(self, prefix="", length=0):
+        try:
+            filename, _ = self.__parse_key(prefix)
+        except Exception:
+            return self.keys(prefix=prefix, length=length)
+
+        if not self.is_file(filename=filename):
+            return []
+
+        keys_from_file = self.__get_keys_from_file(filename)
+
+        keys = [key for key in keys_from_file if key.startswith(prefix)]
+        keys.sort()
+
+        return keys if length == 0 else keys[:length]
+
+    def items(self, prefix=""):
+        """
+        Get all existing items with a given prefix
+        """
+
+        # Get all of the items in the cache currently
+        _items = {}
+        keys = set()
+
+        for k, v in self.pending_writes.items():
+            if k.startswith(prefix) and v is not None:
+                _items[k] = v
+                keys.add(k)
+
+        for k, v in self.cache.items():
+            if k.startswith(prefix) and v is not None:
+                _items[k] = v
+                keys.add(k)
+
+        # Get remaining keys from disk
+        db_keys = set(self.iter_from_disk(prefix=prefix))
+
+        # Subtract the already gotten keys
+        for k in db_keys - keys:
+            _items[k] = self.get(k)  # Cache get will add the keys to the cache
+
+        return _items
+
+    def keys(self, prefix=""):
+        return list(self.items(prefix).keys())
+
+    def values(self, prefix=""):
+        l = list(self.items(prefix).values())
+        return list(self.items(prefix).values())
 
     def make_key(self, contract, variable, args=[]):
         contract_variable = DELIMITER.join((contract, variable))
