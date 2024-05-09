@@ -42,6 +42,7 @@ class Driver:
         self.pending_writes = {}
         self.pending_reads = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
+        self.bypass_cache = bypass_cache
         self.contract_state = STORAGE_HOME.joinpath("contract_state")
         self.run_state = STORAGE_HOME.joinpath("run_state")
         self.__build_directories()
