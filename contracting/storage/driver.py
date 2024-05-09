@@ -357,7 +357,7 @@ class Driver:
         all_contract_state = {}
         for file_path in self.contract_state.iterdir():
             filename = file_path.name
-            keys = hdf5.get_keys_from_file(self.__filename_to_path(filename))
+            keys = self.get_keys_from_file(self.__filename_to_path(filename))
             for key in keys:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
@@ -371,7 +371,7 @@ class Driver:
         run_state = {}
         for file_path in self.run_state.iterdir():
             filename = file_path.name
-            keys = hdf5.get_keys_from_file(self.__filename_to_path(filename))
+            keys = self.get_keys_from_file(self.__filename_to_path(filename))
             for key in keys:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
