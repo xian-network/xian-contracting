@@ -18,13 +18,14 @@ DEFAULT_STAMPS = 1000000
 
 class Executor:
     def __init__(self, production=False, driver=None, metering=True,
-                 currency_contract='currency', balances_hash='balances', bypass_privates=False, bypass_balance_amount=False):
+                 currency_contract='currency', balances_hash='balances', bypass_privates=False, bypass_balance_amount=False, bypass_cache=False):
+
 
         self.metering = metering
         self.driver = driver
 
         if not self.driver:
-            self.driver = Driver()
+            self.driver = Driver(bypass_cache=bypass_cache)
         self.production = production
 
         self.currency_contract = currency_contract
