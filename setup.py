@@ -16,7 +16,8 @@ requirements = [
     "motor==2.5.1",
     "iso8601",
     "h5py",
-    "cachetools"
+    "cachetools",
+    "loguru"
 ]
 
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
