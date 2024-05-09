@@ -37,7 +37,7 @@ COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
 
 class Driver:
-    def __init__(self):
+    def __init__(self, bypass_cache=False):
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
@@ -86,6 +86,10 @@ class Driver:
         self.pending_writes[key] = value
 
     def find(self, key: str):
+        if self.bypass_cache:
+            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+            return value
+            
         value = self.pending_writes.get(key)
         if value is None:
             value = self.cache.get(key)
