@@ -2,7 +2,6 @@ __pycache__/
 dist
 contracting.egg-info
 build
-.github
 .idea
 logs
 *.so
