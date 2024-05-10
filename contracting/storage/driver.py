@@ -25,6 +25,8 @@ FILE_EXT = ".d"
 HASH_EXT = ".x"
 
 STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
+CONTRACT_STATE = STORAGE_HOME.joinpath("contract_state")
+RUN_STATE = STORAGE_HOME.joinpath("run_state")
 DELIMITER = "."
 HASH_DEPTH_DELIMITER = ":"
 
@@ -36,6 +38,10 @@ TIME_KEY = "__submitted__"
 COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
 
+def build_directories():
+    CONTRACT_STATE.mkdir(exist_ok=True, parents=True)
+    RUN_STATE.mkdir(exist_ok=True, parents=True)
+
 class Driver:
     def __init__(self, bypass_cache=False):
         self.pending_deltas = {}
@@ -43,13 +49,9 @@ class Driver:
         self.pending_reads = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
         self.bypass_cache = bypass_cache
-        self.contract_state = STORAGE_HOME.joinpath("contract_state")
-        self.run_state = STORAGE_HOME.joinpath("run_state")
-        self.__build_directories()
-
-    def __build_directories(self):
-        self.contract_state.mkdir(exist_ok=True, parents=True)
-        self.run_state.mkdir(exist_ok=True, parents=True)
+        self.contract_state = CONTRACT_STATE
+        self.run_state = RUN_STATE
+        build_directories()
 
     def __parse_key(self, key):
         try:
@@ -88,8 +90,10 @@ class Driver:
 
     def find(self, key: str):
         if self.bypass_cache:
-            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
-            return value
+            value = self.pending_writes.get(key)
+            if value is None:
+                value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+                return value
             
         value = self.pending_writes.get(key)
         if value is None:
