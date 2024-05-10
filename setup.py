@@ -17,7 +17,8 @@ requirements = [
     "iso8601",
     "h5py",
     "cachetools",
-    "loguru"
+    "loguru",
+    "pynacl"
 ]
 
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
