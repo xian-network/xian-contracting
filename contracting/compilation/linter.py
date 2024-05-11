@@ -86,18 +86,22 @@ class Linter(ast.NodeVisitor):
 
     # TODO: Why are we even doing any logic instead of just failing on visiting these?
     def visit_ClassDef(self, node):
+        # self.log.error("Classes are not allowed in Seneca contracts")
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[5]
         self._violations.append(str)
         self._is_success = False
         self.generic_visit(node)
+        #raise CompilationException
         return node
 
     def visit_AsyncFunctionDef(self, node):
+        # self.log.error("Async functions are not allowed in Seneca contracts")
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[6]
         self._violations.append(str)
 
         self._is_success = False
         self.generic_visit(node)
+        # raise CompilationException
         return node
 
     def visit_Assign(self, node):
@@ -300,5 +304,5 @@ class Linter(ast.NodeVisitor):
 
     def dump_violations(self):
         import pprint
-        pp = pprint.PrettyPrinter(indent=4)
+        pp = pprint.PrettyPrinter(indent = 4)
         pp.pprint(self._violations)

@@ -37,12 +37,11 @@ COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
 
 class Driver:
-    def __init__(self, bypass_cache=False):
+    def __init__(self):
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
-        self.bypass_cache = bypass_cache
         self.contract_state = STORAGE_HOME.joinpath("contract_state")
         self.run_state = STORAGE_HOME.joinpath("run_state")
         self.__build_directories()
@@ -87,10 +86,6 @@ class Driver:
         self.pending_writes[key] = value
 
     def find(self, key: str):
-        if self.bypass_cache:
-            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
-            return value
-            
         value = self.pending_writes.get(key)
         if value is None:
             value = self.cache.get(key)
