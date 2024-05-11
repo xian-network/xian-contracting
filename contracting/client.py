@@ -1,4 +1,4 @@
-from contracting.execution.executor import Executor
+from contracting.execution.executor import Executor, DEFAULT_STAMPS
 from contracting.storage.driver import Driver
 from contracting.compilation.compiler import ContractingCompiler
 from contracting.stdlib.bridge.time import Datetime
@@ -137,7 +137,7 @@ class AbstractContract:
         d = datetime.today()
         return Datetime(d.year, d.month, d.day, hour=d.hour, minute=d.minute)
 
-    def _abstract_function_call(self, signer, executor, contract_name, func, environment=None, stamps=constants.DEFAULT_STAMPS, metering=None, now=None, **kwargs):
+    def _abstract_function_call(self, signer, executor, contract_name, func, environment=None, stamps=DEFAULT_STAMPS, metering=None, now=None, **kwargs):
         # for k, v in kwargs.items():
         #     assert v is not None, 'Keyword "{}" not provided. Must not be None.'.format(k)
         environment = environment or self.environment
