@@ -100,9 +100,9 @@ setup(
     description="Python-based smart contract language and interpreter.",
     packages=find_packages(),
     install_requires=requirements,
-    url="https://github.com/Lamden/contracting",
-    author="Lamden",
-    author_email="team@lamden.io",
+    url="https://github.com/xian-network/contracting",
+    author="Xian",
+    author_email="info@xian.org",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
