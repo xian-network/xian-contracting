@@ -11,7 +11,6 @@ requirements = [
     "astor==0.8.1",
     "pycodestyle==2.10.0",
     "autopep8==1.5.7",
-    "motor==2.5.1",
     "iso8601",
     "h5py",
     "cachetools",
