@@ -10,7 +10,7 @@ def verify(vk: str, msg: str, signature: str):
     vk = nacl.signing.VerifyKey(vk)
     try:
         vk.verify(msg, signature)
-    except nacl.exceptions.BadSignatureError:
+    except Exception as e:
         return False
     return True
 
