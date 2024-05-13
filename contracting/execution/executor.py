@@ -80,12 +80,6 @@ class Executor:
                     if balance is None:
                         balance = 0
 
-                logger.debug({
-                    'balance': balance,
-                    'stamp_cost': stamp_cost,
-                    'stamps': stamps
-                })
-
                 assert balance * stamp_cost >= stamps, (f'Sender does not have enough stamps for the transaction. '
                                                         f'Balance at key {balances_key} is {balance}')
 
