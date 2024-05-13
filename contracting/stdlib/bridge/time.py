@@ -105,7 +105,6 @@ class Timedelta:
             weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds)
         )
 
-
         # For fast access to how many hours are in a timedelta.
         self.__raw_seconds = get_raw_seconds(
             weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds)
@@ -171,6 +170,7 @@ class Timedelta:
         elif isinstance(other, int):
             return Timedelta(days=self._timedelta.days * other,
                              seconds=self._timedelta.seconds * other)
+
         return NotImplemented
 
     def __str__(self):

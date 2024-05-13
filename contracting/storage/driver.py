@@ -54,7 +54,10 @@ class Driver:
         return filename, variable
 
     def __filename_to_path(self, filename):
-        return (str(self.run_state.joinpath(filename)) if filename.startswith("__") else str(self.contract_state.joinpath(filename)))
+        if filename.startswith("__"):
+            return str(self.run_state.joinpath(filename))
+        else:
+            return str(self.contract_state.joinpath(filename))
 
     def __get_files(self):
         return sorted(os.listdir(self.contract_state) + os.listdir(self.run_state))
@@ -301,6 +304,7 @@ class Driver:
                 hdf5.delete_key_from_disk(self.__filename_to_path(k), k)
             else:
                 hdf5.set_value_to_disk(self.__filename_to_path(k), k, v, None)
+
         self.cache.clear()
         self.pending_writes.clear()
         self.pending_reads.clear()
@@ -355,6 +359,7 @@ class Driver:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 all_contract_state[full_key] = value
+
         return all_contract_state
 
     def get_run_state(self):
@@ -369,6 +374,7 @@ class Driver:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 run_state[full_key] = value
+
         return run_state
 
     def reset_cache(self):
