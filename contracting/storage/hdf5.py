@@ -1,12 +1,7 @@
 import h5py
-import logging
 from threading import Lock
 from collections import defaultdict
 from contracting.storage.encoder import encode, decode
-
-# Setup logging
-logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # A dictionary to maintain file-specific locks
 file_locks = defaultdict(Lock)
