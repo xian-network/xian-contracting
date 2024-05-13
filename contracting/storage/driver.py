@@ -1,4 +1,4 @@
-from contracting.storage.encoder import encode, decode, encode_kv
+from contracting.storage.encoder import encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
@@ -6,20 +6,12 @@ from datetime import datetime
 from pathlib import Path
 from cachetools import TTLCache
 from contracting import constants
-
-
 from contracting.storage import hdf5
+
 import marshal
 import decimal
 import os
 import shutil
-import logging
-
-# Logging
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG
-)
-logger = logging.getLogger(__name__)
 
 FILE_EXT = ".d"
 HASH_EXT = ".x"
@@ -35,6 +27,7 @@ OWNER_KEY = "__owner__"
 TIME_KEY = "__submitted__"
 COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
+
 
 class Driver:
     def __init__(self, bypass_cache=False):
