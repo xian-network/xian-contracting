@@ -2,8 +2,6 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from types import ModuleType
 
-from contracting.execution.runtime import rt
-
 
 # Redefine a controlled datetime object that feels like a regular Python datetime object but is restricted so that we
 # can regulate the user interaction with it to prevent security attack vectors. It may seem redundant, but it guarantees
