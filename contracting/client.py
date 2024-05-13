@@ -96,8 +96,16 @@ class AbstractContract:
             f = '{}{}'.format(constants.PRIVATE_METHOD_PREFIX, f)
 
         # Execute
-        result = self._abstract_function_call(signer=signer, executor=self.executor, contract_name=self.name,
-                                              environment=environment, func=f, metering=None, now=None, **kwargs)
+        result = self._abstract_function_call(
+            signer=signer,
+            executor=self.executor,
+            contract_name=self.name,
+            environment=environment,
+            func=f,
+            metering=None,
+            now=None,
+            **kwargs
+        )
 
         # Set executor back to restricted mode
         self.executor.bypass_privates = False
@@ -137,7 +145,19 @@ class AbstractContract:
         d = datetime.today()
         return Datetime(d.year, d.month, d.day, hour=d.hour, minute=d.minute)
 
-    def _abstract_function_call(self, signer, executor, contract_name, func, environment=None, stamps=constants.DEFAULT_STAMPS, metering=None, now=None, **kwargs):
+    def _abstract_function_call(
+            self,
+            signer,
+            executor,
+            contract_name,
+            func,
+            environment=None,
+            stamps=constants.DEFAULT_STAMPS,
+            metering=None,
+            now=None,
+            **kwargs
+    ):
+
         # for k, v in kwargs.items():
         #     assert v is not None, 'Keyword "{}" not provided. Must not be None.'.format(k)
         environment = environment or self.environment
@@ -148,13 +168,15 @@ class AbstractContract:
         if environment.get('now') is None:
             environment.update({'now': now})
 
-        output = executor.execute(sender=signer,
-                                  contract_name=contract_name,
-                                  function_name=func,
-                                  kwargs=kwargs,
-                                  stamps=stamps,
-                                  environment=environment,
-                                  metering=metering)
+        output = executor.execute(
+            sender=signer,
+            contract_name=contract_name,
+            function_name=func,
+            kwargs=kwargs,
+            stamps=stamps,
+            environment=environment,
+            metering=metering
+        )
 
         if executor.production:
             executor.sandbox.terminate()
@@ -173,12 +195,15 @@ class AbstractContract:
 
 
 class ContractingClient:
-    def __init__(self, signer='sys',
-                 submission_filename=os.path.join(os.path.dirname(__file__), 'contracts/submission.s.py'),
-                 driver=Driver(),
-                 metering=False,
-                 compiler=ContractingCompiler(),
-                 environment={}):
+    def __init__(
+            self,
+            signer='sys',
+            submission_filename=os.path.join(os.path.dirname(__file__), 'contracts/submission.s.py'),
+            driver=Driver(),
+            metering=False,
+            compiler=ContractingCompiler(),
+            environment={}
+    ):
 
         self.executor = Executor(metering=metering, driver=driver)
         self.raw_driver = driver
@@ -193,9 +218,7 @@ class ContractingClient:
             with open(self.submission_filename) as f:
                 contract = f.read()
 
-            self.raw_driver.set_contract(name='submission',
-                                         code=contract)
-
+            self.raw_driver.set_contract(name='submission', code=contract)
             self.raw_driver.commit()
 
         # Get submission contract from state
@@ -215,8 +238,8 @@ class ContractingClient:
                 contract = f.read()
 
             self.raw_driver.delete_contract(name='submission')
-            self.raw_driver.set_contract(name='submission',
-                                         code=contract)
+            self.raw_driver.set_contract(name='submission', code=contract)
+
             if commit:
                 self.raw_driver.commit()
 
@@ -248,11 +271,13 @@ class ContractingClient:
 
             funcs.append((func_name, kwargs))
 
-        return AbstractContract(name=name,
-                                signer=self.signer,
-                                environment=self.environment,
-                                executor=self.executor,
-                                funcs=funcs)
+        return AbstractContract(
+            name=name,
+            signer=self.signer,
+            environment=self.environment,
+            executor=self.executor,
+            funcs=funcs
+        )
 
     def closure_to_code_string(self, f):
         closure_code = inspect.getsource(f)
@@ -287,14 +312,6 @@ class ContractingClient:
             else:
                 return violations
 
-    def estimate_stamps(self, contract_name, function_name, kwargs):
-        simulated = self.executor.simulate(
-            contract_name=contract_name,
-            function_name=function_name,
-            kwargs=kwargs)
-
-        return simulated['stamps_used']
-
     def compile(self, f):
         if isinstance(f, FunctionType):
             f, _ = self.closure_to_code_string(f)
@@ -316,8 +333,14 @@ class ContractingClient:
         if signer is None:
             signer = self.signer
 
-        self.submission_contract.submit_contract(name=name, code=f, owner=owner, constructor_args=constructor_args,
-                                                 metering=metering, signer=signer)
+        self.submission_contract.submit_contract(
+            name=name,
+            code=f,
+            owner=owner,
+            constructor_args=constructor_args,
+            metering=metering,
+            signer=signer
+        )
 
     def get_contracts(self):
         contracts = []
