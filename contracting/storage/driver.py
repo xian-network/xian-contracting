@@ -1,4 +1,4 @@
-from contracting.storage.encoder import encode, decode, encode_kv
+from contracting.storage.encoder import encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
