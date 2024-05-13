@@ -1,4 +1,5 @@
 import h5py
+
 from threading import Lock
 from collections import defaultdict
 from contracting.storage.encoder import encode, decode
