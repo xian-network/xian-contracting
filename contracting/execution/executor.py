@@ -42,6 +42,7 @@ class Executor:
                 stamps=constants.DEFAULT_STAMPS,
                 stamp_cost=constants.STAMPS_PER_TAU,
                 metering=None) -> dict:
+
         if not self.bypass_privates:
             assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
 
@@ -61,11 +62,12 @@ class Executor:
 
         try:
             if metering:
-                balances_key = '{}{}{}{}{}'.format(self.currency_contract,
-                                                   constants.INDEX_SEPARATOR,
-                                                   self.balances_hash,
-                                                   constants.DELIMITER,
-                                                   sender)
+                balances_key = (f'{self.currency_contract}'
+                                f'{constants.INDEX_SEPARATOR}'
+                                f'{self.balances_hash}'
+                                f'{constants.DELIMITER}'
+                                f'{sender}')
+
                 if self.bypass_balance_amount:
                     balance = 9999999
 
@@ -84,9 +86,8 @@ class Executor:
                     'stamps': stamps
                 })
 
-                assert balance * stamp_cost >= stamps, 'Sender does not have enough stamps for the transaction. \
-                                                               Balance at key {} is {}'.format(balances_key,
-                                                                                               balance)
+                assert balance * stamp_cost >= stamps, (f'Sender does not have enough stamps for the transaction. '
+                                                        f'Balance at key {balances_key} is {balance}')
 
             runtime.rt.env.update(environment)
             status_code = 0
@@ -159,9 +160,7 @@ class Executor:
             assert balances_key is not None, 'Balance key was not set properly. Cannot deduct stamps.'
 
             to_deduct = stamps_used
-
             to_deduct /= stamp_cost
-
             to_deduct = ContractingDecimal(to_deduct)
 
             balance = driver.get(balances_key)
@@ -171,13 +170,14 @@ class Executor:
             balance = max(balance - to_deduct, 0)
 
             driver.set(balances_key, balance)
-                       #mark=False)  # This makes sure that the key isnt modified every time in the block
+
             if auto_commit:
                 driver.commit()
 
         Seeded.s = False
         runtime.rt.clean_up()
         runtime.rt.env.update({'__Driver': driver})
+
         output = {
             'status_code': status_code,
             'result': result,
