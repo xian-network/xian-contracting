@@ -25,8 +25,15 @@ def get_raw_seconds(weeks, days, hours, minutes, seconds):
 
 class Datetime:
     def __init__(self, year, month, day, hour=0, minute=0, second=0, microsecond=0):
-        self._datetime = dt(year=year, month=month, day=day, hour=hour,
-                            minute=minute, second=second, microsecond=microsecond)
+        self._datetime = dt(
+            year=year,
+            month=month,
+            day=day,
+            hour=hour,
+            minute=minute,
+            second=second,
+            microsecond=microsecond
+        )
 
         self.year = self._datetime.year
         self.month = self._datetime.month
