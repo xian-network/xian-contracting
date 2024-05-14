@@ -111,9 +111,7 @@ class Driver:
                         keys.add(key)
 
                     if 0 < length <= len(keys):
-                        raise AssertionError(
-                            "Length threshold has been hit. Continuing."
-                        )
+                        raise AssertionError("Length threshold has been hit. Continuing.")
         except AssertionError:
             pass
 
