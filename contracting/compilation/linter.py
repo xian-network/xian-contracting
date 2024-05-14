@@ -132,7 +132,7 @@ class Linter(ast.NodeVisitor):
         return node
 
     def visit_AugAssign(self, node):
-        # raghu todo checks here?
+        # TODO: Checks here?
         self.generic_visit(node)
         return node
 
