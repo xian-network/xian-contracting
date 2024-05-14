@@ -13,8 +13,15 @@ import traceback
 
 
 class Executor:
-    def __init__(self, production=False, driver=None, metering=True,
-                 currency_contract='currency', balances_hash='balances', bypass_privates=False, bypass_balance_amount=False, bypass_cache=False):
+    def __init__(self,
+                 production=False,
+                 driver=None,
+                 metering=True,
+                 currency_contract='currency',
+                 balances_hash='balances',
+                 bypass_privates=False,
+                 bypass_balance_amount=False,
+                 bypass_cache=False):
 
         self.metering = metering
         self.driver = driver
