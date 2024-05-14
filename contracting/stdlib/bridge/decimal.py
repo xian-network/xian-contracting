@@ -115,7 +115,7 @@ class ContractingDecimal:
         return self._d.__str__()
 
     def __repr__(self):
-      return self._d.__str__()
+        return self._d.__str__()
 
     def __neg__(self):
         return self._d.__neg__()
