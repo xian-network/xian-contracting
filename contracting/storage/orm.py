@@ -116,6 +116,7 @@ class Hash(Datum):
     def __contains__(self, key):
         raise Exception('Cannot use "in" with a Hash.')
 
+
 class ForeignVariable(Variable):
     def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver=driver):
         super().__init__(contract, name, driver=driver)
@@ -141,4 +142,3 @@ class ForeignHash(Hash):
 
     def clear(self, *args):
         raise Exception('Cannot write with a ForeignHash.')
-
