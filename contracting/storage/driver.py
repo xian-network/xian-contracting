@@ -140,7 +140,7 @@ class Driver:
         Get all existing items with a given prefix
         """
 
-        # Get all of the items in the cache currently
+        # Get all the items in the cache currently
         _items = {}
         keys = set()
 
