@@ -58,7 +58,7 @@ class Encoder(json.JSONEncoder):
 
 
 def encode_int(value: int):
-    if MONGO_MIN_INT < value and value < MONGO_MAX_INT:
+    if MONGO_MIN_INT < value < MONGO_MAX_INT:
         return value
 
     return {

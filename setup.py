@@ -66,7 +66,10 @@ setup(
     zip_safe=True,
     include_package_data=True,
     ext_modules=[
-        Extension("contracting.execution.metering.tracer", ["contracting/execution/metering/tracer.c"]),
+        Extension(
+            "contracting.execution.metering.tracer",
+            ["contracting/execution/metering/tracer.c"]
+        ),
     ],
     cmdclass={
         "build_ext": VerboseBuildExt,

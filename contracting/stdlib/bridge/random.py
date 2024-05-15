@@ -1,4 +1,4 @@
-'''
+"""
     This module wraps and exposes the Python stdlib random functions that can be made deterministic with a random seed
     and return fixed point precision where possible. This allows some psuedorandom behavior when it is nice to have, but
     with the caveat that it's based on environmental constants such as the last block hash and public information such
@@ -9,7 +9,7 @@
     before the next block is minted. While this is extremely unlikely and hard to pull off, it's a valid hole in the
     security and needs to be accepted as a flaw when using random numbers on a reproducible transaction log such as a
     blockchain.
-'''
+"""
 
 import random
 
@@ -95,5 +95,3 @@ random_module.choices = choices
 exports = {
     'random': random_module
 }
-
-
