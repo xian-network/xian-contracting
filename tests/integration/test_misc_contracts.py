@@ -112,48 +112,47 @@ class TestMiscContracts(TestCase):
         tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.single()
+        self.assertEqual(self.c.executor.execute(contract_name="con_too_many_writes", function_name="single", kwargs={}, stamps=1000, sender='stu')["status_code"], 1)
         self.c.executor.metering = False
 
     def test_multiple_too_many_writes_fails(self):
         tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.multiple()
+        # AssertEquals that the status code is 1 (failed tx)
+        self.assertEqual(self.c.executor.execute(contract_name="con_too_many_writes", function_name="multiple", kwargs={}, stamps=1000, sender='stu')["status_code"], 1)
         self.c.executor.metering = False
 
     def test_failed_once_doesnt_affect_others(self):
         tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.multiple()
-        tmwc.not_enough()
+        # AssertEquals that the status code is 1 (failed tx)
+        self.assertEqual(self.c.executor.execute(contract_name="con_too_many_writes", function_name="multiple", kwargs={}, stamps=1000, sender='stu')["status_code"], 1)
+        self.c.executor.execute(contract_name="con_too_many_writes", function_name="not_enough", kwargs={}, stamps=1000, sender='stu')
         self.c.executor.metering = False
 
     def test_memory_overload(self):
         tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.run()
+        # AssertEquals that the status code is 1 (failed tx)
+        self.assertEqual(self.c.executor.execute(contract_name="con_too_many_writes", function_name="run", kwargs={}, stamps=1000, sender='stu')["status_code"], 1)
         self.c.executor.metering = False
 
     def test_memory_overload2(self):
         tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.run2()
+        # AssertEquals that the status code is 1 (failed tx)
+        self.assertEqual(self.c.executor.execute(contract_name="con_too_many_writes", function_name="run2", kwargs={}, stamps=1000, sender='stu')["status_code"], 1)
         self.c.executor.metering = False
 
     def test_memory_exploit(self):
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            self.c.submit(exploit, name='con_exploit')
+        # AssertEquals that the status code is 1 (failed tx)
+        self.assertEqual(self.c.executor.execute(contract_name='submission', function_name='submit_contract', kwargs={'name': 'exploit', 'code': exploit}, stamps=1000, sender='stu')["status_code"], 1)
         self.c.executor.metering = False
 
 class TestPassHash(TestCase):
@@ -486,3 +485,7 @@ class TestFixed(TestCase):
 
         z = f.multiply()
         self.assertEqual(z, 1.234 * 5.678)
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()
