@@ -9,9 +9,9 @@ class TestSenecaClientReplacesExecutor(TestCase):
         self.c.flush()
 
         with open('test_contracts/dater.py') as f:
-            self.c.submit(f=f.read(), name='dater')
+            self.c.submit(f=f.read(), name='con_dater')
 
-        self.dater = self.c.get_contract('dater')
+        self.dater = self.c.get_contract('con_dater')
 
     def tearDown(self):
         self.c.flush()

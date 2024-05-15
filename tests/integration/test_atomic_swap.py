@@ -1,5 +1,5 @@
 from unittest import TestCase
-from contracting.db.driver import ContractDriver
+from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
 from contracting.stdlib.bridge.time import Datetime
 import contracting
@@ -31,8 +31,8 @@ TEST_SUBMISSION_KWARGS = {
 
 class TestAtomicSwapContract(TestCase):
     def setUp(self):
-        self.d = ContractDriver()
-        self.d.flush()
+        self.d = Driver()
+        self.d.flush_full()
 
         with open(contracting.__path__[0] + '/contracts/submission.s.py') as f:
             contract = f.read()
@@ -54,7 +54,7 @@ class TestAtomicSwapContract(TestCase):
     def tearDown(self):
         self.e.bypass_privates = False
 
-        self.d.flush()
+        self.d.flush_full()
 
     def test_initiate_not_enough_approved(self):
         self.e.execute('stu', 'erc20_clone', 'approve', kwargs={'amount': 1000000, 'to': 'atomic_swaps'})

@@ -1,8 +1,6 @@
 from unittest import TestCase
-from contracting.db.driver import ContractDriver
+from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
-from contracting.config import STAMPS_PER_TAU
-from contracting.execution import runtime
 import contracting
 import gc
 import os
@@ -21,7 +19,7 @@ def submission_kwargs_for_file(f):
         contract_code = file.read()
 
     return {
-        'name': contract_name,
+        'name': f'con_{contract_name}',
         'code': contract_code,
     }
 
@@ -36,8 +34,8 @@ TEST_SUBMISSION_KWARGS = {
 class TestMetering(TestCase):
     def setUp(self):
         # Hard load the submission contract
-        self.d = ContractDriver()
-        self.d.flush()
+        self.d = Driver()
+        self.d.flush_full()
 
         with open(contracting.__path__[0] + '/contracts/submission.s.py') as f:
             contract = f.read()
@@ -52,20 +50,21 @@ class TestMetering(TestCase):
                        kwargs=submission_kwargs_for_file('./test_contracts/currency.s.py'), metering=False, auto_commit=True)
 
     def tearDown(self):
-        self.d.flush()
+        self.d.flush_full()
 
     def test_memory_clean_up_after_execution(self):
         process = psutil.Process(os.getpid())
         before = process.memory_info().rss / 1024 / 1024
         for i in range(500):
-            output = self.e.execute('stu', 'currency', 'transfer', kwargs={'amount': 100, 'to': 'colin'}, auto_commit=True,metering=True)
+            output = self.e.execute('stu', 'con_currency', 'transfer', kwargs={'amount': 100, 'to': 'colin'}, auto_commit=True,metering=True)
         gc.collect()
         after = process.memory_info().rss / 1024 / 1024
         before_2 = process.memory_info().rss / 1024 / 1024
         for i in range(500):
-            output = self.e.execute('stu', 'currency', 'transfer', kwargs={'amount': 100, 'to': 'colin'}, auto_commit=True,metering=False)
+            output = self.e.execute('stu', 'con_currency', 'transfer', kwargs={'amount': 100, 'to': 'colin'}, auto_commit=True,metering=False)
         gc.collect()
         after_2 = process.memory_info().rss / 1024 / 1024
+        breakpoint()
         print(f'RAM Difference with metering: {after - before} MB')
         print(f'RAM Difference without metering: {after_2 - before_2} MB')
 

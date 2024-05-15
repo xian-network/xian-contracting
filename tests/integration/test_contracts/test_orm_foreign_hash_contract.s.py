@@ -1,4 +1,4 @@
-fh = ForeignHash(foreign_contract='test_orm_hash_contract', foreign_name='h')
+fh = ForeignHash(foreign_contract='con_test_orm_hash_contract', foreign_name='h')
 
 @export
 def set_fh(k: str, v: int):
