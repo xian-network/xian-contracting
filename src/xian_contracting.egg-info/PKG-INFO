@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: xian-contracting
+Version: 1.0.0
+Summary: Python-based smart contract language and interpreter.
+Home-page: https://github.com/xian-network/contracting
+Author: Xian
+Author-email: info@xian.org
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.11
+License-File: LICENSE
+
+UNKNOWN
+

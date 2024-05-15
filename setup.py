@@ -2,21 +2,8 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 from sys import platform
-
+import os
 import subprocess
-
-__version__ = "2.0.10"
-
-requirements = [
-    "astor==0.8.1",
-    "pycodestyle==2.10.0",
-    "autopep8==1.5.7",
-    "iso8601",
-    "h5py",
-    "cachetools",
-    "loguru",
-    "pynacl"
-]
 
 
 class VerboseBuildExt(build_ext):
@@ -46,21 +33,27 @@ def pkgconfig(package):
     }
 
 
+
 setup(
-    name="contracting",
-    version=__version__,
+   name="xian-contracting",
+    version="1.0.0",
     description="Python-based smart contract language and interpreter.",
-    packages=find_packages(),
-    install_requires=requirements,
+    packages=find_packages(where='src'),  # Find packages in src directory
+    package_dir={'': 'src'},  # Root package is in the src directory
+    install_requires=[
+        "astor==0.8.1",
+        "pycodestyle==2.10.0",
+        "autopep8==1.5.7",
+        "iso8601",
+        "h5py",
+        "cachetools",
+        "loguru",
+        "pynacl"
+    ],
     url="https://github.com/xian-network/contracting",
     author="Xian",
     author_email="info@xian.org",
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
     zip_safe=True,
@@ -68,7 +61,7 @@ setup(
     ext_modules=[
         Extension(
             "contracting.execution.metering.tracer",
-            ["contracting/execution/metering/tracer.c"]
+            ["src/contracting/execution/metering/tracer.c"]
         ),
     ],
     cmdclass={
