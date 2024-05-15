@@ -1,0 +1,8 @@
+astor==0.8.1
+autopep8==1.5.7
+cachetools
+h5py
+iso8601
+motor==2.5.1
+psutil
+pycodestyle==2.10.0
