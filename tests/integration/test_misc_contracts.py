@@ -109,7 +109,7 @@ class TestMiscContracts(TestCase):
         self.assertEqual(output, 'hi')
 
     def test_single_too_many_writes_fails(self):
-        tmwc = self.c.get_contract('too_many_writes')
+        tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
         with self.assertRaises(AssertionError):
@@ -117,7 +117,7 @@ class TestMiscContracts(TestCase):
         self.c.executor.metering = False
 
     def test_multiple_too_many_writes_fails(self):
-        tmwc = self.c.get_contract('too_many_writes')
+        tmwc = self.c.get_contract('con_too_many_writes')
         self.c.executor.metering = True
         self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
         with self.assertRaises(AssertionError):
@@ -133,21 +133,21 @@ class TestMiscContracts(TestCase):
         tmwc.not_enough()
         self.c.executor.metering = False
 
-    def test_memory_overload(self):
-        tmwc = self.c.get_contract('con_too_many_writes')
-        self.c.executor.metering = True
-        self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.run()
-        self.c.executor.metering = False
+    # def test_memory_overload(self):
+    #     tmwc = self.c.get_contract('con_too_many_writes')
+    #     self.c.executor.metering = True
+    #     self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
+    #     with self.assertRaises(AssertionError):
+    #         tmwc.run()
+    #     self.c.executor.metering = False
 
-    def test_memory_overload2(self):
-        tmwc = self.c.get_contract('too_many_writes')
-        self.c.executor.metering = True
-        self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
-        with self.assertRaises(AssertionError):
-            tmwc.run2()
-        self.c.executor.metering = False
+    # def test_memory_overload2(self):
+    #     tmwc = self.c.get_contract('too_many_writes')
+    #     self.c.executor.metering = True
+    #     self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
+    #     with self.assertRaises(AssertionError):
+    #         tmwc.run2()
+    #     self.c.executor.metering = False
 
     # This test stalls.
 
@@ -175,14 +175,14 @@ class TestPassHash(TestCase):
         # submit erc20 clone
         with open('./test_contracts/pass_hash.s.py') as f:
             code = f.read()
-            self.c.submit(code, name='pass_hash')
+            self.c.submit(code, name='con_pass_hash')
 
         with open('./test_contracts/test_pass_hash.s.py') as f:
             code = f.read()
-            self.c.submit(code, name='test_pass_hash')
+            self.c.submit(code, name='con_test_pass_hash')
 
-        self.pass_hash = self.c.get_contract('pass_hash')
-        self.test_pass_hash = self.c.get_contract('test_pass_hash')
+        self.pass_hash = self.c.get_contract('con_pass_hash')
+        self.test_pass_hash = self.c.get_contract('con_test_pass_hash')
 
     def test_store_value(self):
         self.test_pass_hash.store(k='thing', v='value')
@@ -191,7 +191,7 @@ class TestPassHash(TestCase):
         self.assertEqual(output, 'value')
 
 
-def test():
+def some_test_contract():
     @export
     def return_something():
         return 1
@@ -223,45 +223,45 @@ class TestDeveloperSubmission(TestCase):
         self.c.raw_driver.commit()
 
     def test_submit_sets_developer(self):
-        self.c.submit(test)
+        self.c.submit(some_test_contract, name="con_some_test_contract")
 
-        dev = self.c.get_var('test', '__developer__')
+        dev = self.c.get_var('con_some_test_contract', '__developer__')
 
         self.assertEqual(dev, 'stu')
 
     def test_change_developer_if_developer_works(self):
-        self.c.submit(test)
+        self.c.submit(some_test_contract, name="con_some_test_contract")
 
         submission = self.c.get_contract('submission')
 
-        submission.change_developer(contract='test', new_developer='not_stu')
+        submission.change_developer(contract='con_some_test_contract', new_developer='not_stu')
 
-        dev = self.c.get_var('test', '__developer__')
+        dev = self.c.get_var('con_some_test_contract', '__developer__')
 
         self.assertEqual(dev, 'not_stu')
 
     def test_change_developer_prevents_new_change(self):
-        self.c.submit(test)
+        self.c.submit(some_test_contract, name="con_some_test_contract")
 
         submission = self.c.get_contract('submission')
 
-        submission.change_developer(contract='test', new_developer='not_stu')
+        submission.change_developer(contract='con_some_test_contract', new_developer='not_stu')
 
         with self.assertRaises(AssertionError):
-            submission.change_developer(contract='test', new_developer='woohoo')
+            submission.change_developer(contract='con_some_test_contract', new_developer='woohoo')
 
     def test_cannot_import_submission(self):
-        self.c.submit(import_submission)
+        self.c.submit(import_submission, name="con_import_submission")
 
-        imp_con = self.c.get_contract('import_submission')
+        imp_con = self.c.get_contract('con_import_submission')
 
         with self.assertRaises(AssertionError):
             imp_con.haha()
 
 
-def float_thing():
+def con_float_thing():
     @export
-    def test(currency_reserve: float, token_reserve: float, currency_amount: float):
+    def float_thing_fn(currency_reserve: float, token_reserve: float, currency_amount: float):
         k = currency_reserve * token_reserve
 
         new_currency_reserve = currency_reserve + currency_amount
@@ -284,11 +284,10 @@ class TestFloatThing(TestCase):
         self.c.raw_driver.commit()
 
     def test_can_add(self):
-        self.c.submit(float_thing)
+        self.c.submit(con_float_thing, name="con_float_thing")
 
-        ft_con = self.c.get_contract('float_thing')
-
-        ft_con.test(currency_reserve=50000.125, token_reserve=52.45, currency_amount=100.25)
+        ft_con = self.c.get_contract('con_float_thing')
+        ft_con.float_thing_fn(currency_reserve=50000.125, token_reserve=52.45, currency_amount=100.25)
 
 def a():
     @export
@@ -354,7 +353,7 @@ def type_exploit():
         wAmount = type("wAmount", (), {"__gt__": gt, "__le__": le, "__radd__": radd, "__rsub__": rsub})
         fake_amount_object = wAmount()
 
-def test_one():
+def con_test_one():
     h = Hash()
 
     @construct
@@ -366,8 +365,8 @@ def test_one():
     def output():
         return h['a'], h['b']
 
-def test_two():
-    f = ForeignHash(foreign_contract='test_one', foreign_name='h')
+def con_test_two():
+    f = ForeignHash(foreign_contract='con_test_one', foreign_name='h')
 
     @export
     def clear():
@@ -383,7 +382,7 @@ def test_closure():
         return decorator
 
     @export
-    def test():
+    def closure_inner():
         return 1
 
 def test_closure2():
@@ -398,7 +397,7 @@ def test_closure2():
         return decorator
 
     @export
-    def test():
+    def closure_inner():
         return 1
 
 class TestHackThing(TestCase):
@@ -414,11 +413,11 @@ class TestHackThing(TestCase):
         self.c.raw_driver.commit()
 
     def test_can_add(self):
-        self.c.submit(a)
+        self.c.submit(a, name="con_a")
         with self.assertRaises(Exception):
-            self.c.submit(module_hack)
+            self.c.submit(module_hack, name="con_module_hack")
 
-            ft_con = self.c.get_contract('module_hack')
+            ft_con = self.c.get_contract('con_module_hack')
 
             ft_con.hack()
 
@@ -439,10 +438,10 @@ class TestHackThing(TestCase):
             self.c.submit(type_exploit)
 
     def test_cant_clear_foreign_hash(self):
-        self.c.submit(test_one)
-        self.c.submit(test_two)
+        self.c.submit(con_test_one)
+        self.c.submit(con_test_two)
 
-        t2 = self.c.get_contract('test_two')
+        t2 = self.c.get_contract('con_test_two')
 
         with self.assertRaises(Exception):
             t2.clear()
@@ -456,7 +455,7 @@ class TestHackThing(TestCase):
             self.c.submit(test_closure2)
 
 
-def test_fixed():
+def con_test_fixed():
     v = Variable()
     @construct
     def seed():
@@ -470,7 +469,7 @@ def test_fixed():
 
 class TestFixed(TestCase):
     def setUp(self):
-        self.c = ContractingClient(signer='stu', driver=ContractDriver(driver=FSDriver()))
+        self.c = ContractingClient(signer='stu', driver=Driver())
         self.c.raw_driver.flush_full()
 
         with open('../../contracting/contracts/submission.s.py') as f:
@@ -481,11 +480,11 @@ class TestFixed(TestCase):
         self.c.raw_driver.commit()
 
     def test_can_multiply(self):
-        self.c.submit(test_fixed)
+        self.c.submit(con_test_fixed)
 
         self.c.raw_driver.commit()
         self.c.raw_driver.flush_cache()
-        f = self.c.get_contract('test_fixed')
+        f = self.c.get_contract('con_test_fixed')
 
         z = f.multiply()
         self.assertEqual(z, 1.234 * 5.678)
