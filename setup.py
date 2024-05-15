@@ -54,7 +54,7 @@ setup(
     author="Xian",
     author_email="info@xian.org",
     classifiers=[
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     zip_safe=True,
     include_package_data=True,
