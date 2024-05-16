@@ -10,7 +10,7 @@ def too_many_writes():
 
     @export
     def single():
-        v.set('a' * (64 * 1024 + 1))
+        v.set('a' * (128 * 1024 + 1))
 
     @export
     def multiple():
@@ -59,7 +59,7 @@ class TestMiscContracts(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -149,13 +149,11 @@ class TestMiscContracts(TestCase):
             tmwc.run2()
         self.c.executor.metering = False
 
-    # This test stalls.
-
     def test_memory_exploit(self):
         self.c.executor.metering = True
-        self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=100)
+        self.c.set_var(contract='currency', variable='balances', arguments=['stu'], value=1000000)
         with self.assertRaises(AssertionError):
-            self.c.submit(exploit)
+            self.c.submit(exploit, name='con_exploit')
         self.c.executor.metering = False
 
 class TestPassHash(TestCase):
@@ -163,7 +161,7 @@ class TestPassHash(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -215,7 +213,7 @@ class TestDeveloperSubmission(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -276,7 +274,7 @@ class TestFloatThing(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -405,7 +403,7 @@ class TestHackThing(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -472,7 +470,7 @@ class TestFixed(TestCase):
         self.c = ContractingClient(signer='stu', driver=Driver())
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)

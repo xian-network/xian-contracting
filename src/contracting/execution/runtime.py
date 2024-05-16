@@ -67,7 +67,7 @@ _context = Context({
         'submission_name': None
     })
 
-WRITE_MAX = 1024 * 128
+WRITE_MAX = 1024 * 64
 
 
 class Runtime:
@@ -125,8 +125,8 @@ class Runtime:
     def deduct_write(cls, key, value):
         if key is not None and cls.tracer.is_started():
             cost = len(key) + len(value)
+            print(cost)
             cls.writes += cost
-
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE
