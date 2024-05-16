@@ -160,7 +160,6 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
 
       if (new_memory_usage > self -> last_frame_mem_usage) {
         self -> total_mem_usage += (new_memory_usage - self -> last_frame_mem_usage);
-        printf("[TRACER] TX total memory usage: %ld\n", self -> total_mem_usage);
       }
 
       self -> last_frame_mem_usage = new_memory_usage;

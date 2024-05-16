@@ -1,7 +1,7 @@
 import ast
 import sys
 
-from .. import config
+from .. import constants
 
 from ..compilation.whitelists import (
     ALLOWED_AST_TYPES,
@@ -11,12 +11,10 @@ from ..compilation.whitelists import (
     ILLEGAL_AST_TYPES
 )
 
-from contracting.storage.driver import Driver
-
 
 class Linter(ast.NodeVisitor):
 
-    def __init__(self, driver=Driver()):
+    def __init__(self):
         self._violations = []
         self._functions = []
         self._is_one_export = False
@@ -28,7 +26,6 @@ class Linter(ast.NodeVisitor):
         self.arg_types = set()
 
         self.builtins = list(set(list(sys.stdlib_module_names) + list(sys.builtin_module_names)))
-        self.driver = driver
 
     def ast_types(self, t, lnum):
         if type(t) not in ALLOWED_AST_TYPES:
@@ -89,22 +86,18 @@ class Linter(ast.NodeVisitor):
 
     # TODO: Why are we even doing any logic instead of just failing on visiting these?
     def visit_ClassDef(self, node):
-        # self.log.error("Classes are not allowed in Seneca contracts")
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[5]
         self._violations.append(str)
         self._is_success = False
         self.generic_visit(node)
-        #raise CompilationException
         return node
 
     def visit_AsyncFunctionDef(self, node):
-        # self.log.error("Async functions are not allowed in Seneca contracts")
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[6]
         self._violations.append(str)
 
         self._is_success = False
         self.generic_visit(node)
-        # raise CompilationException
         return node
 
     def visit_Assign(self, node):
@@ -115,7 +108,10 @@ class Linter(ast.NodeVisitor):
                 str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[13]
                 self._violations.append(str)
 
-        if isinstance(node.value, ast.Call) and not isinstance(node.value.func, ast.Attribute) and node.value.func.id in config.ORM_CLASS_NAMES:
+        if (isinstance(node.value, ast.Call) and not
+            isinstance(node.value.func, ast.Attribute) and
+            node.value.func.id in constants.ORM_CLASS_NAMES):
+
             if node.value.func.id in ['Variable', 'Hash']:
                 kwargs = [k.arg for k in node.value.keywords]
                 if 'contract' in kwargs or 'name' in kwargs:
@@ -136,7 +132,7 @@ class Linter(ast.NodeVisitor):
         return node
 
     def visit_AugAssign(self, node):
-        # raghu todo checks here?
+        # TODO: Checks here?
         self.generic_visit(node)
         return node
 
@@ -190,17 +186,17 @@ class Linter(ast.NodeVisitor):
         export_decorator = False
         for d in node.decorator_list:
             # Only allow decorators from the allowed set.
-            if d.id not in config.VALID_DECORATORS:
+            if d.id not in constants.VALID_DECORATORS:
                 str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[7] + \
-                      ": valid list: {}".format(d.id, config.VALID_DECORATORS)
+                      ": valid list: {}".format(d.id, constants.VALID_DECORATORS)
                 self._violations.append(str)
                 self._is_success = False
 
-            if d.id == config.EXPORT_DECORATOR_STRING:
+            if d.id == constants.EXPORT_DECORATOR_STRING:
                 self._is_one_export = True
                 export_decorator = True
 
-            if d.id == config.INIT_DECORATOR_STRING:
+            if d.id == constants.INIT_DECORATOR_STRING:
                 if self._constructor_visited:
                     str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[8]
                     self._violations.append(str)
@@ -304,5 +300,5 @@ class Linter(ast.NodeVisitor):
 
     def dump_violations(self):
         import pprint
-        pp = pprint.PrettyPrinter(indent = 4)
+        pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(self._violations)

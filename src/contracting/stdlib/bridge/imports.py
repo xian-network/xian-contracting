@@ -1,5 +1,5 @@
 from types import FunctionType, ModuleType
-from contracting.config import PRIVATE_METHOD_PREFIX
+from contracting.constants import PRIVATE_METHOD_PREFIX
 from contracting.storage.orm import Datum
 from contracting.storage.driver import Driver, OWNER_KEY
 from contracting.execution.runtime import rt
@@ -31,6 +31,7 @@ class Func:
 
         if f.__code__.co_name == self.name and f.__code__.co_varnames[:num_args] == self.args:
             return True
+
         return False
 
 
@@ -61,9 +62,7 @@ def import_module(name):
     if _driver.get_contract(name) is None:
         raise ImportError
 
-    m = importlib.import_module(name, package=None)
-
-    return m
+    return importlib.import_module(name, package=None)
 
 
 def enforce_interface(m: ModuleType, interface: list):
@@ -82,6 +81,7 @@ def enforce_interface(m: ModuleType, interface: list):
         if isinstance(attribute, FunctionType):
             if not i.is_of(attribute):
                 return False
+
     return True
 
 

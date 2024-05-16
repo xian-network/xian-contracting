@@ -1,7 +1,7 @@
 import ast
 import astor
 
-from contracting import config
+from contracting import constants
 from contracting.compilation.linter import Linter
 
 
@@ -31,7 +31,8 @@ class ContractingCompiler(ast.NodeTransformer):
 
         # check all visited nodes and see if they are actually private
 
-        # An Expr node can have a value func of compilation.Name, or compilation.Attribute which you much access the value of.
+        # An Expr node can have a value func of compilation.Name, or compilation.
+        # Attribute which you much access the value of.
         # TODO: This code branching is not ideal and should be investigated for simplicity.
         for node in self.visited_names:
             if node.id in self.private_names or node.id in self.orm_names:
@@ -48,7 +49,7 @@ class ContractingCompiler(ast.NodeTransformer):
 
     @staticmethod
     def privatize(s):
-        return '{}{}'.format(config.PRIVATE_METHOD_PREFIX, s)
+        return '{}{}'.format(constants.PRIVATE_METHOD_PREFIX, s)
 
     def compile(self, source: str, lint=True):
         tree = self.parse(source, lint=lint)
@@ -70,12 +71,12 @@ class ContractingCompiler(ast.NodeTransformer):
             decorator = node.decorator_list.pop()
 
             # change the name of the init function to '____' so it is uncallable except once
-            if decorator.id == config.INIT_DECORATOR_STRING:
+            if decorator.id == constants.INIT_DECORATOR_STRING:
                 node.name = '____'
 
-            elif decorator.id == config.EXPORT_DECORATOR_STRING:
+            elif decorator.id == constants.EXPORT_DECORATOR_STRING:
                 # Transform @export decorators to @__export(contract_name) decorators
-                decorator.id = '{}{}'.format('__', config.EXPORT_DECORATOR_STRING)
+                decorator.id = '{}{}'.format('__', constants.EXPORT_DECORATOR_STRING)
 
                 new_node = ast.Call(
                     func=decorator,
@@ -94,8 +95,10 @@ class ContractingCompiler(ast.NodeTransformer):
         return node
 
     def visit_Assign(self, node):
-        if isinstance(node.value, ast.Call) and not isinstance(node.value.func,
-                                                               ast.Attribute) and node.value.func.id in config.ORM_CLASS_NAMES:
+        if (isinstance(node.value, ast.Call) and not
+            isinstance(node.value.func, ast.Attribute) and
+            node.value.func.id in constants.ORM_CLASS_NAMES):
+
             node.value.keywords.append(ast.keyword('contract', ast.Str(self.module_name)))
             node.value.keywords.append(ast.keyword('name', ast.Str(node.targets[0].id)))
             self.orm_names.add(node.targets[0].id)

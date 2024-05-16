@@ -1,10 +1,12 @@
 from unittest import TestCase
 from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
+
 import contracting
+import psutil
 import gc
 import os
-import psutil
+
 
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories

@@ -1,4 +1,4 @@
-from contracting import config
+from contracting import constants
 from contracting.execution.metering.tracer import Tracer
 
 import contracting
@@ -7,7 +7,7 @@ import os
 
 
 class Context:
-    def __init__(self, base_state, maxlen=config.RECURSION_LIMIT):
+    def __init__(self, base_state, maxlen=constants.RECURSION_LIMIT):
         self._state = []
         self._base_state = base_state
         self._maxlen = maxlen
@@ -118,7 +118,7 @@ class Runtime:
     def deduct_read(cls, key, value):
         if cls.tracer.is_started():
             cost = len(key) + len(value)
-            cost *= config.READ_COST_PER_BYTE
+            cost *= constants.READ_COST_PER_BYTE
             cls.tracer.add_cost(cost)
 
     @classmethod
@@ -129,7 +129,7 @@ class Runtime:
 
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
-            stamp_cost = cost * config.WRITE_COST_PER_BYTE
+            stamp_cost = cost * constants.WRITE_COST_PER_BYTE
             cls.tracer.add_cost(stamp_cost)
 
 
