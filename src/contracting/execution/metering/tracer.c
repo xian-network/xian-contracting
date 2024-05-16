@@ -68,7 +68,6 @@ typedef struct {
   int started;
   char * cu_cost_fname;
   unsigned long long call_count; // Add this line to track call counts
-  unsigned long long hard_ops_count; // Track hard operations
 }
 Tracer;
 
@@ -164,19 +163,6 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
       }
 
       self -> last_frame_mem_usage = new_memory_usage;
-
-      
-      if (opcode == 93 || opcode == 124) {
-          self->hard_ops_count++;
-      }
-
-      // Check for excessive hard operations
-      if (self->hard_ops_count > 5000) {
-          PyErr_SetString(PyExc_AssertionError, "Hard operations count exceeded threshold! Infinite Loop?");
-          PyEval_SetTrace(NULL, NULL); // Stop tracing
-          self->started = 0; // Mark tracer as stopped
-          return RET_ERROR;
-      }
 
       //estimate = estimate * factor;
       if ((self -> cost > self -> stamp_supplied) || self -> cost > MAX_STAMPS) {
