@@ -126,7 +126,6 @@ class Runtime:
         if key is not None and cls.tracer.is_started():
             cost = len(key) + len(value)
             cls.writes += cost
-
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE

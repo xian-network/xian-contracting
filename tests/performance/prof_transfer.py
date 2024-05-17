@@ -1,5 +1,5 @@
 import secrets
-from contracting.db.driver import ContractDriver
+from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
 
 def submission_kwargs_for_file(f):
@@ -27,8 +27,8 @@ TEST_SUBMISSION_KWARGS = {
 }
 
 
-d = ContractDriver()
-d.flush()
+d = Driver()
+d.flush_full()
 
 with open('../../contracting/contracts/submission.s.py') as f:
     contract = f.read()
@@ -54,8 +54,8 @@ for i in range(20):
     # profiler = Profiler()
     # profiler.start()
     for r in recipients:
-        _, res, _ = e.execute(sender='stu',
-                  contract_name='erc20_clone',
+        res = e.execute(sender='stu',
+                  contract_name='con_erc20_clone',
                   function_name='transfer',
                   kwargs={
                       'amount': 1,
@@ -67,7 +67,7 @@ for i in range(20):
 
     print(datetime.datetime.now() - now)
 
-d.flush()
+d.flush_full()
 
 # print(profiler.last_session.duration)
 # print(profiler.output_text(unicode=True, color=True, show_all=True))

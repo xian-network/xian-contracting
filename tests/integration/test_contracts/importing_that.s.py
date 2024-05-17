@@ -1,7 +1,7 @@
-import import_this
+import con_import_this
 
 @export
 def test():
-    a = import_this.howdy()
+    a = con_import_this.howdy()
     a -= 1000
     return a

@@ -6,7 +6,9 @@ import os
 import subprocess
 
 
+
 class VerboseBuildExt(build_ext):
+
     """Build C extensions, but fail with a straightforward exception."""
 
     def run(self):

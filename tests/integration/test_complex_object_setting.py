@@ -26,8 +26,8 @@ class TestComplexStorage(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.flush()
 
-        self.c.submit(contract)
-        self.contract = self.c.get_contract('contract')
+        self.c.submit(contract, name="con_contract")
+        self.contract = self.c.get_contract('con_contract')
 
     def tearDown(self):
         self.c.flush()

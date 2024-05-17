@@ -2,7 +2,7 @@ from unittest import TestCase
 from contracting.client import ContractingClient
 import random
 
-def random_contract():
+def con_random_contract():
     random.seed()
 
     cards = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -65,9 +65,9 @@ class TestRandomsContract(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.flush()
-        self.c.submit(random_contract)
+        self.c.submit(con_random_contract)
 
-        self.random_contract = self.c.get_contract('random_contract')
+        self.random_contract = self.c.get_contract('con_random_contract')
 
     def tearDown(self):
         self.c.flush()
