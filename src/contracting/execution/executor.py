@@ -5,6 +5,7 @@ from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import constants
 from loguru import logger
+import re
 from copy import deepcopy
 
 import importlib
@@ -130,17 +131,7 @@ class Executor:
                 driver.commit()
 
         except Exception as e:
-            tb = traceback.format_exc()
-            tb_info = traceback.extract_tb(e.__traceback__)
-            if contract_name == constants.SUBMISSION_CONTRACT_NAME:
-                filename, line, func, text = tb_info[-1]
-                line += 1
-            else:
-                filename, line, func, text = tb_info[-1]
-
-            result = f'Line {line}: {str(e.__class__.__name__)} ({str(e)})'
-            logger.error(str(e))
-            logger.error(tb)
+            result = e
             status_code = 1
             
             if auto_commit:
