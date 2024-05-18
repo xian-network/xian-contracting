@@ -1,6 +1,7 @@
 __pycache__/
 dist
 xian_contracting.egg-info
+contracting.egg-info
 build
 .idea
 logs
