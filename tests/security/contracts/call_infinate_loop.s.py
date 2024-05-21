@@ -1,5 +1,5 @@
-import infinate_loop
+import con_infinate_loop
 
 @export
 def call():
-    infinate_loop.loop()
+    con_infinate_loop.loop()

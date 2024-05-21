@@ -1,5 +1,5 @@
-thing_H = ForeignHash(foreign_contract='thing', foreign_name='H')
-thing_V = ForeignVariable(foreign_contract='thing', foreign_name='V')
+thing_H = ForeignHash(foreign_contract='con_thing', foreign_name='H')
+thing_V = ForeignVariable(foreign_contract='con_thing', foreign_name='V')
 
 @export
 def read_H_hello():

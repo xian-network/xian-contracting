@@ -13,7 +13,7 @@ class Datum:
 
 
 class Variable(Datum):
-    def __init__(self, contract, name, driver: Driver=driver, t=None):
+    def __init__(self, contract, name, driver: Driver = driver, t=None):
         self._type = None
 
         if isinstance(t, type) or None:
@@ -23,10 +23,8 @@ class Variable(Datum):
 
     def set(self, value):
         if self._type is not None:
-            assert isinstance(value, self._type), 'Wrong type passed to variable! Expected {}, got {}.'.format(
-                self._type,
-                type(value)
-            )
+            assert isinstance(value, self._type), (f'Wrong type passed to variable! '
+                                                   f'Expected {self._type}, got {type(value)}.')
 
         self._driver.set(self._key, value)
 
@@ -35,16 +33,16 @@ class Variable(Datum):
 
 
 class Hash(Datum):
-    def __init__(self, contract, name, driver: Driver=driver, default_value=None):
+    def __init__(self, contract, name, driver: Driver = driver, default_value=None):
         super().__init__(contract, name, driver=driver)
         self._delimiter = constants.DELIMITER
         self._default_value = default_value
 
     def _set(self, key, value):
-        self._driver.set('{}{}{}'.format(self._key, self._delimiter, key), value)
+        self._driver.set(f'{self._key}{self._delimiter}{key}', value)
 
     def _get(self, item):
-        value = self._driver.get('{}{}{}'.format(self._key, self._delimiter, item))
+        value = self._driver.get(f'{self._key}{self._delimiter}{item}')
 
         # Add Python defaultdict behavior for easier smart contracting
         if value is None:
@@ -57,9 +55,8 @@ class Hash(Datum):
 
     def _validate_key(self, key):
         if isinstance(key, tuple):
-            assert len(key) <= constants.MAX_HASH_DIMENSIONS, 'Too many dimensions ({}) for hash. Max is {}'.format(
-                len(key), constants.MAX_HASH_DIMENSIONS
-            )
+            assert len(key) <= constants.MAX_HASH_DIMENSIONS, (f'Too many dimensions ({len(key)}) for hash. '
+                                                               f'Max is {constants.MAX_HASH_DIMENSIONS}')
 
             new_key_str = ''
             for k in key:
@@ -70,7 +67,7 @@ class Hash(Datum):
                 assert constants.DELIMITER not in k, 'Illegal delimiter in key.'
                 assert constants.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
 
-                new_key_str += '{}{}'.format(k, self._delimiter)
+                new_key_str += f'{k}{self._delimiter}'
 
             key = new_key_str[:-len(self._delimiter)]
         else:
@@ -79,14 +76,14 @@ class Hash(Datum):
             assert constants.DELIMITER not in key, 'Illegal delimiter in key.'
             assert constants.INDEX_SEPARATOR not in key, 'Illegal separator in key.'
 
-        assert len(key) <= constants.MAX_KEY_SIZE, 'Key is too long ({}). Max is {}.'.format(len(key), constants.MAX_KEY_SIZE)
+        assert len(key) <= constants.MAX_KEY_SIZE, f'Key is too long ({len(key)}). Max is {constants.MAX_KEY_SIZE}.'
         return key
 
     def _prefix_for_args(self, args):
         multi = self._validate_key(args)
-        prefix = '{}{}'.format(self._key, self._delimiter)
+        prefix = f'{self._key}{self._delimiter}'
         if multi != '':
-            prefix += '{}{}'.format(multi, self._delimiter)
+            prefix += f'{multi}{self._delimiter}'
 
         return prefix
 
@@ -116,8 +113,9 @@ class Hash(Datum):
     def __contains__(self, key):
         raise Exception('Cannot use "in" with a Hash.')
 
+
 class ForeignVariable(Variable):
-    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver=driver):
+    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver = driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
@@ -126,7 +124,7 @@ class ForeignVariable(Variable):
 
 
 class ForeignHash(Hash):
-    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver=driver):
+    def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver = driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
@@ -141,4 +139,3 @@ class ForeignHash(Hash):
 
     def clear(self, *args):
         raise Exception('Cannot write with a ForeignHash.')
-

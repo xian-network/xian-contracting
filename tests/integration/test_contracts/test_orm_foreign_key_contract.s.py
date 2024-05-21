@@ -1,4 +1,4 @@
-fv = ForeignVariable(foreign_contract='test_orm_variable_contract', foreign_name='v')
+fv = ForeignVariable(foreign_contract='con_test_orm_variable_contract', foreign_name='v')
 
 @export
 def set_fv(i: int):

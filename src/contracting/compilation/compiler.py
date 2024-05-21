@@ -31,7 +31,8 @@ class ContractingCompiler(ast.NodeTransformer):
 
         # check all visited nodes and see if they are actually private
 
-        # An Expr node can have a value func of compilation.Name, or compilation.Attribute which you much access the value of.
+        # An Expr node can have a value func of compilation.Name, or compilation.
+        # Attribute which you much access the value of.
         # TODO: This code branching is not ideal and should be investigated for simplicity.
         for node in self.visited_names:
             if node.id in self.private_names or node.id in self.orm_names:

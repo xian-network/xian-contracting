@@ -4,27 +4,31 @@ from contracting.execution.module import install_database_loader, uninstall_buil
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import constants
+from loguru import logger
+import re
 from copy import deepcopy
-from logging import getLogger
 
 import importlib
 import decimal
 import traceback
 
-log = getLogger('CONTRACTING')
-
-DEFAULT_STAMPS = 1000000
-
 
 class Executor:
-    def __init__(self, production=False, driver=None, metering=True,
-                 currency_contract='currency', balances_hash='balances', bypass_privates=False, bypass_balance_amount=False):
+    def __init__(self,
+                 production=False,
+                 driver=None,
+                 metering=True,
+                 currency_contract='currency',
+                 balances_hash='balances',
+                 bypass_privates=False,
+                 bypass_balance_amount=False,
+                 bypass_cache=False):
 
         self.metering = metering
         self.driver = driver
 
         if not self.driver:
-            self.driver = Driver()
+            self.driver = Driver(bypass_cache=bypass_cache)
         self.production = production
 
         self.currency_contract = currency_contract
@@ -43,9 +47,10 @@ class Executor:
                 environment={},
                 auto_commit=False,
                 driver=None,
-                stamps=DEFAULT_STAMPS,
+                stamps=constants.DEFAULT_STAMPS,
                 stamp_cost=constants.STAMPS_PER_TAU,
                 metering=None) -> dict:
+
         if not self.bypass_privates:
             assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
 
@@ -65,11 +70,12 @@ class Executor:
 
         try:
             if metering:
-                balances_key = '{}{}{}{}{}'.format(self.currency_contract,
-                                                   constants.INDEX_SEPARATOR,
-                                                   self.balances_hash,
-                                                   constants.DELIMITER,
-                                                   sender)
+                balances_key = (f'{self.currency_contract}'
+                                f'{constants.INDEX_SEPARATOR}'
+                                f'{self.balances_hash}'
+                                f'{constants.DELIMITER}'
+                                f'{sender}')
+
                 if self.bypass_balance_amount:
                     balance = 9999999
 
@@ -82,22 +88,15 @@ class Executor:
                     if balance is None:
                         balance = 0
 
-                log.debug({
-                    'balance': balance,
-                    'stamp_cost': stamp_cost,
-                    'stamps': stamps
-                })
-
-                assert balance * stamp_cost >= stamps, 'Sender does not have enough stamps for the transaction. \
-                                                               Balance at key {} is {}'.format(balances_key,
-                                                                                               balance)
+                assert balance * stamp_cost >= stamps, (f'Sender does not have enough stamps for the transaction. '
+                                                        f'Balance at key {balances_key} is {balance}')
 
             runtime.rt.env.update(environment)
             status_code = 0
 
             # TODO: Why do we do this?
             # Multiply stamps by 1000 because we divide by it later
-            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
+            # runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
 
             runtime.rt.context._base_state = {
                 'signer': sender,
@@ -125,38 +124,28 @@ class Executor:
                     kwargs[k] = ContractingDecimal(str(v))
 
             enable_restricted_imports()
+            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
+            runtime.rt.tracer.stop()
             disable_restricted_imports()
 
             if auto_commit:
                 driver.commit()
 
-
         except Exception as e:
-            tb = traceback.format_exc()
-            tb_info = traceback.extract_tb(e.__traceback__)
-            if contract_name == constants.SUBMISSION_CONTRACT_NAME:
-                filename, line, func, text = tb_info[-1]
-                line += 1
-            else:
-                filename, line, func, text = tb_info[-1]
-
-            result = f'Line {line}: {str(e.__class__.__name__)} ({str(e)})'
-            log.error(str(e))
-            log.error(tb)
+            result = e
             status_code = 1
             
             if auto_commit:
                 driver.flush_cache()
 
-        runtime.rt.tracer.stop()
+        #runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
 
         stamps_used = stamps_used // 1000
         stamps_used += 1
-
 
         if stamps_used > stamps:
             stamps_used = stamps
@@ -165,9 +154,7 @@ class Executor:
             assert balances_key is not None, 'Balance key was not set properly. Cannot deduct stamps.'
 
             to_deduct = stamps_used
-
             to_deduct /= stamp_cost
-
             to_deduct = ContractingDecimal(to_deduct)
 
             balance = driver.get(balances_key)
@@ -177,13 +164,14 @@ class Executor:
             balance = max(balance - to_deduct, 0)
 
             driver.set(balances_key, balance)
-                       #mark=False)  # This makes sure that the key isnt modified every time in the block
+
             if auto_commit:
                 driver.commit()
 
         Seeded.s = False
         runtime.rt.clean_up()
         runtime.rt.env.update({'__Driver': driver})
+
         output = {
             'status_code': status_code,
             'result': result,

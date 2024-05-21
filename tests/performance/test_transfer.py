@@ -1,6 +1,6 @@
 from unittest import TestCase
 import secrets
-from contracting.db.driver import ContractDriver
+from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
 
 
@@ -17,7 +17,7 @@ def submission_kwargs_for_file(f):
         contract_code = file.read()
 
     return {
-        'name': contract_name,
+        'name': f'con_{contract_name}',
         'code': contract_code,
     }
 
@@ -31,8 +31,8 @@ TEST_SUBMISSION_KWARGS = {
 
 class TestSandbox(TestCase):
     def setUp(self):
-        self.d = ContractDriver()
-        self.d.flush()
+        self.d = Driver()
+        self.d.flush_full()
 
         with open('../../contracting/contracts/submission.s.py') as f:
             contract = f.read()
@@ -44,7 +44,7 @@ class TestSandbox(TestCase):
         self.recipients = [secrets.token_hex(16) for _ in range(10000)]
 
     def tearDown(self):
-        self.d.flush()
+        self.d.flush_full()
 
     def test_transfer_performance(self):
         e = Executor()
@@ -54,7 +54,7 @@ class TestSandbox(TestCase):
 
         for r in self.recipients:
             e.execute(sender='stu',
-                      contract_name='erc20_clone',
+                      contract_name='con_erc20_clone',
                       function_name='transfer',
                       kwargs={
                           'amount': 1,

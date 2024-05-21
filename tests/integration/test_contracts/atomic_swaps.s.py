@@ -1,10 +1,10 @@
-import erc20_clone
+import con_erc20_clone
 
 swaps = Hash()
 
 @export
 def initiate(participant: str, expiration: datetime.datetime, hashlock: str, amount: float):
-    allowance = erc20_clone.allowance(ctx.caller, ctx.this)
+    allowance = con_erc20_clone.allowance(ctx.caller, ctx.this)
 
     assert allowance >= amount, \
         "You cannot initiate an atomic swap without allowing '{}' " \
@@ -12,7 +12,7 @@ def initiate(participant: str, expiration: datetime.datetime, hashlock: str, amo
 
     swaps[participant, hashlock] = [expiration, amount]
 
-    erc20_clone.transfer_from(amount, ctx.this, ctx.caller)
+    con_erc20_clone.transfer_from(amount, ctx.this, ctx.caller)
 
 @export
 def redeem(secret: str):
@@ -27,7 +27,7 @@ def redeem(secret: str):
 
     assert expiration >= now, 'Swap has expired.'
 
-    erc20_clone.transfer(amount, ctx.caller)
+    con_erc20_clone.transfer(amount, ctx.caller)
     swaps[ctx.caller, hashlock] = None # change this to respond to the del keyword?
 
 @export
@@ -46,7 +46,7 @@ def refund(participant: str, secret: str):
 
     assert expiration < now, 'Swap has not expired.'
 
-    erc20_clone.transfer(amount, ctx.caller)
+    con_erc20_clone.transfer(amount, ctx.caller)
     swaps[participant, hashlock] = None
 
 

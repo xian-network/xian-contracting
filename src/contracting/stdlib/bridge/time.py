@@ -2,8 +2,6 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from types import ModuleType
 
-from contracting.execution.runtime import rt
-
 
 # Redefine a controlled datetime object that feels like a regular Python datetime object but is restricted so that we
 # can regulate the user interaction with it to prevent security attack vectors. It may seem redundant, but it guarantees
@@ -27,8 +25,15 @@ def get_raw_seconds(weeks, days, hours, minutes, seconds):
 
 class Datetime:
     def __init__(self, year, month, day, hour=0, minute=0, second=0, microsecond=0):
-        self._datetime = dt(year=year, month=month, day=day, hour=hour,
-                            minute=minute, second=second, microsecond=microsecond)
+        self._datetime = dt(
+            year=year,
+            month=month,
+            day=day,
+            hour=hour,
+            minute=minute,
+            second=second,
+            microsecond=microsecond
+        )
 
         self.year = self._datetime.year
         self.month = self._datetime.month
@@ -107,7 +112,6 @@ class Timedelta:
             weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds)
         )
 
-
         # For fast access to how many hours are in a timedelta.
         self.__raw_seconds = get_raw_seconds(
             weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds)
@@ -173,6 +177,7 @@ class Timedelta:
         elif isinstance(other, int):
             return Timedelta(days=self._timedelta.days * other,
                              seconds=self._timedelta.seconds * other)
+
         return NotImplemented
 
     def __str__(self):

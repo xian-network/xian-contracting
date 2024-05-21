@@ -1,9 +1,10 @@
 __pycache__/
 dist
+xian_contracting.egg-info
 contracting.egg-info
 build
-.github
 .idea
 logs
 *.so
 .ccls
+*.pyc

@@ -1,7 +1,7 @@
 from unittest import TestCase
 from contracting.stdlib.bridge import imports
 from types import ModuleType
-from contracting.db.orm import Hash, Variable
+from contracting.storage.orm import Hash, Variable
 
 
 class TestImports(TestCase):

@@ -1,4 +1,4 @@
-from contracting.storage.encoder import encode, decode, encode_kv
+from contracting.storage.encoder import encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
@@ -6,20 +6,12 @@ from datetime import datetime
 from pathlib import Path
 from cachetools import TTLCache
 from contracting import constants
-
-
 from contracting.storage import hdf5
+
 import marshal
 import decimal
 import os
 import shutil
-import logging
-
-# Logging
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG
-)
-logger = logging.getLogger(__name__)
 
 FILE_EXT = ".d"
 HASH_EXT = ".x"
@@ -36,12 +28,14 @@ TIME_KEY = "__submitted__"
 COMPILED_KEY = "__compiled__"
 DEVELOPER_KEY = "__developer__"
 
+
 class Driver:
-    def __init__(self):
+    def __init__(self, bypass_cache=False):
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
+        self.bypass_cache = bypass_cache
         self.contract_state = STORAGE_HOME.joinpath("contract_state")
         self.run_state = STORAGE_HOME.joinpath("run_state")
         self.__build_directories()
@@ -60,7 +54,10 @@ class Driver:
         return filename, variable
 
     def __filename_to_path(self, filename):
-        return (str(self.run_state.joinpath(filename)) if filename.startswith("__") else str(self.contract_state.joinpath(filename)))
+        if filename.startswith("__"):
+            return str(self.run_state.joinpath(filename))
+        else:
+            return str(self.contract_state.joinpath(filename))
 
     def __get_files(self):
         return sorted(os.listdir(self.contract_state) + os.listdir(self.run_state))
@@ -86,6 +83,10 @@ class Driver:
         self.pending_writes[key] = value
 
     def find(self, key: str):
+        if self.bypass_cache:
+            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+            return value
+            
         value = self.pending_writes.get(key)
         if value is None:
             value = self.cache.get(key)
@@ -110,9 +111,7 @@ class Driver:
                         keys.add(key)
 
                     if 0 < length <= len(keys):
-                        raise AssertionError(
-                            "Length threshold has been hit. Continuing."
-                        )
+                        raise AssertionError("Length threshold has been hit. Continuing.")
         except AssertionError:
             pass
 
@@ -141,7 +140,7 @@ class Driver:
         Get all existing items with a given prefix
         """
 
-        # Get all of the items in the cache currently
+        # Get all the items in the cache currently
         _items = {}
         keys = set()
 
@@ -303,6 +302,7 @@ class Driver:
                 hdf5.delete_key_from_disk(self.__filename_to_path(k), k)
             else:
                 hdf5.set_value_to_disk(self.__filename_to_path(k), k, v, None)
+
         self.cache.clear()
         self.pending_writes.clear()
         self.pending_reads.clear()
@@ -357,6 +357,7 @@ class Driver:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 all_contract_state[full_key] = value
+
         return all_contract_state
 
     def get_run_state(self):
@@ -371,6 +372,7 @@ class Driver:
                 full_key = f"{filename}{DELIMITER}{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 run_state[full_key] = value
+
         return run_state
 
     def reset_cache(self):

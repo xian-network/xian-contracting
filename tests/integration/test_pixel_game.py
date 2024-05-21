@@ -2,7 +2,7 @@ from contracting.client import ContractingClient
 from unittest import TestCase
 
 
-def coin():
+def con_coin():
     supply = Variable()
     balances = Hash(default_value=0)
     owner = Variable()
@@ -73,8 +73,8 @@ class TestCoinContract(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.flush()
 
-        self.c.submit(coin)
-        self.coin = self.c.get_contract('coin')
+        self.c.submit(con_coin)
+        self.coin = self.c.get_contract('con_coin')
 
     def tearDown(self):
         self.c.flush()
@@ -150,8 +150,8 @@ class TestCoinContract(TestCase):
         self.assertEqual(self.coin.supply.get(), 1000000 + 999)
 
 
-def pixel_game():
-    import coin
+def con_pixel_game():
+    import con_coin
 
     plots = Hash()
     landlord = Variable()
@@ -218,9 +218,9 @@ class TestPixelGame(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.flush()
 
-        self.c.submit(coin)
-        self.c.submit(pixel_game)
-        self.pixel = self.c.get_contract('pixel_game')
+        self.c.submit(con_coin)
+        self.c.submit(con_pixel_game)
+        self.pixel = self.c.get_contract('con_pixel_game')
 
     def tearDown(self):
         self.c.flush()

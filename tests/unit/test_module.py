@@ -1,16 +1,17 @@
 from unittest import TestCase
 from contracting.execution.module import *
+from contracting.storage.driver import Driver
 import types
 import glob
 
 
 class TestDatabase(TestCase):
     def setUp(self):
-        self.d = ContractDriver()
-        self.d.flush()
+        self.d = Driver()
+        self.d.flush_full()
 
     def tearDown(self):
-        self.d.flush()
+        self.d.flush_full()
 
     def test_push_and_get_contract(self):
         code = 'a = 123'
@@ -27,7 +28,7 @@ class TestDatabase(TestCase):
 
         self.d.set_contract(name, code)
         self.d.commit()
-        self.d.flush()
+        self.d.flush_full()
 
         self.assertIsNone(self.d.get_contract(name))
 
@@ -37,7 +38,7 @@ class TestDatabaseLoader(TestCase):
         self.dl = DatabaseLoader()
 
     def test_init(self):
-        self.assertTrue(isinstance(self.dl.d, ContractDriver), 'self.d is not a Database object.')
+        self.assertTrue(isinstance(self.dl.d, Driver), 'self.d is not a Database object.')
 
     def test_create_module(self):
         self.assertEqual(self.dl.create_module(None), None, 'self.create_module should return None')
@@ -47,7 +48,7 @@ class TestDatabaseLoader(TestCase):
 
         self.dl.d.set_contract('test', 'b = 1337')
         self.dl.exec_module(module)
-        self.dl.d.flush()
+        self.dl.d.flush_full()
 
         self.assertEqual(module.b, 1337)
 
@@ -56,7 +57,7 @@ class TestDatabaseLoader(TestCase):
 
         self.dl.d.set_contract('test', 'b = 1337')
         self.dl.exec_module(module)
-        self.dl.d.flush()
+        self.dl.d.flush_full()
 
         with self.assertRaises(AttributeError):
             module.a
@@ -95,13 +96,13 @@ class TestInstallLoader(TestCase):
         self.assertEqual(testing.a, 1234567890)
 
 
-driver = ContractDriver()
+driver = Driver()
 
 
 class TestModuleLoadingIntegration(TestCase):
     def setUp(self):
         sys.meta_path.append(DatabaseFinder)
-        driver.flush()
+        driver.flush_full()
         contracts = glob.glob('./test_sys_contracts/*.py')
         for contract in contracts:
             name = contract.split('/')[-1]
@@ -115,7 +116,7 @@ class TestModuleLoadingIntegration(TestCase):
 
     def tearDown(self):
         sys.meta_path.remove(DatabaseFinder)
-        driver.flush()
+        driver.flush_full()
 
     def test_get_code_string(self):
         ctx = types.ModuleType('ctx')
