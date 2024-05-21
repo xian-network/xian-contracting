@@ -1,8 +1,0 @@
-astor==0.8.1
-autopep8==1.5.7
-cachetools
-h5py
-iso8601
-loguru
-pycodestyle==2.10.0
-pynacl
