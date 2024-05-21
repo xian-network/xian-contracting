@@ -96,7 +96,7 @@ class Executor:
 
             # TODO: Why do we do this?
             # Multiply stamps by 1000 because we divide by it later
-            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
+            # runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
 
             runtime.rt.context._base_state = {
                 'signer': sender,
@@ -124,7 +124,9 @@ class Executor:
                     kwargs[k] = ContractingDecimal(str(v))
 
             enable_restricted_imports()
+            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
+            runtime.rt.tracer.stop()
             disable_restricted_imports()
 
             if auto_commit:
@@ -137,7 +139,7 @@ class Executor:
             if auto_commit:
                 driver.flush_cache()
 
-        runtime.rt.tracer.stop()
+        #runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
