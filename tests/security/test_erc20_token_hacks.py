@@ -6,7 +6,7 @@ class TestTokenHacks(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        with open('../../src/contracting/contracts/submission.s.py') as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract)
@@ -71,7 +71,6 @@ class TestTokenHacks(TestCase):
         with open('./contracts/double_spend_gas_attack.s.py') as f:
             code = f.read()
             self.c.submit(code, name='con_hack', metering=True)
-        breakpoint()
         # Test the double_spend contract
         # - sends the amount of the "allowance" (set in token.approve as 'tx_amount')
         # - calls transfer_from to send from 'stu' to 'colin' as 'con_hack'

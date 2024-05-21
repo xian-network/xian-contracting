@@ -1,5 +1,5 @@
 from unittest import TestCase
-from contracting.db.encoder import encode, decode, safe_repr, convert_dict, MONGO_MAX_INT, MONGO_MIN_INT
+from contracting.storage.encoder import encode, decode, safe_repr, convert_dict, MONGO_MAX_INT, MONGO_MIN_INT
 from contracting.stdlib.bridge.time import Datetime, Timedelta
 from datetime import datetime
 from contracting.stdlib.bridge.decimal import ContractingDecimal
