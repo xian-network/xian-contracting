@@ -1,5 +1,5 @@
 # Monkey patch for testing, as this is purely for 'interface enforcement' testing
-from contracting.db.orm import Variable, Hash
+from contracting.storage.orm import Variable, Hash
 
 class ctx:
     caller = 1

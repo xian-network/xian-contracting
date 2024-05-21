@@ -2,8 +2,8 @@
 
 - [ ] final_gov
 - [ ] governance
-- [ ] integration
-    - [ ] test_atomic_swap
+- [x] integration
+    - [x] test_atomic_swap
     - [x] test_builtins_locked_off
     - [x] test_complex_contracts
     - [x] test_complex_object_setting
@@ -13,10 +13,10 @@
     - [x] test_executor_submission_process
     - [x] test_memory_cleanup_after_execution # This might shed some light on the StampEstimator sync bug
     - [ ] test_misc_contracts
-        - [ ] test_memory_exploit
-        - [ ] test_memory_overload
-        - [ ] test_memory_overload2
-        - [ ] test_single_too_many_writes_fails
+        - [x] test_memory_exploit
+        - [x] test_memory_overload
+        - [x] test_memory_overload2
+        - [x] test_single_too_many_writes_fails
     - [x] test_pixel_game
     - [x] test_rich_ctx_calling
     - [x] test_run_private_function
@@ -27,7 +27,20 @@
 - [x] performance
     - [x] prof_transfer - not a test, but a way of measuring performance
     - [x] test_transfer - again, not a test, but a way of measuring performance
-- [ ] security
-    - [ ] test_erc20_token_hacks
-    
-
+- [x] security
+    - [x] test_erc20_token_hacks
+- [x] unit
+    - [x] test_client
+    - [x] test_context_data_struct
+    - [x] test_datetime
+    - [x] test_decimal
+    - [ ] test_driver [deleted]
+    - [x] test_encode
+    - [x] test_imports_stdlib
+    - [x] test_linter
+    - [x] test_module
+    - [x] test_orm
+    - [x] test_parser
+    - [x] test_runtime
+    - [x] test_stdlib_hashing
+    - [x] test_timedelta

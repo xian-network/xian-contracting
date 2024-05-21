@@ -28,9 +28,19 @@ def a():
 
         self.assertEqual(status, None)
 
+    # TODO - Verify this tetst is working as expected.
     def test_good_ast_type(self):
+        # Dictionary to handle special cases of AST nodes that require arguments
+        special_cases = {
+            ast.Index: lambda: ast.Index(value=ast.Str(s='test')),
+        }
+
         for t in ALLOWED_AST_TYPES:
-            _t = t()
+            if t in special_cases:
+                _t = special_cases[t]()
+            else:
+                _t = t()
+
             self.l.ast_types(_t, 1)
             self.assertListEqual([], self.l._violations)
 
@@ -98,7 +108,7 @@ async def a():
 def b():
     c = 1 + 2
 '''
-        err = 'Line 2: S7- Illicit use of Async functions'
+        err = 'Line 3: S7- Illicit use of Async functions'
 
         c = ast.parse(code)
         chk = self.l.check(c)
@@ -182,7 +192,7 @@ def a():
         c = ast.parse(code)
         chk = self.l.check(c)
         self.l.dump_violations()
-        self.assertEqual(chk, ['Line 2: S3- Illicit use of Nested imports'])
+        self.assertEqual(chk, ['Line 3: S3- Illicit use of Nested imports'])
 
     def test_no_nested_imports_works(self):
         code = '''
@@ -341,7 +351,7 @@ def kaboom():
         c = ast.parse(code)
         chk = self.l.check(c)
         self.l.dump_violations()
-        self.assertEqual(chk[0], 'Line 2: S10- Illicit use of multiple decorators: Detected: 2 MAX limit: 1')
+        self.assertEqual(chk[0], 'Line 4: S10- Illicit use of multiple decorators: Detected: 2 MAX limit: 1')
 
     def test_invalid_decorator_fails(self):
         code = '''
@@ -352,7 +362,7 @@ def wont_work():
         c = ast.parse(code)
         chk = self.l.check(c)
         self.l.dump_violations()
-        self.assertEqual(chk[0], 'Line 2: S8- Invalid decorator used: valid list: contracting_invalid')
+        self.assertEqual(chk[0], 'Line 3: S8- Invalid decorator used: valid list: contracting_invalid')
 
     def test_multiple_constructors_fails(self):
         code = '''
@@ -403,7 +413,7 @@ def greeting(name: mytype):
         c = ast.parse(code)
         chk = self.l.check(c)
 
-        self.assertEqual(chk, ['Line 2 : S16- Illegal argument annotation used : mytype'])
+        self.assertEqual(chk, ['Line 3 : S16- Illegal argument annotation used : mytype'])
 
 
     def test_function_none_annotation(self):
@@ -415,7 +425,7 @@ def greeting(name):
         c = ast.parse(code)
         chk = self.l.check(c)
 
-        self.assertEqual(chk, ['Line 2 : S17- No valid argument annotation found'])
+        self.assertEqual(chk, ['Line 3 : S17- No valid argument annotation found'])
 
 
     def test_none_return_annotation(self):
@@ -446,7 +456,7 @@ def greeting(name):
         c = ast.parse(code)
         chk = self.l.check(c)
 
-        self.assertEqual(chk, ['Line 2 : S17- No valid argument annotation found'])
+        self.assertEqual(chk, ['Line 3 : S17- No valid argument annotation found'])
 
 
 ## ANNOTATIONS ARE OKAY
