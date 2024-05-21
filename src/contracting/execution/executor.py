@@ -5,6 +5,7 @@ from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import constants
 from loguru import logger
+import re
 from copy import deepcopy
 
 import importlib
@@ -95,7 +96,7 @@ class Executor:
 
             # TODO: Why do we do this?
             # Multiply stamps by 1000 because we divide by it later
-            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
+            # runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
 
             runtime.rt.context._base_state = {
                 'signer': sender,
@@ -123,30 +124,22 @@ class Executor:
                     kwargs[k] = ContractingDecimal(str(v))
 
             enable_restricted_imports()
+            runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
+            runtime.rt.tracer.stop()
             disable_restricted_imports()
 
             if auto_commit:
                 driver.commit()
 
         except Exception as e:
-            tb = traceback.format_exc()
-            tb_info = traceback.extract_tb(e.__traceback__)
-            if contract_name == constants.SUBMISSION_CONTRACT_NAME:
-                filename, line, func, text = tb_info[-1]
-                line += 1
-            else:
-                filename, line, func, text = tb_info[-1]
-
-            result = f'Line {line}: {str(e.__class__.__name__)} ({str(e)})'
-            logger.error(str(e))
-            logger.error(tb)
+            result = e
             status_code = 1
             
             if auto_commit:
                 driver.flush_cache()
 
-        runtime.rt.tracer.stop()
+        #runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()

@@ -182,14 +182,7 @@ class AbstractContract:
             executor.sandbox.terminate()
 
         if output['status_code'] == 1:
-            matches = re.match(r"Line \d+: (?P<exception_type>\w+) \(", output['result'])
-            try:
-                exception_type = matches.group('exception_type')
-                exception_class = getattr(___builtins___, exception_type)
-                raise exception_class(output['result'])
-            except AttributeError:
-                # If the exception type is not found, raise the output['result'] as a generic Exception.
-                raise Exception(output['result'])
+            raise output['result']
 
         return output['result']
 
