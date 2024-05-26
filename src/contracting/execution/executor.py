@@ -126,7 +126,6 @@ class Executor:
             enable_restricted_imports()
             runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
-            runtime.rt.tracer.stop()
             disable_restricted_imports()
 
             if auto_commit:
@@ -139,10 +138,7 @@ class Executor:
             if auto_commit:
                 driver.flush_cache()
 
-        finally:
-            runtime.rt.tracer.stop()
-
-        #runtime.rt.tracer.stop()
+        runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
