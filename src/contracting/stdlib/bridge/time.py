@@ -99,7 +99,11 @@ class Datetime:
                    minute=d.minute,
                    second=d.second,
                    microsecond=d.microsecond)
-
+    
+    @classmethod
+    def strptime(cls, date_string, format):
+        d = dt.strptime(date_string, format)
+        return cls._from_datetime(d)
 
 class Timedelta:
     def __init__(self, weeks=0,
