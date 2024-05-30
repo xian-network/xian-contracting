@@ -139,6 +139,9 @@ class Executor:
             if auto_commit:
                 driver.flush_cache()
 
+        finally:
+            runtime.rt.tracer.stop()
+
         #runtime.rt.tracer.stop()
 
         # Deduct the stamps if that is enabled
