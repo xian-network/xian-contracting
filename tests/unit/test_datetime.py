@@ -164,3 +164,7 @@ class TestDatetime(TestCase):
 
         self.assertEqual((d - e), Timedelta(days=365))
 
+
+    def test_datetime_strptime(self):
+        d = dt(2019, 1, 1)
+        self.assertEqual(str(Datetime.strptime(str(d), '%Y-%m-%d %H:%M:%S')), str(d))
