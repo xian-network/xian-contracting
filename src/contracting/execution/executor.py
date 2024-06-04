@@ -136,8 +136,7 @@ class Executor:
             result = e
             status_code = 1
             
-            if auto_commit:
-                driver.flush_cache()
+            driver.flush_cache() # TODO: this is sketch, i changed this because it needs to remove all changes after failure
 
         finally:
             runtime.rt.tracer.stop()
