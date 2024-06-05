@@ -51,6 +51,8 @@ class Executor:
                 stamp_cost=constants.STAMPS_PER_TAU,
                 metering=None) -> dict:
 
+        current_driver_pending_writes = deepcopy(self.driver.pending_writes)
+
         if not self.bypass_privates:
             assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
 
@@ -135,6 +137,9 @@ class Executor:
         except Exception as e:
             result = e
             status_code = 1
+
+            # Revert the writes if the transaction fails
+            driver.pending_writes = current_driver_pending_writes
             
             if auto_commit:
                 driver.flush_cache()
