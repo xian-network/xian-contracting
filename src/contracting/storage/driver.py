@@ -135,6 +135,10 @@ class Driver:
 
         return keys if length == 0 else keys[:length]
 
+    def value_from_disk(self, key):
+        filename, variable = self.__parse_key(key)
+        return hdf5.get_value_from_disk(self.__filename_to_path(filename), variable)
+
     def items(self, prefix=""):
         """
         Get all existing items with a given prefix
@@ -354,7 +358,7 @@ class Driver:
             filename = file_path.name
             keys = self.__get_keys_from_file(self.__filename_to_path(filename))
             for key in keys:
-                full_key = f"{filename}{DELIMITER}{key}"
+                full_key = f"{key}"
                 value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
                 all_contract_state[full_key] = value
 
@@ -374,23 +378,3 @@ class Driver:
                 run_state[full_key] = value
 
         return run_state
-
-    def reset_cache(self):
-        self.cache.clear()
-
-    def bust_cache(self, writes: dict):
-        """
-        Remove specific write deltas from the cache
-        """
-        if not writes:
-            return
-
-        for key in writes.keys():
-            should_clear = True
-            for pd in self.pending_deltas.values():
-                should_clear = key not in list(pd["writes"].keys())
-                if not should_clear:
-                    break
-
-            if should_clear:
-                self.cache.pop(key, None)
