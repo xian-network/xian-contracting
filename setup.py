@@ -60,6 +60,7 @@ setup(
     ],
     zip_safe=True,
     include_package_data=True,
+    python_requires='~=3.11.0',
     ext_modules=[
         Extension(
             "contracting.execution.metering.tracer",
