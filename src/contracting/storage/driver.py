@@ -16,7 +16,6 @@ import shutil
 FILE_EXT = ".d"
 HASH_EXT = ".x"
 
-STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
 DELIMITER = "."
 HASH_DEPTH_DELIMITER = ":"
 
@@ -30,14 +29,14 @@ DEVELOPER_KEY = "__developer__"
 
 
 class Driver:
-    def __init__(self, bypass_cache=False):
+    def __init__(self, bypass_cache=False, storage_home=constants.STORAGE_HOME):
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
         self.bypass_cache = bypass_cache
-        self.contract_state = STORAGE_HOME.joinpath("contract_state")
-        self.run_state = STORAGE_HOME.joinpath("run_state")
+        self.contract_state = storage_home.joinpath("contract_state")
+        self.run_state = storage_home.joinpath("run_state")
         self.__build_directories()
 
     def __build_directories(self):

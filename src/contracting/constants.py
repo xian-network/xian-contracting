@@ -1,3 +1,5 @@
+from pathlib import Path
+
 RECURSION_LIMIT = 1024
 
 DELIMITER = ':'
@@ -25,3 +27,5 @@ BLOCK_NUM_DEFAULT = -1
 FILENAME_LEN_MAX = 255
 
 DEFAULT_STAMPS = 1000000
+
+STORAGE_HOME = Path().home().joinpath(".cometbft/xian")
