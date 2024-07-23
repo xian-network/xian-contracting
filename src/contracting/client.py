@@ -192,12 +192,13 @@ class ContractingClient:
             self,
             signer='sys',
             submission_filename=os.path.join(os.path.dirname(__file__), 'contracts/submission.s.py'),
-            driver=Driver(),
+            storage_home=constants.STORAGE_HOME,
+            driver:Driver=None,
             metering=False,
             compiler=ContractingCompiler(),
-            environment={}
+            environment={},
     ):
-
+        driver = driver if driver is not None else Driver(storage_home=storage_home)
         self.executor = Executor(metering=metering, driver=driver)
         self.raw_driver = driver
         self.signer = signer
