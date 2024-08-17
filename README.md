@@ -13,15 +13,25 @@ def token_contract():
          owner.set(ctx.caller)
 
      @export
-     def balance_of(wallet_id):
-         return balances[wallet_id]
+     def approve(amount: float, to: str):
+         assert amount > 0, 'Cannot send negative balances.'
+         balances[ctx.caller, to] += amount
+     
+     @export
+     def transfer_from(amount: float, to: str, main_account: str):
+         assert amount > 0, 'Cannot send negative balances.'
+         assert balances[main_account, ctx.caller] >= amount, f'Not enough coins approved to send. You have {balances[main_account, ctx.caller]} and are trying to spend {amount}'
+         assert balances[main_account] >= amount, 'Not enough coins to send.'
+     
+         balances[main_account, ctx.caller] -= amount
+         balances[main_account] -= amount
+         balances[to] += amount
 
      @export
-     def transfer(to, amount):    
-         sender_balance = balances[ctx.caller]
-
-         assert sender_balance >= 0, "Sender balance must be non-negative!!!"
-         
+     def transfer(amount: float, to: str):
+         assert amount > 0, 'Cannot send negative balances.'
+         assert balances[ctx.caller] >= amount, 'Not enough coins to send.'
+     
          balances[ctx.caller] -= amount
          balances[to] += amount
 
