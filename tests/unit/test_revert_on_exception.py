@@ -75,7 +75,7 @@ class MyTestCase(unittest.TestCase):
             {'sender': 'stu', 'contract': 'con_exception', 'function': 'transfer', 'kwargs': {'amount': 100, 'to': 'colin'},"stamps_supplied":1000},
             "metadata":
             {"signature":"abc"},"b_meta":{"nanos":0,
-            "hash":"0x0","height":0}})
+            "hash":"0x0","height":0, "chain_id":0}})
         logger.debug(f"Output (exception): {output}")
 
         new_balance = self.d.get('con_exception.balances:stu')
@@ -90,7 +90,7 @@ class MyTestCase(unittest.TestCase):
             "payload":
             {'sender': 'stu', 'contract': 'con_currency', 'function': 'transfer', 'kwargs': {'amount': 100, 'to': 'colin'},"stamps_supplied":1000},
             "metadata":
-            {"signature":"abc"},"b_meta":{"nanos":0,"hash":"0x0","height":0}})
+            {"signature":"abc"},"b_meta":{"nanos":0,"hash":"0x0","height":0,"chain_id":0}})
         
         new_balance = self.d.get('con_currency.balances:stu')
         logger.debug(f"New balance (non-exception): {new_balance}")
