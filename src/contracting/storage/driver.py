@@ -44,13 +44,20 @@ class Driver:
         self.run_state.mkdir(exist_ok=True, parents=True)
 
     def __parse_key(self, key):
-        try:
-            filename, variable = key.split(constants.INDEX_SEPARATOR, 1)
-            variable = variable.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
-        except ValueError:
-            filename = "__misc"
-            variable = key.replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
+        # Split the key into parts (filename, group, etc.)
+        parts = key.split(constants.INDEX_SEPARATOR, 1)  # Ensure key contains the INDEX_SEPARATOR
+        
+        # The first part should be the filename (e.g., "currency")
+        filename = parts[0].split(constants.DELIMITER, 1)[0]  # Get only 'currency' from 'currency.balances'
+        
+        # The rest (after the first '.') becomes the group and attribute inside the HDF5 file
+        if len(parts) > 1:
+            variable = parts[1].replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
+        else:
+            variable = parts[0].replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
+        
         return filename, variable
+
 
     def __filename_to_path(self, filename):
         if filename.startswith("__"):
@@ -66,12 +73,18 @@ class Driver:
         return file_path.is_file()
 
     def get(self, key: str, save: bool = True):
+        """
+        Get a value from the cache, pending reads, or disk. If save is True, 
+        the value will be saved to pending_reads.
+        """
+        # Parse the key to get the filename and group
         value = self.find(key)
         if save and self.pending_reads.get(key) is None:
             self.pending_reads[key] = value
         if value is not None:
             rt.deduct_read(*encode_kv(key, value))
         return value
+
 
     def set(self, key, value):
         rt.deduct_write(*encode_kv(key, value))
@@ -82,16 +95,25 @@ class Driver:
         self.pending_writes[key] = value
 
     def find(self, key: str):
+        """
+        Find the value for a given key. If not found in cache or pending writes, 
+        it will look it up from the disk.
+        """
         if self.bypass_cache:
-            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+            # Parse the key to get the filename and group
+            filename, variable = self.__parse_key(key)
+            value = hdf5.get_value_from_disk(self.__filename_to_path(filename), variable)
             return value
-            
+
         value = self.pending_writes.get(key)
         if value is None:
             value = self.cache.get(key)
         if value is None:
-            value = hdf5.get_value_from_disk(self.__filename_to_path(key), key)
+            # Parse the key to get the filename and group for disk lookup
+            filename, variable = self.__parse_key(key)
+            value = hdf5.get_value_from_disk(self.__filename_to_path(filename), variable)
         return value
+
 
     def __get_keys_from_file(self, filename):
         return hdf5.get_groups(self.__filename_to_path(filename))
@@ -135,36 +157,41 @@ class Driver:
         return keys if length == 0 else keys[:length]
 
     def value_from_disk(self, key):
+        """
+        Retrieve a value from the disk based on the parsed key.
+        """
+        # Parse the key to get the filename and group
         filename, variable = self.__parse_key(key)
         return hdf5.get_value_from_disk(self.__filename_to_path(filename), variable)
 
     def items(self, prefix=""):
         """
-        Get all existing items with a given prefix
+        Get all existing items with a given prefix.
         """
-
-        # Get all the items in the cache currently
         _items = {}
         keys = set()
 
+        # Collect pending writes with matching prefix
         for k, v in self.pending_writes.items():
             if k.startswith(prefix) and v is not None:
                 _items[k] = v
                 keys.add(k)
 
+        # Collect cache items with matching prefix
         for k, v in self.cache.items():
             if k.startswith(prefix) and v is not None:
                 _items[k] = v
                 keys.add(k)
 
-        # Get remaining keys from disk
+        # Collect keys from the disk
         db_keys = set(self.iter_from_disk(prefix=prefix))
 
-        # Subtract the already gotten keys
+        # Subtract already collected keys and add missing ones from disk
         for k in db_keys - keys:
             _items[k] = self.get(k)  # Cache get will add the keys to the cache
 
         return _items
+
 
     def keys(self, prefix=""):
         return list(self.items(prefix).keys())
@@ -179,13 +206,21 @@ class Driver:
             return HASH_DEPTH_DELIMITER.join((contract_variable, *[str(arg) for arg in args]))
         return contract_variable
 
-    def get_var(self, contract, variable, arguments=[], mark=True):
-        key = self.make_key(contract, variable, arguments)
-        return self.get(key)
-
     def set_var(self, contract, variable, arguments=[], value=None, mark=True):
+        """
+        Set a variable in a contract.
+        """
+        # Construct the key and set the value
         key = self.make_key(contract, variable, arguments)
         self.set(key, value)
+
+    def get_var(self, contract, variable, arguments=[], mark=True):
+        """
+        Get a variable from a contract.
+        """
+        # Construct the key and get the value
+        key = self.make_key(contract, variable, arguments)
+        return self.get(key)
 
     def get_owner(self, name):
         owner = self.get_var(name, OWNER_KEY)
@@ -241,6 +276,10 @@ class Driver:
         return sorted(os.listdir(self.contract_state))
 
     def delete_key_from_disk(self, key):
+        """
+        Delete a key from the disk by parsing the filename and group from the key.
+        """
+        # Parse the key to get the filename and group
         filename, variable = self.__parse_key(key)
         if len(filename) < constants.FILENAME_LEN_MAX:
             hdf5.delete_key_from_disk(self.__filename_to_path(filename), variable)
@@ -301,18 +340,21 @@ class Driver:
         Save the current state to disk and clear the L1 and L2 caches.
         """
         for k, v in self.pending_writes.items():
+            # Parse the key before applying to HDF5
+            filename, variable = self.__parse_key(k)
             if v is None:
-                hdf5.delete_key_from_disk(self.__filename_to_path(k), k)
+                hdf5.delete_key_from_disk(self.__filename_to_path(filename), variable)
             else:
-                hdf5.set_value_to_disk(self.__filename_to_path(k), k, v, None)
+                hdf5.set_value_to_disk(self.__filename_to_path(filename), variable, v, None)
 
         self.cache.clear()
         self.pending_writes.clear()
         self.pending_reads.clear()
 
+
     def hard_apply(self, nanos):
         """
-        Save the current state to disk and L1 cache and clear the L2 cache
+        Save the current state to disk and L1 cache and clear the L2 cache.
         """
 
         deltas = {}
@@ -328,25 +370,22 @@ class Driver:
         self.pending_reads = {}
         self.pending_writes.clear()
 
-        # see if the HCL even exists
-        if self.pending_deltas.get(nanos) is None:
-            return
-
-        # Run through the sorted HCLs from oldest to newest applying each one until the hcl committed is
-
+        # Run through the sorted HCLs from oldest to newest applying each one
         to_delete = []
         for _nanos, _deltas in sorted(self.pending_deltas.items()):
             # Run through all state changes, taking the second value, which is the post delta
             for key, delta in _deltas["writes"].items():
-                hdf5.set_value_to_disk(self.__filename_to_path(key), key, delta[1], nanos)
+                # Parse the key before applying to HDF5
+                filename, variable = self.__parse_key(key)
+                hdf5.set_value_to_disk(self.__filename_to_path(filename), variable, delta[1], nanos)
 
-            # Add the key (
             to_delete.append(_nanos)
             if _nanos == nanos:
                 break
 
         # Remove the deltas from the set
         [self.pending_deltas.pop(key) for key in to_delete]
+
 
     def get_all_contract_state(self):
         """
