@@ -40,8 +40,32 @@ def get_groups(file_path):
         return list(f.keys())
 
 
+def set(file_path, group_name, value, blocknum, timeout=20):
+    """
+    Set the value and blocknum attributes in the HDF5 file for the given group.
+    """
+    # Acquire a file lock to prevent concurrent writes
+    lock = get_file_lock(file_path if isinstance(file_path, str) else file_path.filename)
+    if lock.acquire(timeout=timeout):
+        try:
+            with h5py.File(file_path, 'a') as f:
+
+                # Write value and blocknum to the group attributes
+                write_attr(f, group_name, ATTR_VALUE, value, timeout)
+                write_attr(f, group_name, ATTR_BLOCK, blocknum, timeout)
+        finally:
+            # Always release the lock after operation
+            lock.release()
+    else:
+        raise TimeoutError("Lock acquisition timed out")
+
+
 def write_attr(file_or_path, group_name, attr_name, value, timeout=20):
-    # Attempt to acquire lock with a timeout to prevent deadlock
+    """
+    Write an attribute to a group inside an HDF5 file.
+    """
+
+    # Open the file and ensure group exists, then write the attribute
     if isinstance(file_or_path, str):
         with h5py.File(file_or_path, 'a') as f:
             _write_attr_to_file(f, group_name, attr_name, value, timeout)
@@ -49,25 +73,19 @@ def write_attr(file_or_path, group_name, attr_name, value, timeout=20):
         _write_attr_to_file(file_or_path, group_name, attr_name, value, timeout)
 
 
-def _write_attr_to_file(file, group_name, attr_name, value, timeout):    
+def _write_attr_to_file(file, group_name, attr_name, value, timeout):
+    """
+    Internal method to write the attribute to the group.
+    """
+    # Ensure the group exists, or create it if necessary
     grp = file.require_group(group_name)
+
+    # Write or update the attribute in the group
     if attr_name in grp.attrs:
         del grp.attrs[attr_name]
-    if value:
+    if value is not None:
         grp.attrs[attr_name] = value
-    
 
-def set(file_path, group_name, value, blocknum, timeout=20):
-    lock = get_file_lock(file_path if isinstance(file_path, str) else file_path.filename)
-    if lock.acquire(timeout=timeout):
-        try:
-            with h5py.File(file_path, 'a') as f:
-                write_attr(f, group_name, ATTR_VALUE, value, timeout)
-                write_attr(f, group_name, ATTR_BLOCK, blocknum, timeout)
-        finally:
-            lock.release()
-    else:
-        raise TimeoutError("Lock acquisition timed out")
 
 
 def delete(file_path, group_name, timeout=20):
@@ -87,7 +105,11 @@ def delete(file_path, group_name, timeout=20):
 
 
 def set_value_to_disk(file_path, group_name, value, block_num=None, timeout=20):
+    """
+    Save value to disk with optional block number.
+    """
     encoded_value = encode(value) if value is not None else None
+ 
     set(file_path, group_name, encoded_value, block_num if block_num is not None else -1, timeout)
 
 
