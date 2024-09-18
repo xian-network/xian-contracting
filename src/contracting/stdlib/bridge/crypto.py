@@ -29,17 +29,16 @@ def key_is_valid(key: str):
 
 
 def randomx_hash(key: str, message: str):
-    try :
+    try:
         key_bytes = bytes.fromhex(key)
     except ValueError:
         key_bytes = key.encode()
-    try :
+    try:
         message_bytes = bytes.fromhex(message)
     except ValueError:
         message_bytes = message.encode()
-    # breakpoint()
-    vm = randomx.RandomX(key_bytes, full_mem=True, secure=False, large_pages=True)
-    return vm(message_bytes)
+    vm = randomx.RandomX(key_bytes, full_mem=False, secure=False, large_pages=False)
+    return vm(message_bytes).hex()
 
 
 crypto_module = ModuleType('crypto')
