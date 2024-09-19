@@ -47,10 +47,11 @@ setup(
         "pycodestyle==2.10.0",
         "autopep8==1.5.7",
         "iso8601",
-        "h5py",
         "cachetools",
         "loguru",
-        "pynacl"
+        "pynacl",
+        "randomx",
+        "h5py",
     ],
     url="https://github.com/xian-network/contracting",
     author="Xian",

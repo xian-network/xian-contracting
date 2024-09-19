@@ -67,6 +67,9 @@ unsigned long long cu_costs[256] = {
 
 unsigned long long MAX_STAMPS = 6500000;
 
+#define CRYPTO_MODULE_NAME "contracting.stdlib.bridge.crypto"
+#define RANDOMX_FUNCTION_NAME "randomx_hash"
+
 /* The Tracer type. */
 
 typedef struct {
@@ -134,18 +137,50 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         return RET_ERROR; // Use an appropriate return code
     }
 
+    // Check if the current function matches the target module and function names
+    PyCodeObject *code = PyFrame_GetCode(frame);
+    if (code == NULL) {
+        return RET_OK;
+    }
+    const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
+    if (current_function_name == NULL) {
+        Py_DECREF(code);
+        return RET_OK;
+    }
+    PyObject *globals = PyFrame_GetGlobals(frame);
+    if (globals == NULL) {
+        Py_DECREF(code);
+        return RET_OK;
+    }
+    PyObject *module_name_obj = PyDict_GetItemString(globals, "__name__");
+    if (module_name_obj == NULL) {
+        Py_DECREF(globals);
+        Py_DECREF(code);
+        return RET_OK;
+    }
+    const char *current_module_name = PyUnicode_AsUTF8(module_name_obj);
+    if (current_module_name == NULL) {
+        Py_DECREF(globals);
+        Py_DECREF(code);
+        return RET_OK;
+    }
+    if (strcmp(current_function_name, RANDOMX_FUNCTION_NAME) == 0 &&
+        strcmp(current_module_name, CRYPTO_MODULE_NAME) == 0) {
+        self->cost += 100000; // Increment the cost by a specific value (e.g., 100)
+    }
+
 
     unsigned long long estimate = 0;
     unsigned long long factor = 1000;
     const char * str;
     // IF, Frame object globals contains __contract__ and it is true, continue
     PyObject * kv = PyUnicode_FromString("__contract__");
-    PyObject * globals = PyFrame_GetGlobals(frame);
     int t = PyDict_Contains(globals, kv);
-    Py_DECREF(globals);
     Py_DECREF(kv);
 
     if (t != 1) {
+      Py_DECREF(globals);
+      Py_DECREF(code);
       return RET_OK;
     }
 
@@ -157,9 +192,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
 
     switch (what) {
     case PyTrace_LINE: /* 2 */ {
-      PyObject * code = PyFrame_GetCode(frame); // Declare 'code' variable here
-      const char * str = PyBytes_AS_STRING(PyCode_GetCode((PyCodeObject * ) code));
-      Py_DECREF(code);
+      const char * str = PyBytes_AS_STRING(PyCode_GetCode(code));
       int lasti = PyFrame_GetLasti(frame);
       opcode = str[lasti];
 
@@ -180,6 +213,8 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         PyErr_SetString(PyExc_AssertionError, "The cost has exceeded the stamp supplied!");
         PyEval_SetTrace(NULL, NULL);
         self -> started = 0;
+        Py_DECREF(globals);
+        Py_DECREF(code);
         return RET_ERROR;
       }
 
@@ -192,6 +227,8 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
           #endif
           PyEval_SetTrace(NULL, NULL);
           self -> started = 0;
+          Py_DECREF(globals);
+          Py_DECREF(code);
           return RET_ERROR;
         }
         //printf("Opcode: %d\n Cost: %lld\n Total Cost: %lld\n", opcode, cu_costs[opcode], self -> cost);
@@ -202,6 +239,8 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
       break;
     }
 
+    Py_DECREF(globals);
+    Py_DECREF(code);
     return RET_OK;
     }
 
