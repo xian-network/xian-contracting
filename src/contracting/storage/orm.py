@@ -38,6 +38,10 @@ class Hash(Datum):
         self._delimiter = constants.DELIMITER
         self._default_value = default_value
 
+        # Store the default_value in storage if it's not None
+        if default_value is not None:
+            self._driver.set(f'{self._key}{self._delimiter}__default__', default_value)
+
     def _set(self, key, value):
         self._driver.set(f'{self._key}{self._delimiter}{key}', value)
 
@@ -46,9 +50,12 @@ class Hash(Datum):
 
         # Add Python defaultdict behavior for easier smart contracting
         if value is None:
+            # Retrieve the default_value from storage if not set
+            if self._default_value is None:
+                self._default_value = self._driver.get(f'{self._key}{self._delimiter}__default__')
             value = self._default_value
 
-        if type(value) == float or type(value) == ContractingDecimal:
+        if isinstance(value, (float, ContractingDecimal)):
             return ContractingDecimal(str(value))
 
         return value
@@ -127,6 +134,10 @@ class ForeignHash(Hash):
     def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver = driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
+        self._delimiter = constants.DELIMITER
+
+        # Retrieve the default_value from the foreign Hash's storage
+        self._default_value = self._driver.get(f'{self._key}{self._delimiter}__default__')
 
     def _set(self, key, value):
         raise ReferenceError
