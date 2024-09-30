@@ -67,9 +67,6 @@ unsigned long long cu_costs[256] = {
 
 unsigned long long MAX_STAMPS = 6500000;
 
-#define CRYPTO_MODULE_NAME "contracting.stdlib.bridge.crypto"
-#define RANDOMX_FUNCTION_NAME "randomx_hash"
-
 /* The Tracer type. */
 
 typedef struct {
@@ -164,11 +161,6 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         Py_DECREF(code);
         return RET_OK;
     }
-    if (strcmp(current_function_name, RANDOMX_FUNCTION_NAME) == 0 &&
-        strcmp(current_module_name, CRYPTO_MODULE_NAME) == 0) {
-        self->cost += 100000; // Increment the cost by a specific value (e.g., 100)
-    }
-
 
     unsigned long long estimate = 0;
     unsigned long long factor = 1000;
