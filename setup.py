@@ -50,7 +50,6 @@ setup(
         "cachetools",
         "loguru",
         "pynacl",
-        "randomx",
         "h5py",
     ],
     url="https://github.com/xian-network/contracting",
