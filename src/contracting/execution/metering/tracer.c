@@ -83,6 +83,16 @@ typedef struct {
 }
 Tracer;
 
+static int get_process_id() {
+    #ifdef _WIN32
+        DWORD pid = GetCurrentProcessId();
+        return pid;
+    #else
+        pid_t pid = getpid();
+        return pid;
+    #endif
+}
+
 static int
 Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   //char *fname = getenv("CU_COST_FNAME");
@@ -93,6 +103,7 @@ Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   self -> cost = 0;
   self -> last_frame_mem_usage = 0;
   self -> total_mem_usage = 0;
+  self -> process_id = get_process_id();
 
   return RET_OK;
 }
@@ -134,6 +145,11 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         return RET_ERROR; // Use an appropriate return code
     }
 
+    if (get_process_id() != self->process_id) {
+        PyDECREF(code);
+        return RET_OK;
+    }
+
     // Check if the current function matches the target module and function names
     PyCodeObject *code = PyFrame_GetCode(frame);
     if (code == NULL) {
@@ -145,6 +161,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         Py_DECREF(code);
         return RET_OK;
     }
+    
     if (globals == NULL) {
         Py_DECREF(code);
         return RET_OK;
