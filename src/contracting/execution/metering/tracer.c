@@ -13,7 +13,6 @@
 /* Conditional inclusion of sys/resource.h for Unix-like systems */
 #ifndef _WIN32
 #include <sys/resource.h>
-#include <unistd.h>   // For Unix-like systems
 #endif
 
 #ifdef _WIN32
@@ -83,24 +82,12 @@ typedef struct {
   long total_mem_usage;
   int started;
   char * cu_cost_fname;
-  unsigned long long process_id;
   unsigned long long call_count; // Add this line to track call counts
 }
 Tracer;
 
-static int get_process_id() {
-    #ifdef _WIN32
-        DWORD pid = GetCurrentProcessId();
-        return pid;
-    #else
-        pid_t pid = getpid();
-        return pid;
-    #endif
-}
-
 static int
 Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
-  
   //char *fname = getenv("CU_COST_FNAME");
 
   //read_cu_costs(fname, self->cu_costs); // Read cu cu_costs from ones interpreted in Python
@@ -109,7 +96,6 @@ Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   self -> cost = 0;
   self -> last_frame_mem_usage = 0;
   self -> total_mem_usage = 0;
-  self -> process_id = get_process_id();
 
   return RET_OK;
 }
@@ -142,7 +128,6 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
-
     self->call_count++;
 
     if (self->call_count > 800000) {
@@ -155,10 +140,6 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     // Check if the current function matches the target module and function names
     PyCodeObject *code = PyFrame_GetCode(frame);
     if (code == NULL) {
-        return RET_OK;
-    }
-    if (get_process_id() != self->process_id) {
-        PyDECREF(code);
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
