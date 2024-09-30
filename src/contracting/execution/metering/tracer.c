@@ -146,6 +146,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     self->call_count++;
 
     if (self->call_count > 800000) {
+        self->cost += 100000; // Add a stamp cost
         PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
         PyEval_SetTrace(NULL, NULL); // Stop tracing
         self->started = 0; // Mark tracer as stopped
@@ -164,6 +165,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
     if (current_function_name == NULL) {
         Py_DECREF(code);
+        Py_DECREF(globals);
         return RET_OK;
     }
     PyObject *globals = PyFrame_GetGlobals(frame);
