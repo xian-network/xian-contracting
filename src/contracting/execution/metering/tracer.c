@@ -162,11 +162,11 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
+    PyObject *globals = PyFrame_GetGlobals(frame);
     if (current_function_name == NULL) {
         Py_DECREF(code);
         return RET_OK;
     }
-    PyObject *globals = PyFrame_GetGlobals(frame);
     if (globals == NULL) {
         Py_DECREF(code);
         return RET_OK;
