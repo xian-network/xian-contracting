@@ -142,30 +142,9 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
-
-    self->call_count++;
-
-    if (self->call_count > 800000) {
-        self->cost += 100000; // Add a stamp cost
-        PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
-        PyEval_SetTrace(NULL, NULL); // Stop tracing
-        self->started = 0; // Mark tracer as stopped
-        return RET_ERROR; // Use an appropriate return code
-    }
-
     // Check if the current function matches the target module and function names
     PyCodeObject *code = PyFrame_GetCode(frame);
     if (code == NULL) {
-        return RET_OK;
-    }
-    if (get_process_id() != self->process_id) {
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
-    if (current_function_name == NULL) {
-        Py_DECREF(code);
-        Py_DECREF(globals);
         return RET_OK;
     }
     PyObject *globals = PyFrame_GetGlobals(frame);
@@ -173,6 +152,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         Py_DECREF(code);
         return RET_OK;
     }
+
     PyObject *module_name_obj = PyDict_GetItemString(globals, "__name__");
     if (module_name_obj == NULL) {
         Py_DECREF(globals);
@@ -185,20 +165,49 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         Py_DECREF(code);
         return RET_OK;
     }
+
+    const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
+    if (current_function_name == NULL) {
+        Py_DECREF(globals);
+        Py_DECREF(code);
+        return RET_OK;
+    }
+
+    // Log the module and function names
+    printf("Module: %s, Function: %s\n", current_module_name, current_function_name);
+
+    PyObject *kv = PyUnicode_FromString("__contract__");
+    int t = PyDict_Contains(globals, kv);
+    Py_DECREF(kv);
+
+    if (t == 1) {
+        self->call_count++;
+
+        if (self->call_count > 800000) {
+            self->cost += 100000; // Add a stamp cost
+            PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
+            PyEval_SetTrace(NULL, NULL); // Stop tracing
+            self->started = 0; // Mark tracer as stopped
+            Py_DECREF(globals);
+            Py_DECREF(code);
+            return RET_ERROR; // Use an appropriate return code
+        }
+    }
+
+    if (get_process_id() != self->process_id) {
+        Py_DECREF(code);
+        Py_DECREF(globals);
+        return RET_OK;
+    }
     if (strcmp(current_function_name, RANDOMX_FUNCTION_NAME) == 0 &&
         strcmp(current_module_name, CRYPTO_MODULE_NAME) == 0) {
         self->cost += 100000; // Increment the cost by a specific value (e.g., 100)
     }
 
-
     unsigned long long estimate = 0;
     unsigned long long factor = 1000;
     const char * str;
     // IF, Frame object globals contains __contract__ and it is true, continue
-    PyObject * kv = PyUnicode_FromString("__contract__");
-    int t = PyDict_Contains(globals, kv);
-    Py_DECREF(kv);
-
     if (t != 1) {
       Py_DECREF(globals);
       Py_DECREF(code);
