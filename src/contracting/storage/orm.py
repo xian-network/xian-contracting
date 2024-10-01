@@ -35,24 +35,23 @@ class Variable(Datum):
 class Hash(Datum):
     def __init__(self, contract, name, driver: Driver = driver, default_value=None):
         super().__init__(contract, name, driver=driver)
-        self._delimiter = constants.DELIMITER
         self._default_value = default_value
 
         # Store the default_value in storage if it's not None
         if default_value is not None:
-            self._driver.set(f'{self._key}{self._delimiter}__default__', default_value)
+            self._driver.set(f'{self._key}{constants.DELIMITER}__default__', default_value)
 
     def _set(self, key, value):
-        self._driver.set(f'{self._key}{self._delimiter}{key}', value)
+        self._driver.set(f'{self._key}{constants.DELIMITER}{key}', value)
 
     def _get(self, item):
-        value = self._driver.get(f'{self._key}{self._delimiter}{item}')
+        value = self._driver.get(f'{self._key}{constants.DELIMITER}{item}')
 
         # Add Python defaultdict behavior for easier smart contracting
         if value is None:
             # Retrieve the default_value from storage if not set
             if self._default_value is None:
-                self._default_value = self._driver.get(f'{self._key}{self._delimiter}__default__')
+                self._default_value = self._driver.get(f'{self._key}{constants.DELIMITER}__default__')
             value = self._default_value
 
         if isinstance(value, (float, ContractingDecimal)):
@@ -74,9 +73,9 @@ class Hash(Datum):
                 assert constants.DELIMITER not in k, 'Illegal delimiter in key.'
                 assert constants.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
 
-                new_key_str += f'{k}{self._delimiter}'
+                new_key_str += f'{k}{constants.DELIMITER}'
 
-            key = new_key_str[:-len(self._delimiter)]
+            key = new_key_str[:-len(constants.DELIMITER)]
         else:
             key = str(key)
 
@@ -88,9 +87,9 @@ class Hash(Datum):
 
     def _prefix_for_args(self, args):
         multi = self._validate_key(args)
-        prefix = f'{self._key}{self._delimiter}'
+        prefix = f'{self._key}{constants.DELIMITER}'
         if multi != '':
-            prefix += f'{multi}{self._delimiter}'
+            prefix += f'{multi}{constants.DELIMITER}'
 
         return prefix
 
@@ -134,10 +133,9 @@ class ForeignHash(Hash):
     def __init__(self, contract, name, foreign_contract, foreign_name, driver: Driver = driver):
         super().__init__(contract, name, driver=driver)
         self._key = self._driver.make_key(foreign_contract, foreign_name)
-        self._delimiter = constants.DELIMITER
 
         # Retrieve the default_value from the foreign Hash's storage
-        self._default_value = self._driver.get(f'{self._key}{self._delimiter}__default__')
+        self._default_value = self._driver.get(f'{self._key}{constants.DELIMITER}__default__')
 
     def _set(self, key, value):
         raise ReferenceError
