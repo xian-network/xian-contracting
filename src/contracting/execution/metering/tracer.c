@@ -155,7 +155,7 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         return RET_OK;
     }
     if (get_process_id() != self->process_id) {
-        PyDECREF(code);
+        Py_DECREF(code);
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
