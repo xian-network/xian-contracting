@@ -137,6 +137,9 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
+    PyObject * globals = PyFrame_GetGlobals(frame);
+    PyCodeObject *code = PyFrame_GetCode(frame);
+
     self->call_count++;
 
     if (self->call_count > 800000) {
@@ -153,12 +156,10 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     }
 
     // Check if the current function matches the target module and function names
-    PyCodeObject *code = PyFrame_GetCode(frame);
     if (code == NULL) {
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
-    PyObject *globals = PyFrame_GetGlobals(frame);
     if (current_function_name == NULL) {
         Py_DECREF(code);
         return RET_OK;
