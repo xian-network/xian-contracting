@@ -3,6 +3,7 @@ import h5py
 from threading import Lock
 from collections import defaultdict
 from contracting.storage.encoder import encode, decode
+from contracting import constants
 
 # A dictionary to maintain file-specific locks
 file_locks = defaultdict(Lock)
@@ -119,3 +120,23 @@ def delete_key_from_disk(file_path, group_name, timeout=20):
 
 def get_value_from_disk(file_path, group_name):
     return decode(get_value(file_path, group_name))
+
+
+        
+def get_all_keys_from_file(file_path):
+    """
+    Retrieve all keys (datasets and groups) from an HDF5 file and replace '/' with a specified character.
+    
+    :param file_path: Path to the HDF5 file.
+    :param replace_char: Character to replace '/' with in the keys.
+    :return: List of all keys in the HDF5 file with '/' replaced by replace_char.
+    """
+    keys = []
+
+    def visit_func(name, node):
+        keys.append(name.replace(constants.HDF5_GROUP_SEPARATOR, constants.DELIMITER))
+
+    with h5py.File(file_path, 'r') as f:
+        f.visititems(visit_func)
+
+    return keys
