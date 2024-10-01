@@ -80,6 +80,7 @@ typedef struct {
   int started;
   char * cu_cost_fname;
   unsigned long long call_count; // Add this line to track call counts
+  int process_id; // Add this line to store the process ID
 }
 Tracer;
 
@@ -103,7 +104,7 @@ Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   self -> cost = 0;
   self -> last_frame_mem_usage = 0;
   self -> total_mem_usage = 0;
-  self -> process_id = get_process_id();
+  self -> process_id = get_process_id(); // Initialize process_id
 
   return RET_OK;
 }
@@ -136,6 +137,9 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
+    PyObject * globals = PyFrame_GetGlobals(frame);
+    PyCodeObject *code = PyFrame_GetCode(frame);
+
     self->call_count++;
 
     if (self->call_count > 800000) {
@@ -146,18 +150,16 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         return RET_ERROR; // Use an appropriate return code
     }
 
-    if (get_process_id() != self->process_id) {
-        PyDECREF(code);
+    if (get_process_id() != self->process_id) { // Check process_id
+        Py_DECREF(code);
         return RET_OK;
     }
 
     // Check if the current function matches the target module and function names
-    PyCodeObject *code = PyFrame_GetCode(frame);
     if (code == NULL) {
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
-    PyObject *globals = PyFrame_GetGlobals(frame);
     if (current_function_name == NULL) {
         Py_DECREF(code);
         Py_DECREF(globals);
