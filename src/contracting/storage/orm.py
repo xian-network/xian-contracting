@@ -1,6 +1,6 @@
 from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
-from contracting import constants
+from contracting import constants as c
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 
 driver = rt.env.get('__Driver') or Driver()
@@ -39,19 +39,19 @@ class Hash(Datum):
 
         # Store the default_value in storage if it's not None
         if default_value is not None:
-            self._driver.set(f'{self._key}{constants.DELIMITER}__default__', default_value)
+            self._driver.set(f'{self._key}{c.DELIMITER}{c.DEFAULT}', default_value)
 
     def _set(self, key, value):
-        self._driver.set(f'{self._key}{constants.DELIMITER}{key}', value)
+        self._driver.set(f'{self._key}{c.DELIMITER}{key}', value)
 
     def _get(self, item):
-        value = self._driver.get(f'{self._key}{constants.DELIMITER}{item}')
+        value = self._driver.get(f'{self._key}{c.DELIMITER}{item}')
 
         # Add Python defaultdict behavior for easier smart contracting
         if value is None:
             # Retrieve the default_value from storage if not set
             if self._default_value is None:
-                self._default_value = self._driver.get(f'{self._key}{constants.DELIMITER}__default__')
+                self._default_value = self._driver.get(f'{self._key}{c.DELIMITER}{c.DEFAULT}')
             value = self._default_value
 
         if isinstance(value, (float, ContractingDecimal)):
@@ -61,8 +61,8 @@ class Hash(Datum):
 
     def _validate_key(self, key):
         if isinstance(key, tuple):
-            assert len(key) <= constants.MAX_HASH_DIMENSIONS, (f'Too many dimensions ({len(key)}) for hash. '
-                                                               f'Max is {constants.MAX_HASH_DIMENSIONS}')
+            assert len(key) <= c.MAX_HASH_DIMENSIONS, (f'Too many dimensions ({len(key)}) for hash. '
+                                                       f'Max is {c.MAX_HASH_DIMENSIONS}')
 
             new_key_str = ''
             for k in key:
@@ -70,26 +70,26 @@ class Hash(Datum):
 
                 k = str(k)
 
-                assert constants.DELIMITER not in k, 'Illegal delimiter in key.'
-                assert constants.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
+                assert c.DELIMITER not in k, 'Illegal delimiter in key.'
+                assert c.INDEX_SEPARATOR not in k, 'Illegal separator in key.'
 
-                new_key_str += f'{k}{constants.DELIMITER}'
+                new_key_str += f'{k}{c.DELIMITER}'
 
-            key = new_key_str[:-len(constants.DELIMITER)]
+            key = new_key_str[:-len(c.DELIMITER)]
         else:
             key = str(key)
 
-            assert constants.DELIMITER not in key, 'Illegal delimiter in key.'
-            assert constants.INDEX_SEPARATOR not in key, 'Illegal separator in key.'
+            assert c.DELIMITER not in key, 'Illegal delimiter in key.'
+            assert c.INDEX_SEPARATOR not in key, 'Illegal separator in key.'
 
-        assert len(key) <= constants.MAX_KEY_SIZE, f'Key is too long ({len(key)}). Max is {constants.MAX_KEY_SIZE}.'
+        assert len(key) <= c.MAX_KEY_SIZE, f'Key is too long ({len(key)}). Max is {c.MAX_KEY_SIZE}.'
         return key
 
     def _prefix_for_args(self, args):
         multi = self._validate_key(args)
-        prefix = f'{self._key}{constants.DELIMITER}'
+        prefix = f'{self._key}{c.DELIMITER}'
         if multi != '':
-            prefix += f'{multi}{constants.DELIMITER}'
+            prefix += f'{multi}{c.DELIMITER}'
 
         return prefix
 
@@ -135,7 +135,7 @@ class ForeignHash(Hash):
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
         # Retrieve the default_value from the foreign Hash's storage
-        self._default_value = self._driver.get(f'{self._key}{constants.DELIMITER}__default__')
+        self._default_value = self._driver.get(f'{self._key}{c.DELIMITER}{c.DEFAULT}')
 
     def _set(self, key, value):
         raise ReferenceError
