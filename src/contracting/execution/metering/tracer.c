@@ -13,7 +13,6 @@
 /* Conditional inclusion of sys/resource.h for Unix-like systems */
 #ifndef _WIN32
 #include <sys/resource.h>
-#include <unistd.h>   // For Unix-like systems
 #endif
 
 #ifdef _WIN32
@@ -80,8 +79,8 @@ typedef struct {
   long total_mem_usage;
   int started;
   char * cu_cost_fname;
-  unsigned long long process_id;
   unsigned long long call_count; // Add this line to track call counts
+  int process_id; // Add this line to store the process ID
 }
 Tracer;
 
@@ -97,7 +96,6 @@ static int get_process_id() {
 
 static int
 Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
-  
   //char *fname = getenv("CU_COST_FNAME");
 
   //read_cu_costs(fname, self->cu_costs); // Read cu cu_costs from ones interpreted in Python
@@ -106,7 +104,7 @@ Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   self -> cost = 0;
   self -> last_frame_mem_usage = 0;
   self -> total_mem_usage = 0;
-  self -> process_id = get_process_id();
+  self -> process_id = get_process_id(); // Initialize process_id
 
   return RET_OK;
 }
@@ -139,31 +137,35 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
+    PyObject * globals = PyFrame_GetGlobals(frame);
+    PyCodeObject *code = PyFrame_GetCode(frame);
 
     self->call_count++;
 
     if (self->call_count > 800000) {
+        self->cost += 100000; // Add a stamp cost
         PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
         PyEval_SetTrace(NULL, NULL); // Stop tracing
         self->started = 0; // Mark tracer as stopped
         return RET_ERROR; // Use an appropriate return code
     }
 
-    // Check if the current function matches the target module and function names
-    PyCodeObject *code = PyFrame_GetCode(frame);
-    if (code == NULL) {
+    if (get_process_id() != self->process_id) { // Check process_id
+        Py_DECREF(code);
         return RET_OK;
     }
-    if (get_process_id() != self->process_id) {
-        Py_DECREF(code);
+
+    // Check if the current function matches the target module and function names
+    if (code == NULL) {
         return RET_OK;
     }
     const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
     if (current_function_name == NULL) {
         Py_DECREF(code);
+        Py_DECREF(globals);
         return RET_OK;
     }
-    PyObject *globals = PyFrame_GetGlobals(frame);
+    
     if (globals == NULL) {
         Py_DECREF(code);
         return RET_OK;
