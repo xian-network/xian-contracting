@@ -67,38 +67,6 @@ unsigned long long cu_costs[256] = {
 
 unsigned long long MAX_STAMPS = 6500000;
 
-/* Modules traced by the tracer */
-char *whitelisted_modules[] = {
-    "contextlib",
-    "contracting.compilation.compiler",
-    "contracting.compilation.linter",
-    "contracting.compilation.parser",
-    "contracting.compilation.whitelists",
-    "contracting.execution.driver",
-    "contracting.execution.executor",
-    "contracting.execution.metering.orm",
-    "contracting.execution.module",
-    "contracting.execution.runtime",
-    "contracting.stdlib.bridge.access",
-    "contracting.stdlib.bridge.crypto",
-    "contracting.stdlib.bridge.decimal",
-    "contracting.stdlib.bridge.hashing",
-    "contracting.stdlib.bridge.imports",
-    "contracting.stdlib.bridge.orm",
-    "contracting.stdlib.bridge.random",
-    "contracting.stdlib.bridge.time",
-    "contracting.storage.contract",
-    "contracting.storage.driver",
-    "contracting.storage.encoder",
-    "contracting.storage.orm",
-    "importlib._bootstrap",
-    "json",
-    "json.decoder",
-    "json.encoder",
-    "os",
-    "re"
-};
-
 /* The Tracer type. */
 
 typedef struct {
@@ -115,17 +83,6 @@ typedef struct {
   int process_id; // Add this line to store the process ID
 }
 Tracer;
-
-/* Helper function to check if a module is whitelisted to be traced */
-int is_whitelisted_module(const char *module_name) {
-    int num_whitelisted_modules = sizeof(whitelisted_modules) / sizeof(whitelisted_modules[0]);
-    for (int i = 0; i < num_whitelisted_modules; i++) {
-        if (strcmp(module_name, whitelisted_modules[i]) == 0) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 static int get_process_id() {
     #ifdef _WIN32
@@ -225,19 +182,6 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
         Py_DECREF(code);
         return RET_OK;
     }
-
-    
-
-
-    // Check if the current module or function is whitelisted to be traced
-    if (!is_whitelisted_module(current_module_name)) {
-        printf("Skipping Module: %s, Function: %s\n", current_module_name, current_function_name);
-        Py_DECREF(globals);
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    // Print the traced module and function name
-    printf("Tracing Module: %s, Function: %s\n", current_module_name, current_function_name);
 
     unsigned long long estimate = 0;
     unsigned long long factor = 1000;
