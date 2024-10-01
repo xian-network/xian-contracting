@@ -394,13 +394,14 @@ class Driver:
         all_contract_state = {}
         for file_path in self.contract_state.iterdir():
             filename = file_path.name
-            keys = self.__get_keys_from_file(self.__filename_to_path(filename))
+            keys = hdf5.get_all_keys_from_file(self.__filename_to_path(filename))
             for key in keys:
-                full_key = f"{key}"
-                value = hdf5.get_value_from_disk(self.__filename_to_path(filename), key)
+                full_key = f"{filename}{DELIMITER}{key}"
+                value = self.get(full_key)
                 all_contract_state[full_key] = value
 
         return all_contract_state
+    
 
     def get_run_state(self):
         """
