@@ -80,6 +80,7 @@ typedef struct {
   int started;
   char * cu_cost_fname;
   unsigned long long call_count; // Add this line to track call counts
+  int process_id; // Add this line to store the process ID
 }
 Tracer;
 
@@ -103,7 +104,7 @@ Tracer_init(Tracer * self, PyObject * args, PyObject * kwds) {
   self -> cost = 0;
   self -> last_frame_mem_usage = 0;
   self -> total_mem_usage = 0;
-  self -> process_id = get_process_id();
+  self -> process_id = get_process_id(); // Initialize process_id
 
   return RET_OK;
 }
@@ -139,14 +140,15 @@ Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
     self->call_count++;
 
     if (self->call_count > 800000) {
+        self->cost += 100000; // Add a stamp cost
         PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
         PyEval_SetTrace(NULL, NULL); // Stop tracing
         self->started = 0; // Mark tracer as stopped
         return RET_ERROR; // Use an appropriate return code
     }
 
-    if (get_process_id() != self->process_id) {
-        PyDECREF(code);
+    if (get_process_id() != self->process_id) { // Check process_id
+        Py_DECREF(code);
         return RET_OK;
     }
 
