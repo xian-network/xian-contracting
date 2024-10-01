@@ -69,12 +69,6 @@ unsigned long long MAX_STAMPS = 6500000;
 
 /* Modules traced by the tracer */
 char *whitelisted_modules[] = {
-    "ast",
-    "astor.code_gen",
-    "astor.node_util",
-    "astor.op_util",
-    "astor.source_repr",
-    "astor.string_repr",
     "contextlib",
     "contracting.compilation.compiler",
     "contracting.compilation.linter",
@@ -97,16 +91,12 @@ char *whitelisted_modules[] = {
     "contracting.storage.driver",
     "contracting.storage.encoder",
     "contracting.storage.orm",
-    "functools",
     "importlib._bootstrap",
-    "importlib.util",
     "json",
     "json.decoder",
     "json.encoder",
-    "namedtuple_string_info",
     "os",
-    "re",
-    "random",
+    "re"
 };
 
 /* The Tracer type. */
