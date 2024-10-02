@@ -27,9 +27,6 @@ cu_costs = {
 # Define maximum stamps
 MAX_STAMPS = 6500000
 
-CRYPTO_MODULE_NAME = "contracting.stdlib.bridge.crypto"
-RANDOMX_FUNCTION_NAME = "randomx_hash"
-
 class Tracer:
     def __init__(self):
         self.cost = 0
@@ -100,10 +97,6 @@ class Tracer:
             current_function_name = code.co_name
             globals_dict = frame.f_globals
             module_name = globals_dict.get('__name__', '')
-
-            if (current_function_name == RANDOMX_FUNCTION_NAME and
-                module_name == CRYPTO_MODULE_NAME):
-                self.cost += 100000  # Increment the cost by a specific value
 
             # Only trace code within contracts (if '__contract__' in globals)
             if '__contract__' not in globals_dict:
