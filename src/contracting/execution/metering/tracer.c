@@ -139,384 +139,389 @@ static long get_memory_usage() {
 
 static int
 Tracer_trace(Tracer * self, PyFrameObject * frame, int what, PyObject * arg) {
-
-    self->call_count++;
-
-    if (self->call_count > 800000) {
-        PyErr_SetString(PyExc_AssertionError, "Call count exceeded threshold! Infinite Loop?");
-        PyEval_SetTrace(NULL, NULL); // Stop tracing
-        self->started = 0; // Mark tracer as stopped
-        return RET_ERROR; // Use an appropriate return code
-    }
-
-    // Check if the current function matches the target module and function names
-    PyCodeObject *code = PyFrame_GetCode(frame);
-    if (code == NULL) {
-        return RET_OK;
-    }
-    if (get_process_id() != self->process_id) {
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    const char *current_function_name = PyUnicode_AsUTF8(code->co_name);
-    if (current_function_name == NULL) {
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    PyObject *globals = PyFrame_GetGlobals(frame);
-    if (globals == NULL) {
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    PyObject *module_name_obj = PyDict_GetItemString(globals, "__name__");
-    if (module_name_obj == NULL) {
-        Py_DECREF(globals);
-        Py_DECREF(code);
-        return RET_OK;
-    }
-    const char *current_module_name = PyUnicode_AsUTF8(module_name_obj);
-    if (current_module_name == NULL) {
-        Py_DECREF(globals);
-        Py_DECREF(code);
-        return RET_OK;
-    }
-
-    unsigned long long estimate = 0;
-    unsigned long long factor = 1000;
-    const char * str;
-    // IF, Frame object globals contains __contract__ and it is true, continue
-    PyObject * kv = PyUnicode_FromString("__contract__");
-    int t = PyDict_Contains(globals, kv);
-    Py_DECREF(kv);
-
-    if (t != 1) {
-      Py_DECREF(globals);
-      Py_DECREF(code);
-      return RET_OK;
-    }
-
-    if (self -> last_frame_mem_usage == 0) {
-      self -> last_frame_mem_usage = get_memory_usage();
-    }
-
-    int opcode;
+    // printf("Tracer_trace called with what: %d\n", what);
+    fflush(stdout);
 
     switch (what) {
     case PyTrace_LINE: /* 2 */ {
-      const char * str = PyBytes_AS_STRING(PyCode_GetCode(code));
-      int lasti = PyFrame_GetLasti(frame);
-      opcode = str[lasti];
+        // printf("Entered PyTrace_LINE block\n");
+        fflush(stdout);
 
-      if (opcode < 0) opcode = -opcode;
-      estimate = (self -> cost + cu_costs[opcode]) / factor;
-      estimate = estimate + 1;
+        PyCodeObject *code = PyFrame_GetCode(frame);
+        if (code == NULL) {
+            // printf("Failed to get code object\n");
+            fflush(stdout);
+            return RET_OK;
+        }
+        // printf("Got code object\n");
+        fflush(stdout);
 
-      long new_memory_usage = get_memory_usage();
+        PyObject *bytecode = PyCode_GetCode(code);
+        if (bytecode == NULL) {
+            printf("Failed to get bytecode object\n");
+            fflush(stdout);
+            Py_DECREF(code);
+            return RET_OK;
+        }
+        // printf("Got bytecode object\n");
+        fflush(stdout);
 
-      if (new_memory_usage > self -> last_frame_mem_usage) {
-        self -> total_mem_usage += (new_memory_usage - self -> last_frame_mem_usage);
-      }
+        const char *str = PyBytes_AS_STRING(bytecode);
+        if (str == NULL) {
+            printf("Failed to get bytecode string\n");
+            fflush(stdout);
+            Py_DECREF(bytecode);
+            Py_DECREF(code);
+            return RET_OK;
+        }
+        // printf("Got bytecode string\n");
+        fflush(stdout);
 
-      self -> last_frame_mem_usage = new_memory_usage;
+        int lasti = PyFrame_GetLasti(frame);
+        // printf("Last instruction index: %d\n", lasti);
+        fflush(stdout);
 
-      //estimate = estimate * factor;
-      if ((self -> cost > self -> stamp_supplied) || self -> cost > MAX_STAMPS) {
-        PyErr_SetString(PyExc_AssertionError, "The cost has exceeded the stamp supplied!");
-        PyEval_SetTrace(NULL, NULL);
-        self -> started = 0;
-        Py_DECREF(globals);
-        Py_DECREF(code);
-        return RET_ERROR;
-      }
+        int opcode = str[lasti];
+        // printf("Opcode: %d\n", opcode);
+        fflush(stdout);
 
-      #ifdef unix
-      if (self -> total_mem_usage > 500000) {
-        PyErr_Format(PyExc_AssertionError, "Transaction exceeded memory usage! Total usage: %ld kilobytes", self -> total_mem_usage);
-        #else
-        if (self -> total_mem_usage > 500000000) {
-          PyErr_Format(PyExc_AssertionError, "Transaction exceeded memory usage! Total usage: %ld bytes", self -> total_mem_usage);
-          #endif
+        if (opcode < 0) opcode = -opcode;
+        unsigned long long estimate = (self->cost + cu_costs[opcode]) / 1000;
+        estimate = estimate + 1;
+
+        // Log the opcode and its cost if the cost is greater than 0
+        if (cu_costs[opcode] > 0) {
+            printf("Opcode: %d, Cost: %llu\n", opcode, cu_costs[opcode]);
+            fflush(stdout); // Ensure the output is flushed
+        }
+
+        long new_memory_usage = get_memory_usage();
+        // printf("New memory usage: %ld\n", new_memory_usage);
+        fflush(stdout);
+
+        if (self -> last_frame_mem_usage == 0) {
+          self -> last_frame_mem_usage = get_memory_usage();
+        }
+
+        if (new_memory_usage > self -> last_frame_mem_usage) {
+          self -> total_mem_usage += (new_memory_usage - self -> last_frame_mem_usage);
+        }
+
+        self -> last_frame_mem_usage = new_memory_usage;
+
+        //estimate = estimate * factor;
+        if ((self -> cost > self -> stamp_supplied) || self -> cost > MAX_STAMPS) {
+          PyErr_SetString(PyExc_AssertionError, "The cost has exceeded the stamp supplied!");
           PyEval_SetTrace(NULL, NULL);
           self -> started = 0;
-          Py_DECREF(globals);
+          Py_DECREF(bytecode);
           Py_DECREF(code);
           return RET_ERROR;
         }
-        //printf("Opcode: %d\n Cost: %lld\n Total Cost: %lld\n", opcode, cu_costs[opcode], self -> cost);
-        self -> cost += cu_costs[opcode];
+
+        #ifdef unix
+        if (self -> total_mem_usage > 500000) {
+          PyErr_Format(PyExc_AssertionError, "Transaction exceeded memory usage! Total usage: %ld kilobytes", self -> total_mem_usage);
+          #else
+          if (self -> total_mem_usage > 500000000) {
+            PyErr_Format(PyExc_AssertionError, "Transaction exceeded memory usage! Total usage: %ld bytes", self -> total_mem_usage);
+            #endif
+            PyEval_SetTrace(NULL, NULL);
+            self -> started = 0;
+            Py_DECREF(bytecode);
+            Py_DECREF(code);
+            return RET_ERROR;
+          }
+          //printf("Opcode: %d\n Cost: %lld\n Total Cost: %lld\n", opcode, cu_costs[opcode], self -> cost);
+          self -> cost += cu_costs[opcode];
+          Py_DECREF(bytecode);
+          Py_DECREF(code);
+          break;
+        }
+        default:
+        // printf("Default case for what: %d\n", what);
+        // fflush(stdout);
         break;
-      }
-      default:
-      break;
     }
 
-    Py_DECREF(globals);
-    Py_DECREF(code);
     return RET_OK;
+}
+
+static PyObject *
+Tracer_start(Tracer * self, PyObject * args) {
+    printf("Tracer_start called\n");
+    fflush(stdout);
+
+    PyEval_SetTrace((Py_tracefunc) Tracer_trace, (PyObject * ) self);
+    self -> cost = 0;
+    self->call_count = 0;
+    self -> started = 1;
+
+    printf("Tracer started\n");
+    fflush(stdout);
+
+    return Py_BuildValue("");
+}
+
+static PyObject *
+Tracer_stop(Tracer * self, PyObject * args) {
+    printf("Tracer_stop called\n");
+    fflush(stdout);
+
+    if (self -> started) {
+        PyEval_SetTrace(NULL, NULL);
+        self -> started = 0;
+
+        printf("Tracer stopped\n");
+        fflush(stdout);
     }
 
-    static PyObject *
-      Tracer_start(Tracer * self, PyObject * args) {
-        PyEval_SetTrace((Py_tracefunc) Tracer_trace, (PyObject * ) self);
-        self -> cost = 0;
-        self->call_count = 0;
-        self -> started = 1;
-        return Py_BuildValue("");
-      }
+    return Py_BuildValue("");
+}
 
-    static PyObject *
-      Tracer_stop(Tracer * self, PyObject * args) {
-        if (self -> started) {
-          PyEval_SetTrace(NULL, NULL);
-          self -> started = 0;
-        }
+static PyObject *
+Tracer_set_stamp(Tracer * self, PyObject * args, PyObject * kwds) {
+    PyArg_ParseTuple(args, "L", & self -> stamp_supplied);
+    return Py_BuildValue("");
+}
 
-        return Py_BuildValue("");
-      }
+static PyObject *
+Tracer_reset(Tracer * self) {
+    self -> cost = 0;
+    self -> stamp_supplied = 0;
+    self -> started = 0;
+    self -> last_frame_mem_usage = 0;
+    self -> total_mem_usage = 0;
 
-    static PyObject *
-      Tracer_set_stamp(Tracer * self, PyObject * args, PyObject * kwds) {
-        PyArg_ParseTuple(args, "L", & self -> stamp_supplied);
-        return Py_BuildValue("");
-      }
+    return Py_BuildValue("");
+}
 
-    static PyObject *
-      Tracer_reset(Tracer * self) {
-        self -> cost = 0;
-        self -> stamp_supplied = 0;
+static PyObject *
+Tracer_add_cost(Tracer * self, PyObject * args, PyObject * kwds) {
+    // This allows you to arbitrarily add to the cost variable from Python
+    // Implemented for adding costs to database read / write operations
+    unsigned long long new_cost;
+    PyArg_ParseTuple(args, "L", & new_cost);
+    self -> cost += new_cost;
+
+    if (self -> cost > self -> stamp_supplied) {
+        PyErr_SetString(PyExc_AssertionError, "The cost has exceeded the stamp supplied!\n");
+        PyEval_SetTrace(NULL, NULL);
         self -> started = 0;
-        self -> last_frame_mem_usage = 0;
-        self -> total_mem_usage = 0;
+        return NULL;
+    }
 
-        return Py_BuildValue("");
-      }
+    return Py_BuildValue("");
+}
 
-    static PyObject *
-      Tracer_add_cost(Tracer * self, PyObject * args, PyObject * kwds) {
-        // This allows you to arbitrarily add to the cost variable from Python
-        // Implemented for adding costs to database read / write operations
-        unsigned long long new_cost;
-        PyArg_ParseTuple(args, "L", & new_cost);
-        self -> cost += new_cost;
+static PyObject *
+Tracer_get_stamp_used(Tracer * self, PyObject * args, PyObject * kwds) {
+    return Py_BuildValue("L", self -> cost);
+}
 
-        if (self -> cost > self -> stamp_supplied) {
-          PyErr_SetString(PyExc_AssertionError, "The cost has exceeded the stamp supplied!\n");
-          PyEval_SetTrace(NULL, NULL);
-          self -> started = 0;
-          return NULL;
-        }
+static PyObject *
+Tracer_get_last_frame_mem_usage(Tracer * self, PyObject * args, PyObject * kwds) {
+    return Py_BuildValue("L", self -> last_frame_mem_usage);
+}
 
-        return Py_BuildValue("");
-      }
+static PyObject *
+Tracer_get_total_mem_usage(Tracer * self, PyObject * args, PyObject * kwds) {
+    return Py_BuildValue("L", self -> total_mem_usage);
+}
 
-    static PyObject *
-      Tracer_get_stamp_used(Tracer * self, PyObject * args, PyObject * kwds) {
-        return Py_BuildValue("L", self -> cost);
-      }
+static PyObject *
+Tracer_is_started(Tracer * self) {
+    return Py_BuildValue("i", self -> started);
+}
 
-    static PyObject *
-      Tracer_get_last_frame_mem_usage(Tracer * self, PyObject * args, PyObject * kwds) {
-        return Py_BuildValue("L", self -> last_frame_mem_usage);
-      }
-
-    static PyObject *
-      Tracer_get_total_mem_usage(Tracer * self, PyObject * args, PyObject * kwds) {
-        return Py_BuildValue("L", self -> total_mem_usage);
-      }
-
-    static PyObject *
-      Tracer_is_started(Tracer * self) {
-        return Py_BuildValue("i", self -> started);
-      }
-
-    static PyMemberDef
-    Tracer_members[] = {
-      {
+static PyMemberDef
+Tracer_members[] = {
+    {
         "started",
         T_OBJECT,
         offsetof(Tracer, started),
         0,
         PyDoc_STR("Whether or not the tracer has been enabled")
-      },
-    };
+    },
+};
 
-    static PyMethodDef
-    Tracer_methods[] = {
-      {
+static PyMethodDef
+Tracer_methods[] = {
+    {
         "start",
         (PyCFunction) Tracer_start,
         METH_VARARGS,
         PyDoc_STR("Start the tracer")
-      },
+    },
 
-      {
+    {
         "stop",
         (PyCFunction) Tracer_stop,
         METH_VARARGS,
         PyDoc_STR("Stop the tracer")
-      },
+    },
 
-      {
+    {
         "reset",
         (PyCFunction) Tracer_reset,
         METH_VARARGS,
         PyDoc_STR("Resets the tracer")
-      },
+    },
 
-      {
+    {
         "add_cost",
         (PyCFunction) Tracer_add_cost,
         METH_VARARGS,
         PyDoc_STR("Add to the cost. Throws AssertionError if cost exceeds stamps supplied.")
-      },
+    },
 
-      {
+    {
         "set_stamp",
         (PyCFunction) Tracer_set_stamp,
         METH_VARARGS,
         PyDoc_STR("Set the stamp before starting the tracer")
-      },
+    },
 
-      {
+    {
         "get_stamp_used",
         (PyCFunction) Tracer_get_stamp_used,
         METH_VARARGS,
         PyDoc_STR("Get the stamp usage after it's been completed")
-      },
+    },
 
-      {
+    {
         "get_last_frame_mem_usage",
         (PyCFunction) Tracer_get_last_frame_mem_usage,
         METH_VARARGS,
         PyDoc_STR("Get the memory usage of the last Python frame processed.")
-      },
+    },
 
-      {
+    {
         "get_total_mem_usage",
         (PyCFunction) Tracer_get_total_mem_usage,
         METH_VARARGS,
         PyDoc_STR("Get the total memory usage after it's been completed")
-      },
+    },
 
-      {
+    {
         "is_started",
         (PyCFunction) Tracer_is_started,
         METH_VARARGS,
         PyDoc_STR("Returns 1 if tracer is started, 0 if not.")
-      },
+    },
 
-      {
+    {
         NULL
-      }
-    };
+    }
+};
 
-    static PyTypeObject
-    TracerType = {
-        MyType_HEAD_INIT
-        "contracting.execution.metering.tracer",    /*tp_name*/
-        sizeof(Tracer),                             /*tp_basicsize*/
-        0,                                          /*tp_itemsize*/
-        (destructor)Tracer_dealloc,                 /*tp_dealloc*/
-        0,                                          /*tp_print*/
-        0,                                          /*tp_getattr*/
-        0,                                          /*tp_setattr*/
-        0,                                          /*tp_compare*/
-        0,                                          /*tp_repr*/
-        0,                                          /*tp_as_number*/
-        0,                                          /*tp_as_sequence*/
-        0,                                          /*tp_as_mapping*/
-        0,                                          /*tp_hash */
-        0,                                          /*tp_call*/
-        0,                                          /*tp_str*/
-        0,                                          /*tp_getattro*/
-        0,                                          /*tp_setattro*/
-        0,                                          /*tp_as_buffer*/
-        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /*tp_flags*/
-        "Tracer objects",                           /* tp_doc */
-        0,                                          /* tp_traverse */
-        0,                                          /* tp_clear */
-        0,                                          /* tp_richcompare */
-        0,                                          /* tp_weaklistoffset */
-        0,                                          /* tp_iter */
-        0,                                          /* tp_iternext */
-        Tracer_methods,                             /* tp_methods */
-        Tracer_members,                             /* tp_members */
-        0,                                          /* tp_getset */
-        0,                                          /* tp_base */
-        0,                                          /* tp_dict */
-        0,                                          /* tp_descr_get */
-        0,                                          /* tp_descr_set */
-        0,                                          /* tp_dictoffset */
-        (initproc)Tracer_init,                      /* tp_init */
-        0,                                          /* tp_alloc */
-        0,                                          /* tp_new */
-    };
+static PyTypeObject
+TracerType = {
+    MyType_HEAD_INIT
+    "contracting.execution.metering.tracer",    /*tp_name*/
+    sizeof(Tracer),                             /*tp_basicsize*/
+    0,                                          /*tp_itemsize*/
+    (destructor)Tracer_dealloc,                 /*tp_dealloc*/
+    0,                                          /*tp_print*/
+    0,                                          /*tp_getattr*/
+    0,                                          /*tp_setattr*/
+    0,                                          /*tp_compare*/
+    0,                                          /*tp_repr*/
+    0,                                          /*tp_as_number*/
+    0,                                          /*tp_as_sequence*/
+    0,                                          /*tp_as_mapping*/
+    0,                                          /*tp_hash */
+    0,                                          /*tp_call*/
+    0,                                          /*tp_str*/
+    0,                                          /*tp_getattro*/
+    0,                                          /*tp_setattro*/
+    0,                                          /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /*tp_flags*/
+    "Tracer objects",                           /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    Tracer_methods,                             /* tp_methods */
+    Tracer_members,                             /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)Tracer_init,                      /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+};
 
-    /* Module definition */
+/* Module definition */
 
-    #define MODULE_DOC PyDoc_STR("Fast tracer for Smart Contract metering.")
+#define MODULE_DOC PyDoc_STR("Fast tracer for Smart Contract metering.")
 
-    #if PY_MAJOR_VERSION >= 3
+#if PY_MAJOR_VERSION >= 3
 
-    static PyModuleDef
-    moduledef = {
-      PyModuleDef_HEAD_INIT,
-      "contracting.execution.metering.tracer",
-      MODULE_DOC,
-      -1,
-      NULL,
-      /* methods */
-      NULL,
-      NULL,
-      /* traverse */
-      NULL,
-      /* clear */
-      NULL
-    };
+static PyModuleDef
+moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "contracting.execution.metering.tracer",
+    MODULE_DOC,
+    -1,
+    NULL,
+    /* methods */
+    NULL,
+    NULL,
+    /* traverse */
+    NULL,
+    /* clear */
+    NULL
+};
 
-    PyObject *
-      PyInit_tracer(void) {
-        Py_Initialize();
-        PyObject * mod = PyModule_Create( & moduledef);
+PyObject *
+PyInit_tracer(void) {
+    Py_Initialize();
+    PyObject * mod = PyModule_Create( & moduledef);
 
-        if (mod == NULL) {
-          Py_DECREF(mod);
-          return NULL;
-        }
+    if (mod == NULL) {
+        Py_DECREF(mod);
+        return NULL;
+    }
 
-        TracerType.tp_new = PyType_GenericNew;
+    TracerType.tp_new = PyType_GenericNew;
 
-        if (PyType_Ready( & TracerType) < 0) {
-          Py_DECREF(mod);
-          Py_DECREF( & TracerType);
-          printf("Not ready");
-          return NULL;
-        }
+    if (PyType_Ready( & TracerType) < 0) {
+        Py_DECREF(mod);
+        Py_DECREF( & TracerType);
+        printf("Not ready");
+        return NULL;
+    }
 
-        PyModule_AddObject(mod, "Tracer", (PyObject * ) & TracerType);
-        return mod;
-      }
+    PyModule_AddObject(mod, "Tracer", (PyObject * ) & TracerType);
+    return mod;
+}
 
-    #else
+#else
 
-    void
-    inittracer(void) {
-      PyObject * mod;
-      mod = Py_InitModule3("contracting.execution.metering.tracer", NULL, MODULE_DOC);
+void
+inittracer(void) {
+    PyObject * mod;
+    mod = Py_InitModule3("contracting.execution.metering.tracer", NULL, MODULE_DOC);
 
-      if (mod == NULL) {
+    if (mod == NULL) {
         Py_DECREF(mod);
         return;
-      }
+    }
 
-      TracerType.tp_new = PyType_GenericNew;
-      if (PyType_Ready( & TracerType) < 0) {
+    TracerType.tp_new = PyType_GenericNew;
+    if (PyType_Ready( & TracerType) < 0) {
         Py_DECREF(mod);
         Py_DECREF( & TracerType);
         return;
-      }
-
-      PyModule_AddObject(mod, "Tracer", (PyObject * ) & TracerType);
     }
 
-    #endif /* Py3k */
+    PyModule_AddObject(mod, "Tracer", (PyObject * ) & TracerType);
+}
+
+#endif /* Py3k */
