@@ -152,12 +152,10 @@ class ContractingDecimal:
         return fix_precision(self._d.__rtruediv__(self._get_other(other)))
 
     def __divmod__(self, other):
-        q, r = self._d.__divmod__(self._get_other(other))
-        return fix_precision(q), fix_precision(r)
+        return fix_precision(self._d.__divmod__(self._get_other(other)))
 
     def __rdivmod__(self, other):
-        q, r = self._get_other(other).__divmod__(self._d)
-        return fix_precision(q), fix_precision(r)
+        return fix_precision(self._d.__divmod__(self._get_other(other)))
 
     def __mod__(self, other):
         return fix_precision(self._d.__mod__(self._get_other(other)))
