@@ -101,6 +101,25 @@ class Hash(Datum):
         prefix = self._prefix_for_args(args)
         return self._driver.items(prefix=prefix)
 
+    def items(self, *args):
+        kvs = self._items(*args)
+        prefix = self._prefix_for_args(args)
+        processed_items = {}
+        for full_key, value in kvs.items():
+            # Remove the prefix from the full key
+            key_suffix = full_key[len(prefix):]
+            if key_suffix.startswith(self._delimiter):
+                key_suffix = key_suffix[len(self._delimiter):]
+            # Split the key_suffix by delimiter to get the original key components
+            key_components = key_suffix.split(self._delimiter)
+            # If the key was a tuple, reconstruct it
+            if len(key_components) == 1:
+                key = key_components[0]
+            else:
+                key = tuple(key_components)
+            processed_items[key] = value
+        return processed_items.items()
+
     def clear(self, *args):
         kvs = self._items(*args)
 
@@ -145,6 +164,9 @@ class ForeignHash(Hash):
 
     def __getitem__(self, item):
         return super().__getitem__(item)
+
+    def items(self, *args):
+        return super().items(*args)
 
     def clear(self, *args):
         raise Exception('Cannot write with a ForeignHash.')
