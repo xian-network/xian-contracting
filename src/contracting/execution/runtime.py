@@ -1,4 +1,5 @@
 from contracting import constants
+from contracting.execution.tracer import Tracer
 
 import contracting
 import sys
