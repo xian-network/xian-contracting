@@ -15,8 +15,7 @@ setup(
         "cachetools",
         "loguru",
         "pynacl",
-        "randomx",
-        "psutil"
+        "psutil",
     ],
     url="https://github.com/xian-network/contracting",
     author="Xian",
