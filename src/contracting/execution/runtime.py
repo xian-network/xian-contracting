@@ -4,6 +4,7 @@ from contracting.execution.tracer import Tracer
 import contracting
 import sys
 import os
+import importlib
 
 
 class Context:
@@ -111,6 +112,7 @@ class Runtime:
             if sys.modules.get(mod) is not None:
                 del sys.modules[mod]
 
+        importlib.invalidate_caches()
         cls.loaded_modules = []
         cls.env = {}
 
