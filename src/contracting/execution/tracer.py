@@ -3,7 +3,7 @@ import dis
 import threading
 import psutil
 import os
-
+from loguru import logger
 # Define the opcode costs
 cu_costs = {
     0: 2, 1: 2, 2: 4, 3: 4, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 2, 10: 2, 11: 4, 12: 2,
@@ -29,6 +29,7 @@ MAX_STAMPS = 6500000
 
 class Tracer:
     def __init__(self):
+        logger.debug("Tracer initialized")
         self.cost = 0
         self.stamp_supplied = 0
         self.last_frame_mem_usage = 0
@@ -38,21 +39,27 @@ class Tracer:
         self.max_call_count = 800000
         self.instruction_cache = {}
         self.lock = threading.Lock()
+        self.opcodes_called = {}
 
     def start(self):
+        logger.info("Starting tracer")
         sys.settrace(self.trace_func)
         self.cost = 0
+        self.opcodes_called = {}
         self.call_count = 0
         self.started = True
 
     def stop(self):
+        logger.info("Stopping tracer")
         if self.started:
             sys.settrace(None)
             self.started = False
 
     def reset(self):
+        logger.info("Resetting tracer")
         self.stop()
         self.cost = 0
+        self.opcodes_called = {}
         self.stamp_supplied = 0
         self.last_frame_mem_usage = 0
         self.total_mem_usage = 0
@@ -66,9 +73,18 @@ class Tracer:
         if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
             self.stop()
             raise AssertionError("The cost has exceeded the stamp supplied!")
+        
+    def add_opcode(self, opcode):
+        if opcode in self.opcodes_called:
+            self.opcodes_called[opcode] += 1
+        else:
+            self.opcodes_called[opcode] = 1
 
     def get_stamp_used(self):
         return self.cost
+    
+    def get_opcodes_called(self):
+        return self.opcodes_called
 
     def get_last_frame_mem_usage(self):
         return self.last_frame_mem_usage
@@ -123,7 +139,8 @@ class Tracer:
             # Add cost based on opcode
             opcode_cost = cu_costs.get(opcode, 1)  # Default cost if opcode not found
             self.cost += opcode_cost
-
+            self.add_opcode(opcode)
+            
             if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
                 self.stop()
                 raise AssertionError("The cost has exceeded the stamp supplied!")

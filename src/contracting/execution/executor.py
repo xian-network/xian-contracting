@@ -151,6 +151,9 @@ class Executor:
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
+        opcodes_called = runtime.rt.tracer.get_opcodes_called()
+        
+        logger.debug(f"Opcodes called: {opcodes_called}")
 
         stamps_used = stamps_used // 1000
         stamps_used += 5
@@ -175,6 +178,8 @@ class Executor:
 
             if auto_commit:
                 driver.commit()
+                
+        logger.debug(f"Pending writes: {driver.pending_writes}")
 
         Seeded.s = False
         runtime.rt.clean_up()
