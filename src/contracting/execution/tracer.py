@@ -74,11 +74,12 @@ class Tracer:
             self.stop()
             raise AssertionError("The cost has exceeded the stamp supplied!")
         
-    def add_opcode(self, opcode):
-        if opcode in self.opcodes_called:
-            self.opcodes_called[opcode] += 1
+    def add_opcode(self, opcode, module_name, function_name):
+        key = (opcode, module_name, function_name)
+        if key in self.opcodes_called:
+            self.opcodes_called[key] += 1
         else:
-            self.opcodes_called[opcode] = 1
+            self.opcodes_called[key] = 1
 
     def get_stamp_used(self):
         return self.cost
@@ -139,7 +140,7 @@ class Tracer:
             # Add cost based on opcode
             opcode_cost = cu_costs.get(opcode, 1)  # Default cost if opcode not found
             self.cost += opcode_cost
-            self.add_opcode(opcode)
+            self.add_opcode(opcode, module_name, current_function_name)
             
             if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
                 self.stop()
