@@ -3,6 +3,7 @@ import dis
 import threading
 import psutil
 import os
+import time
 from loguru import logger
 # Define the opcode costs
 cu_costs = {
@@ -74,12 +75,18 @@ class Tracer:
             self.stop()
             raise AssertionError("The cost has exceeded the stamp supplied!")
         
-    def add_opcode(self, opcode, module_name, function_name):
-        key = (opcode, module_name, function_name)
-        if key in self.opcodes_called:
-            self.opcodes_called[key] += 1
-        else:
-            self.opcodes_called[key] = 1
+    def add_opcode(self, opcode, module_name, function_name, line_number, local_vars, stack_state, timestamp):
+        details = {
+            'module_name': module_name,
+            'function_name': function_name,
+            'line_number': line_number,
+            'local_vars': local_vars,
+            'stack_state': stack_state,
+            'timestamp': timestamp
+        }
+        if opcode not in self.opcodes_called:
+            self.opcodes_called[opcode] = []
+        self.opcodes_called[opcode].append(details)
 
     def get_stamp_used(self):
         return self.cost
@@ -140,7 +147,14 @@ class Tracer:
             # Add cost based on opcode
             opcode_cost = cu_costs.get(opcode, 1)  # Default cost if opcode not found
             self.cost += opcode_cost
-            self.add_opcode(opcode, module_name, current_function_name)
+
+            # Collect additional context
+            line_number = frame.f_lineno
+            local_vars = frame.f_locals
+            stack_state = [f.f_code.co_name for f in frame.f_back]
+            timestamp = time.time()
+
+            self.add_opcode(opcode, module_name, current_function_name, line_number, local_vars, stack_state, timestamp)
             
             if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
                 self.stop()
