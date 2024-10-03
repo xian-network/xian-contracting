@@ -151,7 +151,7 @@ class Tracer:
             # Collect additional context
             line_number = frame.f_lineno
             local_vars = frame.f_locals
-            stack_state = [f.f_code.co_name for f in frame.f_back]
+            stack_state = self.get_stack_state(frame)
             timestamp = time.time()
 
             self.add_opcode(opcode, module_name, current_function_name, line_number, local_vars, stack_state, timestamp)
@@ -161,6 +161,13 @@ class Tracer:
                 raise AssertionError("The cost has exceeded the stamp supplied!")
 
         return self.trace_func
+
+    def get_stack_state(self, frame):
+        stack_state = []
+        while frame:
+            stack_state.append(frame.f_code.co_name)
+            frame = frame.f_back
+        return stack_state
 
     def get_opcode(self, code, offset):
         # Cache the instruction map per code object
