@@ -5,7 +5,6 @@ import contracting
 import sys
 import os
 
-
 class Context:
     def __init__(self, base_state, maxlen=constants.RECURSION_LIMIT):
         self._state = []
@@ -57,7 +56,6 @@ class Context:
     def submission_name(self):
         return self._get_state()['submission_name']
 
-
 _context = Context({
         'this': None,
         'caller': None,
@@ -68,7 +66,6 @@ _context = Context({
     })
 
 WRITE_MAX = 1024 * 128
-
 
 class Runtime:
     cu_path = contracting.__path__[0]
@@ -114,6 +111,10 @@ class Runtime:
         cls.loaded_modules = []
         cls.env = {}
 
+        # Clear module cache to prevent holding contracts in memory
+        from contracting.execution.module import DatabaseLoader
+        DatabaseLoader.module_cache.clear()
+
     @classmethod
     def deduct_read(cls, key, value):
         if cls.tracer.is_started():
@@ -130,6 +131,5 @@ class Runtime:
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE
             cls.tracer.add_cost(stamp_cost)
-
 
 rt = Runtime()

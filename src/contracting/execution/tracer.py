@@ -4,24 +4,167 @@ import threading
 import psutil
 import os
 
-# Define the opcode costs
 cu_costs = {
-    0: 2, 1: 2, 2: 4, 3: 4, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 2, 10: 2, 11: 4, 12: 2,
-    13: 4, 14: 4, 15: 4, 16: 4, 17: 4, 18: 4, 19: 4, 20: 2, 21: 4, 22: 8, 23: 6, 24: 6,
-    25: 4, 26: 4, 27: 4, 28: 4, 29: 4, 30: 4, 31: 6, 32: 6, 33: 6, 34: 2, 35: 6, 36: 6,
-    37: 6, 38: 2, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 2, 45: 2, 46: 2, 47: 4, 48: 2,
-    49: 6, 50: 6, 51: 6, 52: 6, 53: 4, 54: 6, 55: 4, 56: 4, 57: 4, 58: 4, 59: 4, 60: 4,
-    61: 4, 62: 4, 63: 4, 64: 6, 65: 6, 66: 8, 67: 8, 68: 8, 69: 12, 70: 2, 71: 1610, 72: 8,
-    73: 6, 74: 4, 75: 6, 76: 6, 77: 4, 78: 4, 79: 4, 80: 6, 81: 6, 82: 4, 83: 2, 84: 126,
-    85: 1000, 86: 4, 87: 8, 88: 6, 89: 4, 90: 2, 91: 2, 92: 2, 93: 512, 94: 8, 95: 6, 96: 6,
-    97: 4, 98: 4, 99: 2, 100: 2, 101: 2, 102: 2, 103: 6, 104: 8, 105: 8, 106: 4, 107: 4,
-    108: 38, 109: 126, 110: 4, 111: 4, 112: 4, 113: 6, 114: 4, 115: 4, 116: 4, 117: 4, 118: 6,
-    119: 6, 120: 4, 121: 4, 122: 4, 123: 6, 124: 32, 125: 2, 126: 2, 127: 4, 128: 4, 129: 4,
-    130: 6, 131: 10, 132: 8, 133: 12, 134: 4, 135: 4, 136: 8, 137: 2, 138: 2, 139: 2, 140: 4,
-    141: 6, 142: 12, 143: 6, 144: 2, 145: 8, 146: 8, 147: 6, 148: 2, 149: 6, 150: 6, 151: 6,
-    152: 6, 153: 4, 154: 4, 155: 4, 156: 6, 157: 4, 158: 4, 159: 4, 160: 4, 161: 2, 162: 4,
-    163: 6, 164: 6, 165: 6, 166: 6, 167: 2, 168: 4, 169: 4, 170: 2, 171: 8, 172: 2, 173: 4,
-    174: 4, 175: 4, 176: 4, 177: 4, 178: 4, 179: 4, 180: 4, 255: 8
+    dis.opmap.get('NOP', 0): 1,
+    dis.opmap.get('POP_TOP', 1): 1,
+    dis.opmap.get('PUSH_NULL', 2): 1,
+    dis.opmap.get('INTERPRETER_EXIT', 3): 1,
+    dis.opmap.get('END_FOR', 4): 1,
+    dis.opmap.get('BINARY_OP', 5): 2,
+    dis.opmap.get('LOAD_SUPER_ATTR', 6): 2,
+    dis.opmap.get('LOAD_FAST', 7): 1,
+    dis.opmap.get('STORE_FAST', 8): 1,
+    dis.opmap.get('DELETE_FAST', 9): 1,
+    dis.opmap.get('LOAD_CONST', 10): 1,
+    dis.opmap.get('LOAD_NAME', 11): 2,
+    dis.opmap.get('STORE_NAME', 12): 2,
+    dis.opmap.get('DELETE_NAME', 13): 2,
+    dis.opmap.get('LOAD_GLOBAL', 14): 2,
+    dis.opmap.get('STORE_GLOBAL', 15): 2,
+    dis.opmap.get('DELETE_GLOBAL', 16): 2,
+    dis.opmap.get('LOAD_ATTR', 17): 2,
+    dis.opmap.get('STORE_ATTR', 18): 2,
+    dis.opmap.get('DELETE_ATTR', 19): 2,
+    dis.opmap.get('LOAD_METHOD', 20): 2,
+    dis.opmap.get('CALL_METHOD', 21): 2,
+    dis.opmap.get('IMPORT_NAME', 22): 10,
+    dis.opmap.get('IMPORT_FROM', 23): 4,
+    dis.opmap.get('JUMP_FORWARD', 24): 1,
+    dis.opmap.get('JUMP_IF_FALSE_OR_POP', 25): 1,
+    dis.opmap.get('JUMP_IF_TRUE_OR_POP', 26): 1,
+    dis.opmap.get('JUMP_ABSOLUTE', 27): 1,
+    dis.opmap.get('POP_JUMP_IF_FALSE', 28): 1,
+    dis.opmap.get('POP_JUMP_IF_TRUE', 29): 1,
+    dis.opmap.get('LOAD_BUILD_CLASS', 30): 2,
+    dis.opmap.get('RETURN_VALUE', 31): 1,
+    dis.opmap.get('YIELD_VALUE', 32): 2,
+    dis.opmap.get('YIELD_FROM', 33): 2,
+    dis.opmap.get('SETUP_ANNOTATIONS', 34): 1,
+    dis.opmap.get('IMPORT_STAR', 35): 10,
+    dis.opmap.get('POP_BLOCK', 36): 1,
+    dis.opmap.get('POP_EXCEPT', 37): 1,
+    dis.opmap.get('STORE_NAME', 38): 2,
+    dis.opmap.get('DELETE_NAME', 39): 2,
+    dis.opmap.get('UNPACK_SEQUENCE', 40): 2,
+    dis.opmap.get('FOR_ITER', 41): 2,
+    dis.opmap.get('UNPACK_EX', 42): 2,
+    dis.opmap.get('STORE_ATTR', 43): 2,
+    dis.opmap.get('DELETE_ATTR', 44): 2,
+    dis.opmap.get('STORE_GLOBAL', 45): 2,
+    dis.opmap.get('DELETE_GLOBAL', 46): 2,
+    dis.opmap.get('LOAD_CONST', 47): 1,
+    dis.opmap.get('LOAD_NAME', 48): 2,
+    dis.opmap.get('BUILD_TUPLE', 49): 2,
+    dis.opmap.get('BUILD_LIST', 50): 2,
+    dis.opmap.get('BUILD_SET', 51): 2,
+    dis.opmap.get('BUILD_MAP', 52): 2,
+    dis.opmap.get('BUILD_CONST_KEY_MAP', 53): 2,
+    dis.opmap.get('BUILD_STRING', 54): 2,
+    dis.opmap.get('BUILD_TUPLE_UNPACK', 55): 3,
+    dis.opmap.get('BUILD_LIST_UNPACK', 56): 3,
+    dis.opmap.get('BUILD_SET_UNPACK', 57): 3,
+    dis.opmap.get('BUILD_MAP_UNPACK', 58): 3,
+    dis.opmap.get('BUILD_MAP_UNPACK_WITH_CALL', 59): 3,
+    dis.opmap.get('LOAD_ATTR', 60): 2,
+    dis.opmap.get('COMPARE_OP', 61): 2,
+    dis.opmap.get('IMPORT_NAME', 62): 10,
+    dis.opmap.get('IMPORT_FROM', 63): 4,
+    dis.opmap.get('JUMP_FORWARD', 64): 1,
+    dis.opmap.get('JUMP_IF_FALSE_OR_POP', 65): 1,
+    dis.opmap.get('JUMP_IF_TRUE_OR_POP', 66): 1,
+    dis.opmap.get('JUMP_ABSOLUTE', 67): 1,
+    dis.opmap.get('POP_JUMP_IF_FALSE', 68): 1,
+    dis.opmap.get('POP_JUMP_IF_TRUE', 69): 1,
+    dis.opmap.get('LOAD_GLOBAL', 70): 2,
+    dis.opmap.get('SETUP_FINALLY', 71): 4,
+    dis.opmap.get('LOAD_FAST', 72): 1,
+    dis.opmap.get('STORE_FAST', 73): 1,
+    dis.opmap.get('DELETE_FAST', 74): 1,
+    dis.opmap.get('LOAD_CONST', 75): 1,
+    dis.opmap.get('LOAD_NAME', 76): 2,
+    dis.opmap.get('BUILD_TUPLE', 77): 2,
+    dis.opmap.get('BUILD_LIST', 78): 2,
+    dis.opmap.get('BUILD_SET', 79): 2,
+    dis.opmap.get('BUILD_MAP', 80): 2,
+    dis.opmap.get('LOAD_ATTR', 81): 2,
+    dis.opmap.get('COMPARE_OP', 82): 2,
+    dis.opmap.get('IMPORT_NAME', 83): 10,
+    dis.opmap.get('IMPORT_FROM', 84): 4,
+    dis.opmap.get('JUMP_FORWARD', 85): 1,
+    dis.opmap.get('JUMP_IF_FALSE_OR_POP', 86): 1,
+    dis.opmap.get('JUMP_IF_TRUE_OR_POP', 87): 1,
+    dis.opmap.get('JUMP_ABSOLUTE', 88): 1,
+    dis.opmap.get('POP_JUMP_IF_FALSE', 89): 1,
+    dis.opmap.get('POP_JUMP_IF_TRUE', 90): 1,
+    dis.opmap.get('LOAD_GLOBAL', 91): 2,
+    dis.opmap.get('SETUP_FINALLY', 92): 4,
+    dis.opmap.get('STORE_ATTR', 93): 2,
+    dis.opmap.get('DELETE_ATTR', 94): 2,
+    dis.opmap.get('STORE_GLOBAL', 95): 2,
+    dis.opmap.get('DELETE_GLOBAL', 96): 2,
+    dis.opmap.get('ROT_TWO', 97): 1,
+    dis.opmap.get('ROT_THREE', 98): 1,
+    dis.opmap.get('ROT_FOUR', 99): 1,
+    dis.opmap.get('LOAD_CONST', 100): 1,
+    dis.opmap.get('LOAD_NAME', 101): 2,
+    dis.opmap.get('BUILD_TUPLE', 102): 2,
+    dis.opmap.get('BUILD_LIST', 103): 2,
+    dis.opmap.get('BUILD_SET', 104): 2,
+    dis.opmap.get('BUILD_MAP', 105): 2,
+    dis.opmap.get('LOAD_ATTR', 106): 2,
+    dis.opmap.get('COMPARE_OP', 107): 2,
+    dis.opmap.get('IMPORT_NAME', 108): 10,
+    dis.opmap.get('IMPORT_FROM', 109): 4,
+    dis.opmap.get('JUMP_FORWARD', 110): 1,
+    dis.opmap.get('JUMP_IF_FALSE_OR_POP', 111): 1,
+    dis.opmap.get('JUMP_IF_TRUE_OR_POP', 112): 1,
+    dis.opmap.get('JUMP_ABSOLUTE', 113): 1,
+    dis.opmap.get('POP_JUMP_IF_FALSE', 114): 1,
+    dis.opmap.get('POP_JUMP_IF_TRUE', 115): 1,
+    dis.opmap.get('LOAD_GLOBAL', 116): 2,
+    dis.opmap.get('SETUP_FINALLY', 117): 4,
+    dis.opmap.get('CALL_FUNCTION', 118): 2,
+    dis.opmap.get('MAKE_FUNCTION', 119): 4,
+    dis.opmap.get('BUILD_SLICE', 120): 2,
+    dis.opmap.get('EXTENDED_ARG', 121): 1,
+    dis.opmap.get('FORMAT_VALUE', 122): 2,
+    dis.opmap.get('MATCH_MAPPING', 123): 2,
+    dis.opmap.get('MATCH_SEQUENCE', 124): 2,
+    dis.opmap.get('MATCH_KEYS', 125): 2,
+    dis.opmap.get('COPY_DICT_WITHOUT_KEYS', 126): 2,
+    dis.opmap.get('WITH_EXCEPT_START', 127): 4,
+    dis.opmap.get('GET_AITER', 128): 2,
+    dis.opmap.get('GET_ANEXT', 129): 2,
+    dis.opmap.get('BEFORE_ASYNC_WITH', 130): 2,
+    dis.opmap.get('END_ASYNC_FOR', 131): 2,
+    dis.opmap.get('STORE_FAST', 132): 1,
+    dis.opmap.get('DELETE_FAST', 133): 1,
+    dis.opmap.get('LOAD_FAST', 134): 1,
+    dis.opmap.get('LIST_TO_TUPLE', 135): 1,
+    dis.opmap.get('RETURN_GENERATOR', 136): 1,
+    dis.opmap.get('LOAD_ASSERTION_ERROR', 137): 1,
+    dis.opmap.get('RETURN_VALUE', 138): 1,
+    dis.opmap.get('PREP_RERAISE_STAR', 139): 1,
+    dis.opmap.get('POP_EXCEPT_AND_RERAISE', 140): 1,
+    dis.opmap.get('LOAD_GLOBAL', 141): 2,
+    dis.opmap.get('LOAD_FAST', 142): 1,
+    dis.opmap.get('STORE_FAST', 143): 1,
+    dis.opmap.get('DELETE_FAST', 144): 1,
+    dis.opmap.get('RAISE_VARARGS', 145): 2,
+    dis.opmap.get('CALL_FUNCTION_EX', 146): 4,
+    dis.opmap.get('SETUP_ANNOTATIONS', 147): 1,
+    dis.opmap.get('STORE_LOCALS', 148): 1,
+    dis.opmap.get('LOAD_LOCALS', 149): 1,
+    dis.opmap.get('COMPARE_OP', 150): 2,
+    dis.opmap.get('IS_OP', 151): 2,
+    dis.opmap.get('CONTAINS_OP', 152): 2,
+    dis.opmap.get('JUMP_IF_NOT_EXC_MATCH', 153): 2,
+    dis.opmap.get('LOAD_METHOD', 154): 2,
+    dis.opmap.get('CALL_METHOD', 155): 2,
+    dis.opmap.get('LIST_EXTEND', 156): 2,
+    dis.opmap.get('SET_UPDATE', 157): 2,
+    dis.opmap.get('DICT_MERGE', 158): 2,
+    dis.opmap.get('DICT_UPDATE', 159): 2,
 }
 
 # Define maximum stamps
@@ -57,6 +200,7 @@ class Tracer:
         self.last_frame_mem_usage = 0
         self.total_mem_usage = 0
         self.call_count = 0
+        self.instruction_cache.clear()  # Clear the instruction cache to prevent memory leaks
 
     def set_stamp(self, stamp):
         self.stamp_supplied = stamp
@@ -82,7 +226,6 @@ class Tracer:
     def get_memory_usage(self):
         process = psutil.Process(os.getpid())
         mem_info = process.memory_info()
-        # Return the RSS (Resident Set Size)
         return mem_info.rss
 
     def trace_func(self, frame, event, arg):
@@ -92,41 +235,33 @@ class Tracer:
                 self.stop()
                 raise AssertionError("Call count exceeded threshold! Infinite Loop?")
 
-            # Check if the function matches the target module and function names
             code = frame.f_code
-            current_function_name = code.co_name
             globals_dict = frame.f_globals
-            module_name = globals_dict.get('__name__', '')
 
-            # Only trace code within contracts (if '__contract__' in globals)
+            # Only trace code within contracts
             if '__contract__' not in globals_dict:
                 return
 
-            # Get the opcode at the current instruction
             lasti = frame.f_lasti
             opcode = self.get_opcode(code, lasti)
 
-            # Update memory usage
-            if self.last_frame_mem_usage == 0:
-                self.last_frame_mem_usage = self.get_memory_usage()
-
             new_memory_usage = self.get_memory_usage()
+            if self.last_frame_mem_usage == 0:
+                self.last_frame_mem_usage = new_memory_usage
+
+            # Track incremental memory usage
             if new_memory_usage > self.last_frame_mem_usage:
                 self.total_mem_usage += (new_memory_usage - self.last_frame_mem_usage)
             self.last_frame_mem_usage = new_memory_usage
 
-            # Check for memory usage limit (set an arbitrary limit, e.g., 500MB)
+            # Memory usage limit
             if self.total_mem_usage > 500 * 1024 * 1024:
                 self.stop()
                 raise AssertionError(f"Transaction exceeded memory usage! Total usage: {self.total_mem_usage} bytes")
 
             # Add cost based on opcode
-            opcode_cost = cu_costs.get(opcode, 1)  # Default cost if opcode not found
-            self.cost += opcode_cost
-
-            if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
-                self.stop()
-                raise AssertionError("The cost has exceeded the stamp supplied!")
+            opcode_cost = cu_costs.get(opcode, 1)
+            self.add_cost(opcode_cost)
 
         return self.trace_func
 
@@ -139,8 +274,4 @@ class Tracer:
                 for instr in dis.get_instructions(code):
                     instruction_map[instr.offset] = instr.opcode
                 self.instruction_cache[code] = instruction_map
-            opcode = instruction_map.get(offset, None)
-            if opcode is None:
-                # Instruction not found; default to 0
-                opcode = 0
-            return opcode
+            return instruction_map.get(offset, 0)

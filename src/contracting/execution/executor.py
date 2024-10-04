@@ -4,14 +4,10 @@ from contracting.execution.module import install_database_loader, uninstall_buil
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import constants
-from loguru import logger
-import re
 from copy import deepcopy
 
 import importlib
 import decimal
-import traceback
-
 
 class Executor:
     def __init__(self,
@@ -96,10 +92,6 @@ class Executor:
             runtime.rt.env.update(environment)
             status_code = 0
 
-            # TODO: Why do we do this?
-            # Multiply stamps by 1000 because we divide by it later
-            # runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
-
             runtime.rt.context._base_state = {
                 'signer': sender,
                 'caller': sender,
@@ -140,16 +132,16 @@ class Executor:
 
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
-            
+
             if auto_commit:
                 driver.flush_cache()
 
         finally:
             runtime.rt.tracer.stop()
+            # Clear the module cache to prevent holding contracts in memory
+            from contracting.execution.module import DatabaseLoader
+            DatabaseLoader.module_cache.clear()
 
-        #runtime.rt.tracer.stop()
-
-        # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
 
         stamps_used = stamps_used // 1000
