@@ -51,8 +51,6 @@ class Executor:
                 stamp_cost=constants.STAMPS_PER_TAU,
                 metering=None) -> dict:
 
-        importlib.invalidate_caches()
-
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
 
         if not self.bypass_privates:
