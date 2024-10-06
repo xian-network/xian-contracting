@@ -144,7 +144,7 @@ class Driver:
         try:
             filename, _ = self.__parse_key(prefix)
         except Exception:
-            return self.keys(prefix=prefix, length=length)
+            return self.keys(prefix=prefix)
 
         if not self.is_file(filename=filename):
             return []
