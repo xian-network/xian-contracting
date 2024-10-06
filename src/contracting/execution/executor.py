@@ -128,6 +128,7 @@ class Executor:
             enable_restricted_imports()
             runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
+            transaction_writes = deepcopy(driver.transaction_writes)
             runtime.rt.tracer.stop()
             disable_restricted_imports()
 
@@ -140,11 +141,13 @@ class Executor:
 
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
+            transaction_writes = {}
             
             if auto_commit:
                 driver.flush_cache()
 
         finally:
+            driver.clear_transaction_writes()
             runtime.rt.tracer.stop()
 
         #runtime.rt.tracer.stop()
@@ -184,7 +187,7 @@ class Executor:
             'status_code': status_code,
             'result': result,
             'stamps_used': stamps_used,
-            'writes': deepcopy(driver.pending_writes),
+            'writes': transaction_writes,
             'reads': driver.pending_reads
         }
 

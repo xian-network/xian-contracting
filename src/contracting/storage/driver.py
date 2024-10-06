@@ -38,6 +38,7 @@ class Driver:
         self.contract_state = storage_home.joinpath("contract_state")
         self.run_state = storage_home.joinpath("run_state")
         self.__build_directories()
+        self.transaction_writes = {}  # New dictionary for transaction-specific writes
 
     def __build_directories(self):
         self.contract_state.mkdir(exist_ok=True, parents=True)
@@ -76,7 +77,7 @@ class Driver:
         """
         Get a value from the cache, pending reads, or disk. If save is True, 
         the value will be saved to pending_reads.
-        """
+        """ 
         # Parse the key to get the filename and group
         value = self.find(key)
         if save and self.pending_reads.get(key) is None:
@@ -93,6 +94,8 @@ class Driver:
         if type(value) in [decimal.Decimal, float]:
             value = ContractingDecimal(str(value))
         self.pending_writes[key] = value
+        self.transaction_writes[key] = value
+
 
     def find(self, key: str):
         """
@@ -417,3 +420,10 @@ class Driver:
                 run_state[full_key] = value
 
         return run_state
+
+
+    def clear_transaction_writes(self):
+        """
+        Clear the transaction-specific writes.
+        """
+        self.transaction_writes.clear()
