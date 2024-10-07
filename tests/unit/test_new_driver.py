@@ -51,7 +51,7 @@ class TestDriver(unittest.TestCase):
         self.driver.set(key2, value)
         self.driver.set(prefix_key, value)
         self.driver.commit()
-        keys = self.driver.iter_from_disk(prefix='prefix')
+        keys = self.driver.iter_from_disk(prefix=prefix_key)
         self.assertIn(prefix_key, keys)
         self.assertNotIn(key1, keys)
         self.assertNotIn(key2, keys)
@@ -61,7 +61,7 @@ class TestDriver(unittest.TestCase):
         value = 'test_value'
         self.driver.set(prefix_key, value)
         self.driver.commit()
-        items = self.driver.items(prefix='prefix')
+        items = self.driver.items(prefix=prefix_key)
         self.assertIn(prefix_key, items)
         self.assertEqual(items[prefix_key], value)
 
