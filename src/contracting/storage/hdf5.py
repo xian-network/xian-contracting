@@ -28,17 +28,27 @@ def get_block(file_path, group_name):
 
 
 def get_attr(file_path, group_name, attr_name):
-    with h5py.File(file_path, 'a') as f:
-        try:
-            value = f[group_name].attrs[attr_name]
-            return value.decode() if isinstance(value, bytes) else value
-        except KeyError:
-            return None
+    try:
+        with h5py.File(file_path, 'r') as f:
+            try:
+                value = f[group_name].attrs[attr_name]
+                return value.decode() if isinstance(value, bytes) else value
+            except KeyError:
+                return None
+    except OSError:
+        # File doesn't exist
+        return None
+
 
 
 def get_groups(file_path):
-    with h5py.File(file_path, 'a') as f:
-        return list(f.keys())
+    try:
+        with h5py.File(file_path, 'r') as f:
+            return list(f.keys())
+    except OSError:
+        # File doesn't exist
+        return []
+
 
 
 def set(file_path, group_name, value, blocknum, timeout=20):
