@@ -33,6 +33,7 @@ class Driver:
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
+        self.transaction_writes = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
         self.bypass_cache = bypass_cache
         self.contract_state = storage_home.joinpath("contract_state")
@@ -76,7 +77,7 @@ class Driver:
         """
         Get a value from the cache, pending reads, or disk. If save is True, 
         the value will be saved to pending_reads.
-        """
+        """ 
         # Parse the key to get the filename and group
         value = self.find(key)
         if save and self.pending_reads.get(key) is None:
@@ -86,13 +87,16 @@ class Driver:
         return value
 
 
-    def set(self, key, value):
+    def set(self, key, value, is_txn_write=False):
         rt.deduct_write(*encode_kv(key, value))
         if self.pending_reads.get(key) is None:
             self.get(key)
         if type(value) in [decimal.Decimal, float]:
             value = ContractingDecimal(str(value))
         self.pending_writes[key] = value
+        if is_txn_write:
+            self.transaction_writes[key] = value
+
 
     def find(self, key: str):
         """
@@ -288,6 +292,7 @@ class Driver:
         self.pending_writes.clear()
         self.pending_reads.clear()
         self.pending_deltas.clear()
+        self.transaction_writes.clear()
         self.cache.clear()
 
     def flush_disk(self):
@@ -417,3 +422,10 @@ class Driver:
                 run_state[full_key] = value
 
         return run_state
+
+
+    def clear_transaction_writes(self):
+        """
+        Clear the transaction-specific writes.
+        """
+        self.transaction_writes.clear()
