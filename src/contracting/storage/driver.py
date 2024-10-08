@@ -33,12 +33,12 @@ class Driver:
         self.pending_deltas = {}
         self.pending_writes = {}
         self.pending_reads = {}
+        self.transaction_writes = {}
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
         self.bypass_cache = bypass_cache
         self.contract_state = storage_home.joinpath("contract_state")
         self.run_state = storage_home.joinpath("run_state")
         self.__build_directories()
-        self.transaction_writes = {}  # New dictionary for transaction-specific writes
 
     def __build_directories(self):
         self.contract_state.mkdir(exist_ok=True, parents=True)
@@ -87,14 +87,15 @@ class Driver:
         return value
 
 
-    def set(self, key, value):
+    def set(self, key, value, is_txn_write=False):
         rt.deduct_write(*encode_kv(key, value))
         if self.pending_reads.get(key) is None:
             self.get(key)
         if type(value) in [decimal.Decimal, float]:
             value = ContractingDecimal(str(value))
         self.pending_writes[key] = value
-        self.transaction_writes[key] = value
+        if is_txn_write:
+            self.transaction_writes[key] = value
 
 
     def find(self, key: str):
@@ -291,6 +292,7 @@ class Driver:
         self.pending_writes.clear()
         self.pending_reads.clear()
         self.pending_deltas.clear()
+        self.transaction_writes.clear()
         self.cache.clear()
 
     def flush_disk(self):

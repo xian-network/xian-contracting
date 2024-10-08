@@ -52,6 +52,7 @@ class Executor:
                 metering=None) -> dict:
 
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
+        self.driver.clear_transaction_writes()
 
         if not self.bypass_privates:
             assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
@@ -175,6 +176,7 @@ class Executor:
             balance = max(balance - to_deduct, 0)
 
             driver.set(balances_key, balance)
+            transaction_writes[balances_key] = balance
 
             if auto_commit:
                 driver.commit()
