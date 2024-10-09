@@ -155,9 +155,9 @@ class Executor:
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
-        opcodes_called = runtime.rt.tracer.get_opcodes_called()
+        # opcodes_called = runtime.rt.tracer.get_opcodes_called()
         
-        logger.debug(f"Opcodes called: {opcodes_called}")
+        # logger.debug(f"Opcodes called: {opcodes_called}")
 
         stamps_used = stamps_used // 1000
         stamps_used += 5

@@ -30,7 +30,7 @@ MAX_STAMPS = 6500000
 
 class Tracer:
     def __init__(self):
-        logger.debug("Tracer initialized")
+        # logger.debug("Tracer initialized")
         self.cost = 0
         self.stamp_supplied = 0
         self.last_frame_mem_usage = 0
@@ -43,7 +43,7 @@ class Tracer:
         self.opcodes_called = {}
 
     def start(self):
-        logger.info("Starting tracer")
+        # logger.info("Starting tracer")
         sys.settrace(self.trace_func)
         self.cost = 0
         self.opcodes_called = {}
@@ -51,13 +51,13 @@ class Tracer:
         self.started = True
 
     def stop(self):
-        logger.info("Stopping tracer")
+        # logger.info("Stopping tracer")
         if self.started:
             sys.settrace(None)
             self.started = False
 
     def reset(self):
-        logger.info("Resetting tracer")
+        # logger.info("Resetting tracer")
         self.stop()
         self.cost = 0
         self.opcodes_called = {}
@@ -75,12 +75,11 @@ class Tracer:
             self.stop()
             raise AssertionError("The cost has exceeded the stamp supplied!")
         
-    def add_opcode(self, opcode, module_name, function_name, line_number, local_vars, stack_state, timestamp):
+    def add_opcode(self, opcode, module_name, function_name, stack_state, timestamp):
         details = {
             'module_name': module_name,
             'function_name': function_name,
-            'line_number': line_number,
-            'local_vars': local_vars,
+            # 'line_number': line_number,
             'stack_state': stack_state,
             'timestamp': timestamp
         }
@@ -121,6 +120,7 @@ class Tracer:
             current_function_name = code.co_name
             globals_dict = frame.f_globals
             module_name = globals_dict.get('__name__', '')
+            logger.info(globals_dict)
 
             # Only trace code within contracts (if '__contract__' in globals)
             if '__contract__' not in globals_dict:
@@ -149,12 +149,10 @@ class Tracer:
             self.cost += opcode_cost
 
             # Collect additional context
-            line_number = frame.f_lineno
-            local_vars = frame.f_locals
-            stack_state = self.get_stack_state(frame)
-            timestamp = time.time()
+            # stack_state = self.get_stack_state(frame)
+            # timestamp = time.time()
 
-            self.add_opcode(opcode, module_name, current_function_name, line_number, local_vars, stack_state, timestamp)
+            # self.add_opcode(opcode, module_name, current_function_name, stack_state, timestamp)
             
             if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
                 self.stop()
