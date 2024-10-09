@@ -51,7 +51,7 @@ class TestDriver(unittest.TestCase):
         self.driver.set(key2, value)
         self.driver.set(prefix_key, value)
         self.driver.commit()
-        keys = self.driver.iter_from_disk(prefix='prefix')
+        keys = self.driver.iter_from_disk(prefix=prefix_key)
         self.assertIn(prefix_key, keys)
         self.assertNotIn(key1, keys)
         self.assertNotIn(key2, keys)
@@ -61,7 +61,7 @@ class TestDriver(unittest.TestCase):
         value = 'test_value'
         self.driver.set(prefix_key, value)
         self.driver.commit()
-        items = self.driver.items(prefix='prefix')
+        items = self.driver.items(prefix=prefix_key)
         self.assertIn(prefix_key, items)
         self.assertEqual(items[prefix_key], value)
 
@@ -105,6 +105,24 @@ class TestDriver(unittest.TestCase):
         contract_state = self.driver.get_all_contract_state()
         self.assertIn(key, contract_state)
         self.assertEqual(contract_state[key], value)
+        
+    def test_transaction_writes(self):
+        key = 'test_key'
+        value = 'test_value'
+        self.driver.set(key, value)
+        # self.driver.commit()
+        transaction_writes = self.driver.transaction_writes
+        self.assertIn(key, transaction_writes)
+        self.assertEqual(transaction_writes[key], value)
+        
+    def test_clear_transaction_writes(self):
+        key = 'test_key'
+        value = 'test_value'
+        self.driver.set(key, value)
+        # self.driver.commit()
+        self.driver.clear_transaction_writes()
+        transaction_writes = self.driver.transaction_writes
+        self.assertNotIn(key, transaction_writes)
 
     def test_get_run_state(self):
         # We can't test this function here since we are not running a real blockchain.

@@ -26,7 +26,7 @@ class Variable(Datum):
             assert isinstance(value, self._type), (f'Wrong type passed to variable! '
                                                    f'Expected {self._type}, got {type(value)}.')
 
-        self._driver.set(self._key, value)
+        self._driver.set(self._key, value, True)
 
     def get(self):
         return self._driver.get(self._key)
@@ -39,7 +39,7 @@ class Hash(Datum):
         self._default_value = default_value
 
     def _set(self, key, value):
-        self._driver.set(f'{self._key}{self._delimiter}{key}', value)
+        self._driver.set(f'{self._key}{self._delimiter}{key}', value, True)
 
     def _get(self, item):
         value = self._driver.get(f'{self._key}{self._delimiter}{item}')

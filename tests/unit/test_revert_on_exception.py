@@ -54,14 +54,14 @@ class MyTestCase(unittest.TestCase):
 
         self.d.set_contract(name='submission', code=contract)
 
-        with open('../integration/test_contracts/currency.s.py') as f:
+        with open('./integration/test_contracts/currency.s.py') as f:
             contract = f.read()
         self.d.set_contract(name='currency', code=contract)
 
-        self.c.executor.execute(**TEST_SUBMISSION_KWARGS, kwargs=submission_kwargs_for_file('../integration/test_contracts/currency.s.py'), metering=False, auto_commit=True)
+        self.c.executor.execute(**TEST_SUBMISSION_KWARGS, kwargs=submission_kwargs_for_file('./integration/test_contracts/currency.s.py'), metering=False, auto_commit=True)
 
         self.c.executor.execute(**TEST_SUBMISSION_KWARGS,
-                       kwargs=submission_kwargs_for_file('../integration/test_contracts/exception.py'), 
+                       kwargs=submission_kwargs_for_file('./integration/test_contracts/exception.py'), 
                        metering=False, auto_commit=True)
         self.d.commit()
 
@@ -75,7 +75,7 @@ class MyTestCase(unittest.TestCase):
             {'sender': 'stu', 'contract': 'con_exception', 'function': 'transfer', 'kwargs': {'amount': 100, 'to': 'colin'},"stamps_supplied":1000},
             "metadata":
             {"signature":"abc"},"b_meta":{"nanos":0,
-            "hash":"0x0","height":0}})
+            "hash":"0x0","height":0, "chain_id":"xian-1"}})
         logger.debug(f"Output (exception): {output}")
 
         new_balance = self.d.get('con_exception.balances:stu')
@@ -90,7 +90,7 @@ class MyTestCase(unittest.TestCase):
             "payload":
             {'sender': 'stu', 'contract': 'con_currency', 'function': 'transfer', 'kwargs': {'amount': 100, 'to': 'colin'},"stamps_supplied":1000},
             "metadata":
-            {"signature":"abc"},"b_meta":{"nanos":0,"hash":"0x0","height":0}})
+            {"signature":"abc"},"b_meta":{"nanos":0,"hash":"0x0","height":0, "chain_id":"xian-1"}})
         
         new_balance = self.d.get('con_currency.balances:stu')
         logger.debug(f"New balance (non-exception): {new_balance}")
