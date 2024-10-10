@@ -11,14 +11,11 @@ import inspect
 import astor
 import autopep8
 import os
-import re
 
 from . import constants
 
 from .storage.orm import Variable
 from .storage.orm import Hash
-
-import builtins as ___builtins___
 
 
 class AbstractContract:
