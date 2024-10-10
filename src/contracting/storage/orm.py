@@ -1,7 +1,6 @@
 from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
 from contracting import constants
-from contracting.stdlib.bridge.decimal import ContractingDecimal
 
 driver = rt.env.get('__Driver') or Driver()
 
@@ -16,15 +15,20 @@ class Variable(Datum):
     def __init__(self, contract, name, driver: Driver = driver, t=None):
         self._type = None
 
-        if isinstance(t, type) or None:
+        if t is None or isinstance(t, type):
             self._type = t
+        else:
+            raise TypeError(f"Expected a type or None for 't', got {type(t)}.")
 
         super().__init__(contract, name, driver=driver)
 
     def set(self, value):
+        if isinstance(value, float):
+            raise TypeError("Cannot set a float value due to precision loss. Use integers or strings.")
         if self._type is not None:
-            assert isinstance(value, self._type), (f'Wrong type passed to variable! '
-                                                   f'Expected {self._type}, got {type(value)}.')
+            assert isinstance(value, self._type), (
+                f'Wrong type passed to variable! Expected {self._type}, got {type(value)}.'
+            )
 
         self._driver.set(self._key, value, True)
 
@@ -39,6 +43,8 @@ class Hash(Datum):
         self._default_value = default_value
 
     def _set(self, key, value):
+        if isinstance(value, float):
+            raise TypeError("Cannot set a float value due to precision loss. Use integers or strings.")
         self._driver.set(f'{self._key}{self._delimiter}{key}', value, True)
 
     def _get(self, item):
@@ -48,15 +54,13 @@ class Hash(Datum):
         if value is None:
             value = self._default_value
 
-        if type(value) == float or type(value) == ContractingDecimal:
-            return ContractingDecimal(str(value))
-
         return value
 
     def _validate_key(self, key):
         if isinstance(key, tuple):
-            assert len(key) <= constants.MAX_HASH_DIMENSIONS, (f'Too many dimensions ({len(key)}) for hash. '
-                                                               f'Max is {constants.MAX_HASH_DIMENSIONS}')
+            assert len(key) <= constants.MAX_HASH_DIMENSIONS, (
+                f'Too many dimensions ({len(key)}) for hash. Max is {constants.MAX_HASH_DIMENSIONS}'
+            )
 
             new_key_str = ''
             for k in key:
@@ -102,7 +106,6 @@ class Hash(Datum):
             self._driver.delete(k)
 
     def __setitem__(self, key, value):
-        # handle multiple hashes differently
         key = self._validate_key(key)
         self._set(key, value)
 
@@ -120,7 +123,7 @@ class ForeignVariable(Variable):
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
     def set(self, value):
-        raise ReferenceError
+        raise ReferenceError("Cannot set value on a ForeignVariable.")
 
 
 class ForeignHash(Hash):
@@ -129,10 +132,10 @@ class ForeignHash(Hash):
         self._key = self._driver.make_key(foreign_contract, foreign_name)
 
     def _set(self, key, value):
-        raise ReferenceError
+        raise ReferenceError("Cannot set value on a ForeignHash.")
 
     def __setitem__(self, key, value):
-        raise ReferenceError
+        raise ReferenceError("Cannot set value on a ForeignHash.")
 
     def __getitem__(self, item):
         return super().__getitem__(item)

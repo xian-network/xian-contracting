@@ -1,7 +1,6 @@
 from contracting.storage.encoder import encode_kv
 from contracting.execution.runtime import rt
 from contracting.stdlib.bridge.time import Datetime
-from contracting.stdlib.bridge.decimal import ContractingDecimal
 from datetime import datetime
 from pathlib import Path
 from cachetools import TTLCache
@@ -9,7 +8,6 @@ from contracting import constants
 from contracting.storage import hdf5
 
 import marshal
-import decimal
 import os
 import shutil
 
@@ -34,7 +32,7 @@ class Driver:
         self.pending_writes = {}
         self.pending_reads = {}
         self.transaction_writes = {}
-        self.cache = TTLCache(maxsize=1000, ttl=6*3600)
+        self.cache = TTLCache(maxsize=1000, ttl=6 * 3600)
         self.bypass_cache = bypass_cache
         self.contract_state = storage_home.joinpath("contract_state")
         self.run_state = storage_home.joinpath("run_state")
@@ -47,18 +45,17 @@ class Driver:
     def __parse_key(self, key):
         # Split the key into parts (filename, group, etc.)
         parts = key.split(constants.INDEX_SEPARATOR, 1)  # Ensure key contains the INDEX_SEPARATOR
-        
+
         # The first part should be the filename (e.g., "currency")
         filename = parts[0].split(constants.DELIMITER, 1)[0]  # Get only 'currency' from 'currency.balances'
-        
+
         # The rest (after the first '.') becomes the group and attribute inside the HDF5 file
         if len(parts) > 1:
             variable = parts[1].replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
         else:
             variable = parts[0].replace(constants.DELIMITER, constants.HDF5_GROUP_SEPARATOR)
-        
-        return filename, variable
 
+        return filename, variable
 
     def __filename_to_path(self, filename):
         if filename.startswith("__"):
@@ -68,16 +65,16 @@ class Driver:
 
     def __get_files(self):
         return sorted(os.listdir(self.contract_state) + os.listdir(self.run_state))
-    
+
     def is_file(self, filename):
         file_path = Path(self.__filename_to_path(filename))
         return file_path.is_file()
 
     def get(self, key: str, save: bool = True):
         """
-        Get a value from the cache, pending reads, or disk. If save is True, 
+        Get a value from the cache, pending reads, or disk. If save is True,
         the value will be saved to pending_reads.
-        """ 
+        """
         # Parse the key to get the filename and group
         value = self.find(key)
         if save and self.pending_reads.get(key) is None:
@@ -86,21 +83,19 @@ class Driver:
             rt.deduct_read(*encode_kv(key, value))
         return value
 
-
     def set(self, key, value, is_txn_write=False):
         rt.deduct_write(*encode_kv(key, value))
         if self.pending_reads.get(key) is None:
             self.get(key)
-        if type(value) in [decimal.Decimal, float]:
-            value = ContractingDecimal(str(value))
+        if isinstance(value, float):
+            raise TypeError("Cannot set a float value due to precision loss. Use integers or strings.")
         self.pending_writes[key] = value
         if is_txn_write:
             self.transaction_writes[key] = value
 
-
     def find(self, key: str):
         """
-        Find the value for a given key. If not found in cache or pending writes, 
+        Find the value for a given key. If not found in cache or pending writes,
         it will look it up from the disk.
         """
         if self.bypass_cache:
@@ -117,7 +112,6 @@ class Driver:
             filename, variable = self.__parse_key(key)
             value = hdf5.get_value_from_disk(self.__filename_to_path(filename), variable)
         return value
-
 
     def __get_keys_from_file(self, filename):
         return hdf5.get_groups(self.__filename_to_path(filename))
@@ -196,12 +190,10 @@ class Driver:
 
         return _items
 
-
     def keys(self, prefix=""):
         return list(self.items(prefix).keys())
 
     def values(self, prefix=""):
-        l = list(self.items(prefix).values())
         return list(self.items(prefix).values())
 
     def make_key(self, contract, variable, args=[]):
@@ -356,12 +348,10 @@ class Driver:
         self.pending_writes.clear()
         self.pending_reads.clear()
 
-
     def hard_apply(self, nanos):
         """
         Save the current state to disk and L1 cache and clear the L2 cache.
         """
-
         deltas = {}
         for k, v in self.pending_writes.items():
             current = self.pending_reads.get(k)
@@ -391,7 +381,6 @@ class Driver:
         # Remove the deltas from the set
         [self.pending_deltas.pop(key) for key in to_delete]
 
-
     def get_all_contract_state(self):
         """
         Queries the disk storage and returns a dictionary with all the state from the contract storage directory.
@@ -406,7 +395,6 @@ class Driver:
                 all_contract_state[full_key] = value
 
         return all_contract_state
-    
 
     def get_run_state(self):
         """
@@ -422,7 +410,6 @@ class Driver:
                 run_state[full_key] = value
 
         return run_state
-
 
     def clear_transaction_writes(self):
         """

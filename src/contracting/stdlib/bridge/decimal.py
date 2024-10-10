@@ -1,191 +1,162 @@
-from decimal import Decimal
+DECIMAL_PLACES = 30  # Number of decimal places for minimal unit
 
-import decimal
+def to_minimal_unit(amount):
+    if isinstance(amount, (int, float)):
+        amount = str(amount)
 
-MAX_UPPER_PRECISION = 30
-MAX_LOWER_PRECISION = 30
-CONTEXT = decimal.Context(
-    prec=MAX_UPPER_PRECISION + MAX_LOWER_PRECISION,
-    rounding=decimal.ROUND_FLOOR,
-    Emin=-100,
-    Emax=100
-)
-decimal.setcontext(CONTEXT)
+    if '.' in amount:
+        integer_part, fractional_part = amount.split('.')
+    else:
+        integer_part, fractional_part = amount, ''
 
+    integer_part = integer_part.lstrip('0') or '0'
+    fractional_part = fractional_part.rstrip('0')
 
-def make_min_decimal_str(prec):
-    s = '0.'
-    for i in range(prec - 1):
-        s += '0'
-    s += '1'
-    return s
+    if len(fractional_part) > DECIMAL_PLACES:
+        raise ValueError(f"Amount has more than {DECIMAL_PLACES} decimal places.")
 
+    fractional_part = fractional_part.ljust(DECIMAL_PLACES, '0')
+    minimal_amount_str = integer_part + fractional_part
+    return int(minimal_amount_str)
 
-def make_max_decimal_str(prec):
-    s = '1'
-    for i in range(prec - 1):
-        s += '0'
-    return s
+def from_minimal_unit(amount):
+    if not isinstance(amount, int):
+        raise TypeError("Amount must be an integer representing minimal units.")
 
+    amount_str = str(amount).rjust(DECIMAL_PLACES + 1, '0')
+    integer_part = amount_str[:-DECIMAL_PLACES]
+    fractional_part = amount_str[-DECIMAL_PLACES:].rstrip('0')
 
-def neg_sci_not(s: str):
-    try:
-        base, exp = s.split('e-')
-
-        if float(base) > 9:
-            return s
-
-        base = base.replace('.', '')
-
-        numbers = ('0' * (int(exp) - 1)) + base
-
-        if int(exp) > 0:
-            numbers = '0.' + numbers
-
-        return numbers
-    except ValueError:
-        return s
-
-
-MAX_DECIMAL = Decimal(make_max_decimal_str(MAX_UPPER_PRECISION))
-MIN_DECIMAL = Decimal(make_min_decimal_str(MAX_LOWER_PRECISION))
-
-
-def should_round(x: Decimal):
-    s = str(x)
-
-    try:
-        upper, lower = s.split('.')
-    except ValueError:
-        return False
-
-    if len(lower) > MAX_LOWER_PRECISION - 1:
-        return True
-
-
-def fix_precision(x: Decimal):
-    if x > MAX_DECIMAL:
-        return MAX_DECIMAL
-
-    if should_round(x):
-        return x.quantize(MIN_DECIMAL, rounding=decimal.ROUND_FLOOR).normalize()
-
-    return ContractingDecimal(x)
-
+    if fractional_part:
+        return f"{integer_part}.{fractional_part}"
+    else:
+        return integer_part
 
 class ContractingDecimal:
-    def _get_other(self, other):
-        if type(other) == ContractingDecimal:
-            return other._d
-        elif type(other) == float or type(other) == int:
-            o = str(other)
-            return Decimal(neg_sci_not(o))
-        return other
-
-    def __init__(self, a):
-        if type(a) == float or type(a) == int:
-            o = str(a)
-            self._d = Decimal(neg_sci_not(o))
-        elif type(a) == Decimal:
-            self._d = a
-        elif type(a) == str:
-            self._d = Decimal(neg_sci_not(a))
+    def __init__(self, value):
+        if isinstance(value, ContractingDecimal):
+            self._value = value._value
+        elif isinstance(value, (int, str)):
+            self._value = to_minimal_unit(value)
         else:
-            self._d = Decimal(a)
+            raise TypeError("Value must be an integer, string, or ContractingInteger.")
 
-    def __bool__(self):
-        return self._d > 0
-
-    def __eq__(self, other):
-        return self._d.__eq__(self._get_other(other))
-
-    def __lt__(self, other):
-        return self._d.__lt__(self._get_other(other))
-
-    def __le__(self, other):
-        return self._d.__le__(self._get_other(other))
-
-    def __gt__(self, other):
-        return self._d.__gt__(self._get_other(other))
-
-    def __ge__(self, other):
-        return self._d.__ge__(self._get_other(other))
-
-    def __str__(self):
-        return self._d.__str__()
-
-    def __repr__(self):
-        return self._d.__str__()
-
-    def __neg__(self):
-        return self._d.__neg__()
-
-    def __pos__(self):
-        return self._d.__pos__()
-
-    def __abs__(self):
-        return self._d.__abs__()
+    def _get_other(self, other):
+        if isinstance(other, ContractingDecimal):
+            return other._value
+        elif isinstance(other, int):
+            return other
+        elif isinstance(other, str):
+            return to_minimal_unit(other)
+        else:
+            raise TypeError("Unsupported type for arithmetic operation.")
 
     def __add__(self, other):
-        x = self._d.__add__(self._get_other(other))
-        return fix_precision(x)
+        result = self._value + self._get_other(other)
+        return ContractingDecimal(result)
 
     def __radd__(self, other):
-        return fix_precision(self._d.__radd__(self._get_other(other)))
+        return self.__add__(other)
 
     def __sub__(self, other):
-        return fix_precision(self._d.__sub__(self._get_other(other)))
+        result = self._value - self._get_other(other)
+        return ContractingDecimal(result)
 
     def __rsub__(self, other):
-        return fix_precision(self._d.__rsub__(self._get_other(other)))
+        result = self._get_other(other) - self._value
+        return ContractingDecimal(result)
 
     def __mul__(self, other):
-        return fix_precision(self._d.__mul__(self._get_other(other)))
+        result = self._value * self._get_other(other)
+        # Since multiplication can increase decimal places, adjust back
+        result = result // (10 ** DECIMAL_PLACES)
+        return ContractingDecimal(result)
 
     def __rmul__(self, other):
-        return fix_precision(self._d.__rmul__(self._get_other(other)))
+        return self.__mul__(other)
 
     def __truediv__(self, other):
-        return fix_precision(self._d.__truediv__(self._get_other(other)))
+        numerator = self._value * (10 ** DECIMAL_PLACES)
+        denominator = self._get_other(other)
+        result = numerator // denominator
+        return ContractingDecimal(result)
 
     def __rtruediv__(self, other):
-        return fix_precision(self._d.__rtruediv__(self._get_other(other)))
-
-    def __divmod__(self, other):
-        q, r = self._d.__divmod__(self._get_other(other))
-        return fix_precision(q), fix_precision(r)
-
-    def __rdivmod__(self, other):
-        q, r = self._get_other(other).__divmod__(self._d)
-        return fix_precision(q), fix_precision(r)
-
-    def __mod__(self, other):
-        return fix_precision(self._d.__mod__(self._get_other(other)))
-
-    def __rmod__(self, other):
-        return fix_precision(self._d.__rmod__(self._get_other(other)))
+        numerator = self._get_other(other) * (10 ** DECIMAL_PLACES)
+        denominator = self._value
+        result = numerator // denominator
+        return ContractingDecimal(result)
 
     def __floordiv__(self, other):
-        return fix_precision(self._d.__floordiv__(self._get_other(other)))
+        result = self._value // self._get_other(other)
+        return ContractingDecimal(result)
 
     def __rfloordiv__(self, other):
-        return fix_precision(self._d.__rfloordiv__(self._get_other(other)))
+        result = self._get_other(other) // self._value
+        return ContractingDecimal(result)
+
+    def __mod__(self, other):
+        result = self._value % self._get_other(other)
+        return ContractingDecimal(result)
+
+    def __rmod__(self, other):
+        result = self._get_other(other) % self._value
+        return ContractingDecimal(result)
 
     def __pow__(self, other):
-        return fix_precision(self._d.__pow__(self._get_other(other)))
+        result = pow(self._value, self._get_other(other))
+        return ContractingDecimal(result)
 
     def __rpow__(self, other):
-        return fix_precision(self._d.__rpow__(self._get_other(other)))
+        result = pow(self._get_other(other), self._value)
+        return ContractingDecimal(result)
+
+    def __eq__(self, other):
+        return self._value == self._get_other(other)
+
+    def __ne__(self, other):
+        return self._value != self._get_other(other)
+
+    def __lt__(self, other):
+        return self._value < self._get_other(other)
+
+    def __le__(self, other):
+        return self._value <= self._get_other(other)
+
+    def __gt__(self, other):
+        return self._value > self._get_other(other)
+
+    def __ge__(self, other):
+        return self._value >= self._get_other(other)
+
+    def __neg__(self):
+        return ContractingDecimal(-self._value)
+
+    def __abs__(self):
+        return ContractingDecimal(abs(self._value))
 
     def __int__(self):
-        return self._d.__int__()
+        return self._value // (10 ** DECIMAL_PLACES)
 
-    def __float__(self):
-        return float(self._d)
+    def __str__(self):
+        return from_minimal_unit(self._value)
 
-    def __round__(self, n=None):
-        return self._d.__round__(n)
+    def __repr__(self):
+        return f"ContractingInteger({self.__str__()})"
 
+    def __bool__(self):
+        return self._value != 0
+
+    def to_minimal_unit(self):
+        return self._value
+
+    @classmethod
+    def from_minimal_unit(cls, amount):
+        if not isinstance(amount, int):
+            raise TypeError("Amount must be an integer representing minimal units.")
+        obj = cls(0)
+        obj._value = amount
+        return obj
 
 exports = {
     'decimal': ContractingDecimal
