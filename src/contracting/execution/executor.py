@@ -4,13 +4,10 @@ from contracting.execution.module import install_database_loader, uninstall_buil
 from contracting.stdlib.bridge.decimal import ContractingDecimal, CONTEXT
 from contracting.stdlib.bridge.random import Seeded
 from contracting import constants
-from loguru import logger
-import re
 from copy import deepcopy
 
 import importlib
 import decimal
-import traceback
 
 
 class Executor:
