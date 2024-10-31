@@ -7,6 +7,7 @@ from typing import Any
 class __export(ContextDecorator):
     def __init__(self, contract):
         self.contract = contract
+        self.context_entered = False  # Track if `__enter__` has been called
 
     def __enter__(self, *args, **kwargs):
         driver = rt.env.get('__Driver') or Driver()
@@ -24,12 +25,15 @@ class __export(ContextDecorator):
             }
 
             rt.context._add_state(state)
+            self.context_entered = True  # Mark that `__enter__` was called
 
             if state['owner'] is not None and state['owner'] != state['caller']:
                 raise Exception('Caller is not the owner!')
 
     def __exit__(self, *args, **kwargs):
-        rt.context._pop_state()
+        if self.context_entered:  # Only pop state if `__enter__` was called
+            rt.context._pop_state()
+            self.context_entered = False  # Reset the flag
 
 
 exports = {
