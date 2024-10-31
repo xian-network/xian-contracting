@@ -71,6 +71,7 @@ class MyTestCase(unittest.TestCase):
         self.deploy_broken_stuff()
         self.assertEqual(self.proxythis.proxythis(con="con_thistest2", signer="address"), ("con_thistest2", "con_proxythis"))
         self.assertEqual(self.proxythis.noproxy(signer="address"), ("con_proxythis", "address"))
+        self.assertEqual(self.proxythis.nestedproxythis(con="con_thistest2", signer="address"), ("con_thistest2", "con_proxythis"))
 
 if __name__ == '__main__':
     unittest.main()

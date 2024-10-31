@@ -24,14 +24,15 @@ class Context:
         return self._state[-1]
 
     def _add_state(self, state: dict):
-        if len(self._state) < self._maxlen and self._context_changed(state['this']):
+        if len(self._state) < self._maxlen:
             self._state.append(state)
             self._depth += 1  # Increase depth when a state is added
 
     def _pop_state(self):
         if self._depth > 0:  # Only pop if depth indicates an active context
-            self._state.pop(-1)
             self._depth -= 1  # Decrease depth when a state is popped
+            if self._depth == 0:
+                self._state.pop(-1)
 
     def _reset(self):
         self._state = []

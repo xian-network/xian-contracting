@@ -1,9 +1,12 @@
 @export
 def exported():
-    return 0
+    return ctx.this, ctx.caller
 
 @export
 def getthis():
-    exported()
     return ctx.this, ctx.caller
+
+@export
+def nested_exported():
+    return exported()
  
