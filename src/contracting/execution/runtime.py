@@ -24,7 +24,7 @@ class Context:
         return self._state[-1]
 
     def _add_state(self, state: dict):
-        if len(self._state) < self._maxlen:
+        if len(self._state) < self._maxlen and self._context_changed(state['this']):
             self._state.append(state)
             self._depth += 1  # Increase depth when a state is added
 
