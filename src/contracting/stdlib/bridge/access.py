@@ -27,6 +27,8 @@ class __export(ContextDecorator):
 
             if state['owner'] is not None and state['owner'] != state['caller']:
                 raise Exception('Caller is not the owner!')
+        else:
+            rt.context._ins_state()
 
     def __exit__(self, *args, **kwargs):
         rt.context._pop_state()

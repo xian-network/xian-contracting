@@ -9,6 +9,7 @@ import os
 class Context:
     def __init__(self, base_state, maxlen=constants.RECURSION_LIMIT):
         self._state = []
+        self._depth = []
         self._base_state = base_state
         self._maxlen = maxlen
 
@@ -25,13 +26,22 @@ class Context:
     def _add_state(self, state: dict):
         if self._context_changed(state['this']) and len(self._state) < self._maxlen:
             self._state.append(state)
+            self._depth.append(1)
+
+    def _ins_state(self):
+        if len(self._depth) > 0:
+            self._depth[-1] += 1
 
     def _pop_state(self):
-        if len(self._state) > 0:
-            self._state.pop(-1)
+        if len(self._state) > 0: #len(self._state) should equal len(self._depth)
+            self._depth[-1] -= 1
+            if self._depth[-1] == 0:
+                self._state.pop(-1)
+                self._depth.pop(-1)
 
     def _reset(self):
         self._state = []
+        self._depth = []
 
     @property
     def this(self):
@@ -56,7 +66,6 @@ class Context:
     @property
     def submission_name(self):
         return self._get_state()['submission_name']
-
 
 _context = Context({
         'this': None,
