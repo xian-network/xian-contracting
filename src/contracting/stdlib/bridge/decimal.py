@@ -59,13 +59,16 @@ class ContractingDecimal:
 
     def __init__(self, a):
         if isinstance(a, (float, int)):
-            self._d = Decimal(neg_sci_not(str(a))).quantize(MIN_DECIMAL)
-        elif isinstance(a, Decimal):
-            self._d = a.quantize(MIN_DECIMAL)
+            self._d = Decimal(neg_sci_not(str(a)))
         elif isinstance(a, str):
-            self._d = Decimal(neg_sci_not(a)).quantize(MIN_DECIMAL)
+            self._d = Decimal(neg_sci_not(a))
+        elif isinstance(a, Decimal):
+            self._d = a
         else:
-            self._d = Decimal(a).quantize(MIN_DECIMAL)
+            self._d = Decimal(a)
+
+        # Clamp and quantize during initialization
+        self._d = fix_precision(self._d)
 
     def __bool__(self):
         return self._d > 0
