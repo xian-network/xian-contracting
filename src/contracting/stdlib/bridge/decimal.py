@@ -1,42 +1,34 @@
-from decimal import Decimal
-
+from decimal import Decimal, Context, ROUND_FLOOR
 import decimal
 
+# Define precision constants
 MAX_UPPER_PRECISION = 30
 MAX_LOWER_PRECISION = 30
-CONTEXT = decimal.Context(
+
+# Set the decimal context for precision and rounding
+CONTEXT = Context(
     prec=MAX_UPPER_PRECISION + MAX_LOWER_PRECISION,
-    rounding=decimal.ROUND_FLOOR,
+    rounding=ROUND_FLOOR,
     Emin=-100,
     Emax=100
 )
 decimal.setcontext(CONTEXT)
 
-
+# Create min and max decimal strings for precision boundaries
 def make_min_decimal_str(prec):
-    s = '0.'
-    for i in range(prec - 1):
-        s += '0'
-    s += '1'
-    return s
-
+    return '0.' + '0' * (prec - 1) + '1'
 
 def make_max_decimal_str(prec):
-    s = '1'
-    for i in range(prec - 1):
-        s += '0'
-    return s
+    return '1' + '0' * (prec - 1)
 
-
+# Convert scientific notation to non-exponential format if needed
 def neg_sci_not(s: str):
     try:
         base, exp = s.split('e-')
-
         if float(base) > 9:
             return s
 
         base = base.replace('.', '')
-
         numbers = ('0' * (int(exp) - 1)) + base
 
         if int(exp) > 0:
@@ -46,147 +38,120 @@ def neg_sci_not(s: str):
     except ValueError:
         return s
 
-
+# Define maximum and minimum decimal constants
 MAX_DECIMAL = Decimal(make_max_decimal_str(MAX_UPPER_PRECISION))
 MIN_DECIMAL = Decimal(make_min_decimal_str(MAX_LOWER_PRECISION))
 
-
-def should_round(x: Decimal):
-    s = str(x)
-
-    try:
-        upper, lower = s.split('.')
-    except ValueError:
-        return False
-
-    if len(lower) > MAX_LOWER_PRECISION - 1:
-        return True
-
-
+# Ensure the value is within bounds and quantized
 def fix_precision(x: Decimal):
     if x > MAX_DECIMAL:
         return MAX_DECIMAL
+    return x.quantize(MIN_DECIMAL, rounding=ROUND_FLOOR).normalize()
 
-    if should_round(x):
-        return x.quantize(MIN_DECIMAL, rounding=decimal.ROUND_FLOOR).normalize()
-
-    return ContractingDecimal(x)
-
-
+# Main ContractingDecimal class
 class ContractingDecimal:
     def _get_other(self, other):
-        if type(other) == ContractingDecimal:
+        if isinstance(other, ContractingDecimal):
             return other._d
-        elif type(other) == float or type(other) == int:
-            o = str(other)
-            return Decimal(neg_sci_not(o))
+        elif isinstance(other, (float, int)):
+            return Decimal(neg_sci_not(str(other)))
         return other
 
     def __init__(self, a):
-        if type(a) == float or type(a) == int:
-            o = str(a)
-            self._d = Decimal(neg_sci_not(o))
-        elif type(a) == Decimal:
-            self._d = a
-        elif type(a) == str:
-            self._d = Decimal(neg_sci_not(a))
+        if isinstance(a, (float, int)):
+            self._d = Decimal(neg_sci_not(str(a))).quantize(MIN_DECIMAL)
+        elif isinstance(a, Decimal):
+            self._d = a.quantize(MIN_DECIMAL)
+        elif isinstance(a, str):
+            self._d = Decimal(neg_sci_not(a)).quantize(MIN_DECIMAL)
         else:
-            self._d = Decimal(a)
+            self._d = Decimal(a).quantize(MIN_DECIMAL)
 
     def __bool__(self):
         return self._d > 0
 
     def __eq__(self, other):
-        return self._d.__eq__(self._get_other(other))
+        return self._d == self._get_other(other)
 
     def __lt__(self, other):
-        return self._d.__lt__(self._get_other(other))
+        return self._d < self._get_other(other)
 
     def __le__(self, other):
-        return self._d.__le__(self._get_other(other))
+        return self._d <= self._get_other(other)
 
     def __gt__(self, other):
-        return self._d.__gt__(self._get_other(other))
+        return self._d > self._get_other(other)
 
     def __ge__(self, other):
-        return self._d.__ge__(self._get_other(other))
+        return self._d >= self._get_other(other)
 
     def __str__(self):
-        return self._d.__str__()
+        return self._d.to_eng_string()
 
     def __repr__(self):
-        return self._d.__str__()
+        return self._d.to_eng_string()
 
     def __neg__(self):
-        return self._d.__neg__()
+        return ContractingDecimal(-self._d)
 
     def __pos__(self):
-        return self._d.__pos__()
+        return self
 
     def __abs__(self):
-        return self._d.__abs__()
+        return ContractingDecimal(abs(self._d))
 
     def __add__(self, other):
-        x = self._d.__add__(self._get_other(other))
-        return fix_precision(x)
+        return ContractingDecimal(fix_precision(self._d + self._get_other(other)))
 
     def __radd__(self, other):
-        return fix_precision(self._d.__radd__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) + self._d))
 
     def __sub__(self, other):
-        return fix_precision(self._d.__sub__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d - self._get_other(other)))
 
     def __rsub__(self, other):
-        return fix_precision(self._d.__rsub__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) - self._d))
 
     def __mul__(self, other):
-        return fix_precision(self._d.__mul__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d * self._get_other(other)))
 
     def __rmul__(self, other):
-        return fix_precision(self._d.__rmul__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) * self._d))
 
     def __truediv__(self, other):
-        return fix_precision(self._d.__truediv__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d / self._get_other(other)))
 
     def __rtruediv__(self, other):
-        return fix_precision(self._d.__rtruediv__(self._get_other(other)))
-
-    def __divmod__(self, other):
-        q, r = self._d.__divmod__(self._get_other(other))
-        return fix_precision(q), fix_precision(r)
-
-    def __rdivmod__(self, other):
-        q, r = self._get_other(other).__divmod__(self._d)
-        return fix_precision(q), fix_precision(r)
+        return ContractingDecimal(fix_precision(self._get_other(other) / self._d))
 
     def __mod__(self, other):
-        return fix_precision(self._d.__mod__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d % self._get_other(other)))
 
     def __rmod__(self, other):
-        return fix_precision(self._d.__rmod__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) % self._d))
 
     def __floordiv__(self, other):
-        return fix_precision(self._d.__floordiv__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d // self._get_other(other)))
 
     def __rfloordiv__(self, other):
-        return fix_precision(self._d.__rfloordiv__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) // self._d))
 
     def __pow__(self, other):
-        return fix_precision(self._d.__pow__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._d ** self._get_other(other)))
 
     def __rpow__(self, other):
-        return fix_precision(self._d.__rpow__(self._get_other(other)))
+        return ContractingDecimal(fix_precision(self._get_other(other) ** self._d))
 
     def __int__(self):
-        return self._d.__int__()
+        return int(self._d)
 
     def __float__(self):
         return float(self._d)
 
     def __round__(self, n=None):
-        return self._d.__round__(n)
+        return round(self._d, n)
 
-
+# Export ContractingDecimal for external use
 exports = {
     'decimal': ContractingDecimal
 }
