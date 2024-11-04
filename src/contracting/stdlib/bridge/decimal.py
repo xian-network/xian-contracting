@@ -52,7 +52,7 @@ def fix_precision(x: Decimal):
 class ContractingDecimal:
     def _get_other(self, other):
         if isinstance(other, ContractingDecimal):
-            return fix_precision(other._d)
+            return other._d
         elif isinstance(other, (float, int)):
             return fix_precision(Decimal(neg_sci_not(str(other))))
         return other
