@@ -2,8 +2,9 @@ from decimal import Decimal
 import decimal
 import math
 
-from contracting.stdlib.bridge.decimal import ContractingDecimal, fix_precision, should_round, MAX_DECIMAL, neg_sci_not
+from contracting.stdlib.bridge.decimal import ContractingDecimal, fix_precision, MAX_DECIMAL, neg_sci_not
 from unittest import TestCase
+import unittest
 
 
 class TestDecimal(TestCase):
@@ -125,16 +126,6 @@ class TestDecimal(TestCase):
 
         print(c)
 
-    def test_should_round_false_for_lower_number(self):
-        d = Decimal('1.12345678901234567890123456789')
-
-        self.assertFalse(should_round(d))
-
-    def test_should_round_true_for_too_lower_number(self):
-        d = Decimal('1.123456789012345678901234567890123')
-
-        self.assertTrue(should_round(d))
-
     def test_fix_precision_cuts_too_low(self):
         d = Decimal('1.123456789012345678901234567890123')
         e = Decimal('1.12345678901234567890123456789')
@@ -186,3 +177,6 @@ class TestDecimal(TestCase):
         expected = '20e-5'
 
         self.assertEqual(neg_sci_not(s), expected)
+
+if "__main__" == __name__:
+    unittest.main()
