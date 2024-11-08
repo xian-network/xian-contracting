@@ -65,7 +65,7 @@ class LogEvent(Datum):
             "event": self._name,
             "signer": rt.context.signer,
             "caller": rt.context.caller,
-            "args": list(self._args.keys()),
+            "args": self._args.keys(),
             "arg_0": kwargs[self._args[0]],
             "arg_1": kwargs[self._args[1]],
             "arg_2": kwargs[self._args[2]],
@@ -75,6 +75,8 @@ class LogEvent(Datum):
     def __call__(self, data):
         self.emit(data)
 
+"""
+Usage:
 
 TransferEvent = LogEvent(
     name="Transfer",
@@ -89,6 +91,7 @@ def transfer(self, from_address, to_address, amount):
 
     # Log the transfer event
     TransferEvent({"from": from_address, "to": to_address, "amount": amount})
+"""
 
 
 class Hash(Datum):
