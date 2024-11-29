@@ -2,8 +2,9 @@ from contracting.storage.driver import Driver
 from contracting.execution.runtime import rt
 from contracting import constants
 from contracting.stdlib.bridge.decimal import ContractingDecimal
+from contracting.storage.encoder import encode_kv
 
-driver = rt.env.get('__Driver') or Driver()
+driver = rt.env.get("__Driver") or Driver()
 
 
 class Datum:
@@ -30,7 +31,6 @@ class Variable(Datum):
 
     def get(self):
         return self._driver.get(self._key)
-
 
 class Hash(Datum):
     def __init__(self, contract, name, driver: Driver = driver, default_value=None):
@@ -139,3 +139,87 @@ class ForeignHash(Hash):
 
     def clear(self, *args):
         raise Exception('Cannot write with a ForeignHash.')
+
+class LogEvent(Datum):
+    def __init__(self, contract, name, args, driver: Driver = driver):
+        super().__init__(contract, name, driver=driver)
+        self._args = args
+        self._contract = contract
+        self._name = name
+
+        assert isinstance(args, dict), "Args must be a dictionary."
+        assert len(args) > 0, "Args must have at least one argument."
+        # Check for indexed arguments with a maximum of three
+        indexed_args_count = sum(1 for arg in args.values() if arg.get('idx', False))
+        assert indexed_args_count <= 3, "Args must have at most three indexed arguments."
+        for arg in args.values():
+            # breakpoint()
+            if not isinstance(arg['type'], tuple):
+                arg['type'] = (arg['type'],)
+
+            # Now perform the type check
+            assert all(
+                issubclass(t, (str, int, float, ContractingDecimal, bool)) for t in arg['type']
+            ), "Each type in args must be str, int, float, ContractingDecimal, or bool."
+            if isinstance(arg['type'], str):
+                assert len(arg['type']) <= 128, f"Argument {arg} is too long (max 128 characters)."
+
+    def write_event(self, event_data):
+        assert len(event_data) == len(
+            self._args
+        ), "Data must have the same number of arguments as specified in the event."
+        for arg in self._args:
+            assert arg in event_data, f"Argument {arg} is missing from the data dictionary."
+
+            assert isinstance(event_data[arg], self._args[arg]['type']), (
+                f"Argument {arg} is the wrong type! "
+                f"Expected {self._args[arg]['type']}, got {type(event_data[arg])}."
+            )
+
+        event = {
+            "contract": self._contract,
+            "event": self._name,
+            "signer": rt.context.signer,
+            "caller": rt.context.caller,
+            "indexed_args": {arg: event_data[arg] for arg in self._args if self._args[arg].get('idx', False)},
+            "non_indexed_args": {arg: event_data[arg] for arg in self._args if not self._args[arg].get('idx', False)}
+        }
+
+        # breakpoint()
+
+        for arg, value in event['indexed_args'].items():
+            assert isinstance(value, self._args[arg]['type']), f"Indexed argument {arg} is the wrong type! Expected {self._args[arg]['type']}, got {type(value)}."
+            encoded = encode_kv(arg, value)
+            rt.deduct_write(*encoded)
+        for arg, value in event['non_indexed_args'].items():
+            assert isinstance(value, self._args[arg]['type']), f"Non-indexed argument {arg} is the wrong type! Expected {self._args[arg]['type']}, got {type(value)}."
+            encoded = encode_kv(arg, value)
+            rt.deduct_write(*encoded)
+        self._driver.set_event(event)
+
+    def __call__(self, data):
+        self.write_event(data)
+
+
+"""
+Usage:
+
+TransferEvent = LogEvent(
+    name="Transfer",
+    args={
+        "from": {"type": str, "idx": True},
+        "to": {"type": str, "idx": True},
+        "amount": {"type": (int, float, ContractingDecimal)}
+    },
+)
+
+
+@export
+def transfer(self, from_address, to_address, amount):
+    # Perform the transfer logic
+    # ...
+
+    # Log the transfer event
+    TransferEvent({"from": from_address, "to": to_address, "amount": amount})
+"""
+

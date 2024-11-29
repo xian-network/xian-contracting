@@ -132,6 +132,7 @@ class Runtime:
 
     @classmethod
     def deduct_write(cls, key, value):
+        breakpoint()
         if key is not None and cls.tracer.is_started():
             cost = len(key) + len(value)
             cls.writes += cost

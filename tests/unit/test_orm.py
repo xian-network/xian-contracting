@@ -1,7 +1,8 @@
 from unittest import TestCase
 from contracting import constants
+from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting.storage.driver import Driver
-from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash
+from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash, LogEvent
 # from contracting.stdlib.env import gather
 
 # Variable = gather()['Variable']
@@ -616,3 +617,131 @@ class TestForeignHash(TestCase):
         h['howdy'] = 555
 
         self.assertEqual(f['howdy'], 555)
+
+
+class TestLogEvent(TestCase):
+    def setUp(self):
+
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float, ContractingDecimal)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        
+        
+    def test_log_event(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float, ContractingDecimal)
+            }
+        }
+        
+
+        le = LogEvent(contract, name, args=args, driver=driver)
+
+
+    def test_log_event_with_max_indexed_args(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float, ContractingDecimal),
+                'idx': True
+            }
+        }
+        # This should not raise an assertion error
+        le = LogEvent(contract, name, args=args, driver=driver)
+        self.assertIsInstance(le, LogEvent)
+        
+
+    def test_log_event_with_too_many_indexed_args(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float, ContractingDecimal),
+                'idx': True
+            },
+            'extra': {
+                'type': str,
+                'idx': True
+            }
+        }
+        
+        # This should raise an assertion error
+        with self.assertRaisesRegex(AssertionError, "Args must have at most three indexed arguments."):
+            LogEvent(contract, name, args=args, driver=driver)
+
+    def test_write_event_success(self):
+        # Define the event data
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "amount": 100
+        }
+
+        # Call the write_event method
+        self.log_event.write_event(data)
+
+        # No assertions needed here if no exceptions are raised
+
+    def test_write_event_missing_argument(self):
+        # Define the event data with a missing argument
+        data = {
+            "from": "Alice",
+            "amount": 100
+        }
+
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Data must have the same number of arguments as specified in the event.", str(context.exception))
+
+    def test_write_event_wrong_type(self):
+        # Define the event data with a wrong type
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "amount": "one hundred"
+        }
+
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Argument amount is the wrong type!", str(context.exception))
+
+if __name__ == '__main__':
+    unittest.main()
