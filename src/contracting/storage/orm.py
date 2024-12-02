@@ -34,6 +34,7 @@ class Variable(Datum):
     def get(self):
         return self._driver.get(self._key)
 
+
 class Hash(Datum):
     def __init__(self, contract, name, driver: Driver = driver, default_value=None):
         super().__init__(contract, name, driver=driver)
@@ -148,80 +149,103 @@ class ForeignHash(Hash):
         return super().__getitem__(item)
 
     def clear(self, *args):
-        raise Exception('Cannot write with a ForeignHash.')
+        raise Exception("Cannot write with a ForeignHash.")
 
-class LogEvent(Datum):
+
+class LogEvent:
     """
     TODO
     - Break validation into smaller functions
     - Add checks for use of illegal types and argument names (See Hash checks.)
     """
-    def __init__(self, contract, name, args, driver: Driver = driver):
-        super().__init__(contract, name, driver=driver)
-        self._args = args
-        self._contract = contract
-        self._name = name
 
-        assert isinstance(args, dict), "Args must be a dictionary."
-        assert len(args) > 0, "Args must have at least one argument."
+    def __init__(self, contract, name, event, params, driver: Driver = driver):
+        self._driver = driver
+        self._params = params
+        self._contract = contract
+        self._event = event
+
+        assert isinstance(params, dict), "Args must be a dictionary."
+        assert len(params) > 0, "Args must have at least one argument."
         # Check for indexed arguments with a maximum of three
-        indexed_args_count = sum(1 for arg in args.values() if arg.get('idx', False))
-        assert indexed_args_count <= 3, "Args must have at most three indexed arguments."
-        for arg in args.values():
-            if not isinstance(arg['type'], tuple):
-                arg['type'] = (arg['type'],)
+        indexed_args_count = sum(1 for arg in params.values() if arg.get("idx", False))
+        assert (
+            indexed_args_count <= 3
+        ), "Args must have at most three indexed arguments."
+        for param in params.values():
+            if not isinstance(param["type"], tuple):
+                param["type"] = (param["type"],)
 
             assert all(
-                issubclass(t, (str, int, float, ContractingDecimal, bool)) for t in arg['type']
-            ), "Each type in args must be str, int, float, ContractingDecimal, or bool."
-            if isinstance(arg['type'], str):
-                assert len(arg['type']) <= 128, f"Argument {arg} is too long (max 128 characters)."
+                issubclass(t, (str, int, float, bool))
+                for t in param["type"]
+            ), "Each type in args must be str, int, float, or bool."
 
     def write_event(self, event_data):
+
         # Check that the number of arguments matches
         assert len(event_data) == len(
-            self._args
-        ), "Data must have the same number of arguments as specified in the event."
+            self._params
+        ), "Event Data must have the same number of arguments as specified in the event."
 
         # Check for unexpected arguments
         for arg in event_data:
-            assert arg in self._args, f"Unexpected argument {arg} in the data dictionary."
+            assert (
+                arg in self._params
+            ), f"Unexpected argument {arg} in the data dictionary."
 
         # Check for missing and type-mismatched arguments
-        for arg in self._args:
-            assert arg in event_data, f"Argument {arg} is missing from the data dictionary."
+        for arg in self._params:
+            assert (
+                arg in event_data
+            ), f"Argument {arg} is missing from the data dictionary."
 
             # Check the type of the argument
-            assert isinstance(event_data[arg], self._args[arg]['type']), (
+            assert isinstance(event_data[arg], self._params[arg]["type"]), (
                 f"Argument {arg} is the wrong type! "
-                f"Expected {self._args[arg]['type']}, got {type(event_data[arg])}."
+                f"Expected {self._params[arg]['type']}, got {type(event_data[arg])}."
             )
 
             # Check the size of the argument
-            value_size = len(str(event_data[arg]).encode('utf-8'))
-            assert value_size <= 1024, f"Argument {arg} is too large ({value_size} bytes). Max is 1024 bytes."
+            value_size = len(str(event_data[arg]).encode("utf-8"))
+            assert (
+                value_size <= 1024
+            ), f"Argument {arg} is too large ({value_size} bytes). Max is 1024 bytes."
 
         event = {
             "contract": self._contract,
-            "event": self._name,
+            "event": self._event,
             "signer": rt.context.signer,
             "caller": rt.context.caller,
-            "indexed_args": {arg: event_data[arg] for arg in self._args if self._args[arg].get('idx', False)},
-            "non_indexed_args": {arg: event_data[arg] for arg in self._args if not self._args[arg].get('idx', False)}
+            "data_indexed": {
+                arg: event_data[arg]
+                for arg in self._params
+                if self._params[arg].get("idx", False)
+            },
+            "data": {
+                arg: event_data[arg]
+                for arg in self._params
+                if not self._params[arg].get("idx", False)
+            },
         }
 
         # breakpoint()
 
-        for arg, value in event['indexed_args'].items():
-            assert isinstance(value, self._args[arg]['type']), f"Indexed argument {arg} is the wrong type! Expected {self._args[arg]['type']}, got {type(value)}."
+        for arg, value in event["data_indexed"].items():
+            assert isinstance(
+                value, self._params[arg]["type"]
+            ), f"Indexed argument {arg} is the wrong type! Expected {self._params[arg]['type']}, got {type(value)}."
             encoded = encode_kv(arg, value)
             rt.deduct_write(*encoded, multiplier=0.5)
-        for arg, value in event['non_indexed_args'].items():
-            assert isinstance(value, self._args[arg]['type']), f"Non-indexed argument {arg} is the wrong type! Expected {self._args[arg]['type']}, got {type(value)}."
+        for arg, value in event["data"].items():
+            assert isinstance(
+                value, self._params[arg]["type"]
+            ), f"Non-indexed argument {arg} is the wrong type! Expected {self._params[arg]['type']}, got {type(value)}."
             encoded = encode_kv(arg, value)
             rt.deduct_write(*encoded, multiplier=0.5)
 
         self._driver.set_event(event)
+
 
     def __call__(self, data):
         self.write_event(data)
@@ -248,4 +272,3 @@ def transfer(self, from_address, to_address, amount):
     # Log the transfer event
     TransferEvent({"from": from_address, "to": to_address, "amount": amount})
 """
-

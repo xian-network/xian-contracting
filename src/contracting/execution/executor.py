@@ -127,7 +127,7 @@ class Executor:
             runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
             transaction_writes = deepcopy(driver.transaction_writes)
-            events = deepcopy(driver.events)
+            events = deepcopy(driver.log_events)
             runtime.rt.tracer.stop()
             disable_restricted_imports()
 

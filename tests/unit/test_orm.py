@@ -3,6 +3,7 @@ from contracting import constants
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting.storage.driver import Driver
 from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash, LogEvent
+from contracting.execution.executor import Executor
 # from contracting.stdlib.env import gather
 
 # Variable = gather()['Variable']
@@ -681,11 +682,11 @@ class TestLogEvent(TestCase):
         self.args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
         self.contract = "test_contract"
         self.name = "Transfer"
         self.driver = driver  
@@ -704,12 +705,12 @@ class TestLogEvent(TestCase):
                 'idx': True
             },
             'amount': {
-                'type': (int, float, ContractingDecimal)
+                'type': (int, float)
             }
         }
         
 
-        le = LogEvent(contract, name, args=args, driver=driver)
+        le = LogEvent(contract, name, event=name, params=args, driver=driver)
 
 
     def test_log_event_with_max_indexed_args(self):
@@ -726,12 +727,12 @@ class TestLogEvent(TestCase):
                 'idx': True
             },
             'amount': {
-                'type': (int, float, ContractingDecimal),
+                'type': (int, float),
                 'idx': True
             }
         }
         # This should not raise an assertion error
-        le = LogEvent(contract, name, args=args, driver=driver)
+        le = LogEvent(contract, name, event=name, params=args, driver=driver)
         self.assertIsInstance(le, LogEvent)
         
 
@@ -749,7 +750,7 @@ class TestLogEvent(TestCase):
                 'idx': True
             },
             'amount': {
-                'type': (int, float, ContractingDecimal),
+                'type': (int, float),
                 'idx': True
             },
             'extra': {
@@ -760,7 +761,7 @@ class TestLogEvent(TestCase):
         
         # This should raise an assertion error
         with self.assertRaisesRegex(AssertionError, "Args must have at most three indexed arguments."):
-            LogEvent(contract, name, args=args, driver=driver)
+            LogEvent(contract, name, event=name, params=args, driver=driver)
 
     def test_write_event_success(self):
         # Define the event data
@@ -824,11 +825,11 @@ class TestLogEvent(TestCase):
         args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        log_event = LogEvent(self.contract, self.name, args=args, driver=self.driver)
+        log_event = LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
         # Define event data with an unexpected argument name
         data = {
@@ -855,11 +856,11 @@ class TestLogEventBoundaryIndexedArgs(TestCase):
         args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal), "idx": True}
+            "amount": {"type": (int, float), "idx": True}
         }
 
         # This should not raise an assertion error
-        log_event = LogEvent(self.contract, self.name, args=args, driver=self.driver)
+        log_event = LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
         self.assertIsInstance(log_event, LogEvent)
 
     def test_log_event_with_more_than_three_indexed_args(self):
@@ -867,13 +868,13 @@ class TestLogEventBoundaryIndexedArgs(TestCase):
         args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal), "idx": True},
+            "amount": {"type": (int, float), "idx": True},
             "extra": {"type": str, "idx": True}
         }
 
         # This should raise an assertion error
         with self.assertRaises(AssertionError) as context:
-            LogEvent(self.contract, self.name, args=args, driver=self.driver)
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
         self.assertIn("Args must have at most three indexed arguments.", str(context.exception))
         
@@ -886,11 +887,11 @@ class TestLogEventTypeEnforcementFuzz(TestCase):
         self.args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
 
     def random_string(self, length=10):
         return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -952,11 +953,11 @@ class TestLogEventInvalidArgumentNames(TestCase):
         self.args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
 
     def test_write_event_with_invalid_argument_names(self):
         # Define event data with an unexpected argument name
@@ -978,11 +979,11 @@ class TestLogEventLargeData(TestCase):
         self.args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
 
     def test_write_event_with_large_data(self):
         # Generate a large string for the 'from' and 'to' fields
@@ -1015,11 +1016,11 @@ class TestLogEventInvalidDataTypes(TestCase):
         self.args = {
             "from": {"type": str, "idx": True},
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # Create a LogEvent instance
-        self.log_event = LogEvent(contract="test_contract", name="Transfer", args=self.args)
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
 
     def test_write_event_with_invalid_string_type(self):
         # Use an invalid type (e.g., list) for the 'from' field
@@ -1075,14 +1076,14 @@ class TestLogEventNonStandardTypes(TestCase):
         args = {
             "from": {"type": list, "idx": True},  # Invalid type: list
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # This should raise an assertion error
         with self.assertRaises(AssertionError) as context:
-            LogEvent(self.contract, self.name, args=args, driver=self.driver)
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
-        self.assertIn("Each type in args must be str, int, float, ContractingDecimal, or bool.", str(context.exception))
+        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
 
     def test_log_event_with_custom_object_type(self):
         # Define arguments with a custom object type
@@ -1092,15 +1093,14 @@ class TestLogEventNonStandardTypes(TestCase):
         args = {
             "from": {"type": CustomType, "idx": True},  # Invalid type: CustomType
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float, ContractingDecimal)}
+            "amount": {"type": (int, float)}
         }
 
         # This should raise an assertion error
         with self.assertRaises(AssertionError) as context:
-            LogEvent(self.contract, self.name, args=args, driver=self.driver)
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
-        self.assertIn("Each type in args must be str, int, float, ContractingDecimal, or bool.", str(context.exception))
-
+        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()
