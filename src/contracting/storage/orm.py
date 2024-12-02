@@ -34,7 +34,6 @@ class Variable(Datum):
     def get(self):
         return self._driver.get(self._key)
 
-
 class Hash(Datum):
     def __init__(self, contract, name, driver: Driver = driver, default_value=None):
         super().__init__(contract, name, driver=driver)

@@ -1,9 +1,7 @@
 from unittest import TestCase
 from contracting import constants
-from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting.storage.driver import Driver
 from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash, LogEvent
-from contracting.execution.executor import Executor
 # from contracting.stdlib.env import gather
 
 # Variable = gather()['Variable']
@@ -624,57 +622,6 @@ class TestForeignHash(TestCase):
 
 
 class TestLogEvent(TestCase):
-    
-    
-    """
-    TO DO :
-    # Missing Tests for `LogEvent` Class
-
-    1. Unauthorized Access Test: 
-    - Ensure that unauthorized access to the `rt.context` and `_driver` is not possible. This could involve attempting to manipulate these objects directly and verifying that such actions are blocked or result in an error.
-
-    2. Boundary Value Tests for Indexed Arguments: 
-    - Test the boundary conditions for the number of indexed arguments (e.g., exactly three, more than three) to ensure the assertion behaves as expected.
-
-    3. Type Enforcement Test: 
-    - Verify that the type enforcement in the `write_event` method is strict and cannot be bypassed by using subclasses or similar types.
-
-    4. Empty Event Data Test: 
-    - Test the behavior when `write_event` is called with an empty dictionary or `None` to ensure it fails gracefully.
-
-    5. Invalid Argument Names Test: 
-    - Attempt to use invalid or unexpected argument names in the `args` dictionary to ensure they are properly rejected.
-
-    6. Concurrent Access Test: 
-    - Simulate concurrent access to the `LogEvent` instance to ensure thread safety and that no race conditions occur.
-
-    7. Large Data Test: 
-    - Test the behavior when very large data sets are passed to `write_event` to ensure performance and stability.
-
-    8. Invalid Contract or Event Name Test: 
-    - Test with invalid or unexpected contract and event names to ensure they are handled correctly.
-
-    9. Driver Manipulation Test: 
-    - Attempt to manipulate the `_driver` directly to ensure it is protected against unauthorized changes.
-
-    10. Event Encoding Test: 
-        - Verify that the `encode_kv` function is called correctly and that the encoded data is as expected.
-
-    11. Event Logging Test: 
-        - Ensure that events are logged correctly in the `_driver` and that the log can be retrieved and verified.
-
-    12. Security Test for `__call__` Method: 
-        - Ensure that the `__call__` method does not expose any vulnerabilities when invoked with unexpected or malicious data.
-
-    13. Invalid Data Types in Event Data Test: 
-        - Test with data types that are not specified in the `args` to ensure they are rejected.
-
-    14. Test for Missing `driver`: 
-        - Ensure that the class behaves correctly if the `driver` is not provided or is `None`.
-
-    15. Test for Non-Standard Types in Args: 
-        - Attempt to use non-standard types in the `args` dictionary to ensure they are rejected.
-    """
 
     def setUp(self):
 
