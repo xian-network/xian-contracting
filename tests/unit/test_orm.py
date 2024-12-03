@@ -1,7 +1,7 @@
 from unittest import TestCase
 from contracting import constants
 from contracting.storage.driver import Driver
-from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash
+from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash, LogEvent
 # from contracting.stdlib.env import gather
 
 # Variable = gather()['Variable']
@@ -616,3 +616,438 @@ class TestForeignHash(TestCase):
         h['howdy'] = 555
 
         self.assertEqual(f['howdy'], 555)
+        
+        
+
+
+
+class TestLogEvent(TestCase):
+
+    def setUp(self):
+
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
+        self.contract = "test_contract"
+        self.name = "Transfer"
+        self.driver = driver  
+        
+    def test_log_event(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float)
+            }
+        }
+        
+
+        le = LogEvent(contract, name, event=name, params=args, driver=driver)
+
+
+    def test_log_event_with_max_indexed_args(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float),
+                'idx': True
+            }
+        }
+        # This should not raise an assertion error
+        le = LogEvent(contract, name, event=name, params=args, driver=driver)
+        self.assertIsInstance(le, LogEvent)
+        
+
+    def test_log_event_with_too_many_indexed_args(self):
+        contract = 'currency'
+        name = 'Transfer'
+        
+        args = {
+            'from': {
+                'type': str,
+                'idx': True
+            }, 
+            'to': {
+                'type': str,
+                'idx': True
+            },
+            'amount': {
+                'type': (int, float),
+                'idx': True
+            },
+            'extra': {
+                'type': str,
+                'idx': True
+            }
+        }
+        
+        # This should raise an assertion error
+        with self.assertRaisesRegex(AssertionError, "Args must have at most three indexed arguments."):
+            LogEvent(contract, name, event=name, params=args, driver=driver)
+
+    def test_write_event_success(self):
+        # Define the event data
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "amount": 100
+        }
+
+        # Call the write_event method
+        self.log_event.write_event(data)
+
+        # No assertions needed here if no exceptions are raised
+
+    def test_write_event_missing_argument(self):
+        # Define the event data with a missing argument
+        data = {
+            "from": "Alice",
+            "amount": 100
+        }
+
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Data must have the same number of arguments as specified in the event.", str(context.exception))
+
+    def test_write_event_wrong_type(self):
+        # Define the event data with a wrong type
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "amount": "one hundred"
+        }
+
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Argument amount is the wrong type!", str(context.exception))
+        
+
+    def test_write_event_with_empty_data(self):
+        # Test with an empty dictionary
+        data = {}
+
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Data must have the same number of arguments as specified in the event.", str(context.exception))
+
+    def test_write_event_with_none(self):
+        # Test with None as data
+        data = None
+
+        with self.assertRaises(TypeError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("object of type 'NoneType' has no len()", str(context.exception))
+
+    def test_write_event_with_invalid_argument_names(self):
+        # Define the event arguments correctly
+        args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        log_event = LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
+
+        # Define event data with an unexpected argument name
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "unexpected_arg": 100
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            log_event.write_event(data)
+
+        self.assertIn("Unexpected argument unexpected_arg in the data dictionary.", str(context.exception))
+
+class TestLogEventBoundaryIndexedArgs(TestCase):
+    def setUp(self):
+        # Common setup for the tests
+        self.contract = "test_contract"
+        self.name = "Transfer"
+        self.driver = driver  # Assuming driver is defined elsewhere
+
+    def test_log_event_with_exactly_three_indexed_args(self):
+        # Define arguments with exactly three indexed arguments
+        args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float), "idx": True}
+        }
+
+        # This should not raise an assertion error
+        log_event = LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
+        self.assertIsInstance(log_event, LogEvent)
+
+    def test_log_event_with_more_than_three_indexed_args(self):
+        # Define arguments with more than three indexed arguments
+        args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float), "idx": True},
+            "extra": {"type": str, "idx": True}
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
+
+        self.assertIn("Args must have at most three indexed arguments.", str(context.exception))
+        
+import random
+import string
+
+class TestLogEventTypeEnforcementFuzz(TestCase):
+    def setUp(self):
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
+
+    def random_string(self, length=10):
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+    def test_write_event_with_random_data(self):
+        # Generate random data for each argument
+        for _ in range(100):  # Run 100 iterations for fuzz testing
+            data = {
+                "from": self.random_string(),
+                "to": self.random_string(),
+                "amount": random.choice([self.random_string(), None, [], {}, set(), object()])
+            }
+
+            with self.assertRaises(AssertionError) as context:
+                self.log_event.write_event(data)
+
+            self.assertIn("Argument amount is the wrong type!", str(context.exception))
+
+    def test_write_event_with_random_structures(self):
+        # Test with random structures for the 'amount' field
+        random_structures = [None, [], {}, set(), object(), lambda x: x, b"bytes", (1, 2, 3)]
+
+        for structure in random_structures:
+            data = {
+                "from": "Alice",
+                "to": "Bob",
+                "amount": structure
+            }
+
+            with self.assertRaises(AssertionError) as context:
+                self.log_event.write_event(data)
+
+            self.assertIn("Argument amount is the wrong type!", str(context.exception))
+
+    def test_write_event_with_random_numeric_types(self):
+        # Test with various numeric types that are not allowed
+        random_numeric_types = [
+            complex(1, 1), 
+            # float('nan'), # Doesnt raise IS THIS OK ?
+            # float('inf'), # Doesn't raise IS THIS OK ?
+            # -float('inf') # Doesn't raise IS THIS OK ?
+        ]
+
+        for num in random_numeric_types:
+            data = {
+                "from": "Alice",
+                "to": "Bob",
+                "amount": num
+            }
+
+            with self.assertRaises(AssertionError) as context:
+                self.log_event.write_event(data)
+
+            self.assertIn("Argument amount is the wrong type!", str(context.exception))
+
+class TestLogEventInvalidArgumentNames(TestCase):
+    def setUp(self):
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
+
+    def test_write_event_with_invalid_argument_names(self):
+        # Define event data with an unexpected argument name
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "unexpected_arg": 100
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Unexpected argument unexpected_arg in the data dictionary.", str(context.exception))
+
+class TestLogEventLargeData(TestCase):
+    def setUp(self):
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
+
+    def test_write_event_with_large_data(self):
+        # Generate a large string for the 'from' and 'to' fields
+        large_string = 'A' * 10**6  # 1 million characters
+
+        # Generate a large number for the 'amount' field
+        large_number = 10**18  # A very large number
+
+        # Define the event data with large values
+        data = {
+            "from": large_string,
+            "to": large_string,
+            "amount": large_number
+        }
+
+        # Call the write_event method and ensure it completes without error
+        try:
+            self.log_event.write_event(data)
+            success = True
+        except Exception as e:
+            success = False
+            print(f"Error occurred: {e}")
+
+        self.assertFalse(success, "write_event should not handle large data without errors.")
+
+
+class TestLogEventInvalidDataTypes(TestCase):
+    def setUp(self):
+        # Define the event arguments
+        self.args = {
+            "from": {"type": str, "idx": True},
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # Create a LogEvent instance
+        self.log_event = LogEvent(contract="test_contract", name="con_some_contract", event="Transfer", params=self.args)
+
+    def test_write_event_with_invalid_string_type(self):
+        # Use an invalid type (e.g., list) for the 'from' field
+        data = {
+            "from": ["Alice"],  # Invalid type: list instead of str
+            "to": "Bob",
+            "amount": 100
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Argument from is the wrong type!", str(context.exception))
+
+    def test_write_event_with_invalid_numeric_type(self):
+        # Use an invalid type (e.g., string) for the 'amount' field
+        data = {
+            "from": "Alice",
+            "to": "Bob",
+            "amount": "one hundred"  # Invalid type: str instead of int/float/ContractingDecimal
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Argument amount is the wrong type!", str(context.exception))
+
+    def test_write_event_with_unexpected_object_type(self):
+        # Use an unexpected object type for the 'to' field
+        data = {
+            "from": "Alice",
+            "to": object(),  # Invalid type: object instead of str
+            "amount": 100
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            self.log_event.write_event(data)
+
+        self.assertIn("Argument to is the wrong type!", str(context.exception))
+        
+class TestLogEventNonStandardTypes(TestCase):
+    def setUp(self):
+        # Common setup for the tests
+        self.contract = "test_contract"
+        self.name = "Transfer"
+        self.driver = driver  # Assuming driver is defined elsewhere
+
+    def test_log_event_with_non_standard_type(self):
+        # Define arguments with a non-standard type (e.g., list)
+        args = {
+            "from": {"type": list, "idx": True},  # Invalid type: list
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
+
+        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
+
+    def test_log_event_with_custom_object_type(self):
+        # Define arguments with a custom object type
+        class CustomType:
+            pass
+
+        args = {
+            "from": {"type": CustomType, "idx": True},  # Invalid type: CustomType
+            "to": {"type": str, "idx": True},
+            "amount": {"type": (int, float)}
+        }
+
+        # This should raise an assertion error
+        with self.assertRaises(AssertionError) as context:
+            LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
+
+        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
+
+if __name__ == '__main__':
+    unittest.main()

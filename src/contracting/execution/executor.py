@@ -50,6 +50,7 @@ class Executor:
 
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
         self.driver.clear_transaction_writes()
+        self.driver.clear_events()
 
         if not self.bypass_privates:
             assert not function_name.startswith(constants.PRIVATE_METHOD_PREFIX), 'Private method not callable.'
@@ -126,6 +127,7 @@ class Executor:
             runtime.rt.set_up(stmps=stamps * 1000, meter=metering)
             result = func(**kwargs)
             transaction_writes = deepcopy(driver.transaction_writes)
+            events = deepcopy(driver.log_events)
             runtime.rt.tracer.stop()
             disable_restricted_imports()
 
@@ -139,11 +141,12 @@ class Executor:
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
             transaction_writes = {}
-            
+            events = {}
             if auto_commit:
                 driver.flush_cache()
 
         finally:
+            driver.clear_events()
             driver.clear_transaction_writes()
             runtime.rt.tracer.stop()
 
@@ -186,7 +189,8 @@ class Executor:
             'result': result,
             'stamps_used': stamps_used,
             'writes': transaction_writes,
-            'reads': driver.pending_reads
+            'reads': driver.pending_reads,
+            'events': events
         }
 
         disable_restricted_imports()
