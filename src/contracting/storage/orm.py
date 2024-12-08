@@ -13,23 +13,28 @@ class Datum:
 
 
 class Variable(Datum):
-    def __init__(self, contract, name, driver: Driver = driver, t=None):
+    def __init__(self, contract, name, driver: Driver = driver, t=None, default_value=None):
         self._type = None
 
-        if isinstance(t, type) or None:
+        if isinstance(t, type):
             self._type = t
+
+        self._default_value = default_value
 
         super().__init__(contract, name, driver=driver)
 
     def set(self, value):
-        if self._type is not None:
+        if self._type is not None and value is not None:
             assert isinstance(value, self._type), (f'Wrong type passed to variable! '
                                                    f'Expected {self._type}, got {type(value)}.')
 
         self._driver.set(self._key, value, True)
 
     def get(self):
-        return self._driver.get(self._key)
+        value = self._driver.get(self._key)
+        if value is None:
+            return self._default_value
+        return value
 
 
 class Hash(Datum):
