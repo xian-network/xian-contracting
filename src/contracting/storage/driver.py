@@ -34,6 +34,7 @@ class Driver:
         self.pending_writes = {}
         self.pending_reads = {}
         self.transaction_writes = {}
+        self.log_events = []
         self.cache = TTLCache(maxsize=1000, ttl=6*3600)
         self.bypass_cache = bypass_cache
         self.contract_state = storage_home.joinpath("contract_state")
@@ -293,6 +294,7 @@ class Driver:
         self.pending_reads.clear()
         self.pending_deltas.clear()
         self.transaction_writes.clear()
+        self.log_events.clear()
         self.cache.clear()
 
     def flush_disk(self):
@@ -304,6 +306,9 @@ class Driver:
         file_path = self.__filename_to_path(filename)
         if os.path.isfile(file_path):
             os.unlink(file_path)
+            
+    def set_event(self, event):
+        self.log_events.append(event)
 
     def flush_full(self):
         """
@@ -429,3 +434,6 @@ class Driver:
         Clear the transaction-specific writes.
         """
         self.transaction_writes.clear()
+
+    def clear_events(self):
+        self.log_events.clear()
