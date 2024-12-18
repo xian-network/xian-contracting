@@ -2,6 +2,8 @@ from unittest import TestCase
 from contracting import constants
 from contracting.storage.driver import Driver
 from contracting.storage.orm import Datum, Variable, ForeignHash, ForeignVariable, Hash, LogEvent
+from contracting.stdlib.bridge.decimal import ContractingDecimal
+
 # from contracting.stdlib.env import gather
 
 # Variable = gather()['Variable']
@@ -1023,14 +1025,14 @@ class TestLogEventNonStandardTypes(TestCase):
         args = {
             "from": {"type": list, "idx": True},  # Invalid type: list
             "to": {"type": str, "idx": True},
-            "amount": {"type": (int, float)}
+            "amount": {"type": (int, float, ContractingDecimal)}
         }
 
         # This should raise an assertion error
         with self.assertRaises(AssertionError) as context:
             LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
-        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
+        self.assertIn("Each type in args must be str, int, float, decimal or bool.", str(context.exception))
 
     def test_log_event_with_custom_object_type(self):
         # Define arguments with a custom object type
@@ -1047,7 +1049,7 @@ class TestLogEventNonStandardTypes(TestCase):
         with self.assertRaises(AssertionError) as context:
             LogEvent(self.contract, self.name, event=self.name, params=args, driver=self.driver)
 
-        self.assertIn("Each type in args must be str, int, float, or bool.", str(context.exception))
+        self.assertIn("Each type in args must be str, int, float, decimal or bool.", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

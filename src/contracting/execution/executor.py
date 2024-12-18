@@ -137,11 +137,10 @@ class Executor:
         except Exception as e:
             result = e
             status_code = 1
-
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
             transaction_writes = {}
-            events = {}
+            events = []
             if auto_commit:
                 driver.flush_cache()
 

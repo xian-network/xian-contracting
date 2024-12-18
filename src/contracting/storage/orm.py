@@ -151,7 +151,7 @@ class ForeignHash(Hash):
         raise Exception("Cannot write with a ForeignHash.")
 
 
-class LogEvent:
+class LogEvent(Datum):
     """
     TODO
     - Break validation into smaller functions
@@ -161,8 +161,8 @@ class LogEvent:
     def __init__(self, contract, name, event, params, driver: Driver = driver):
         self._driver = driver
         self._params = params
-        self._contract = contract
         self._event = event
+        self._signer = rt.context.signer
 
         assert isinstance(params, dict), "Args must be a dictionary."
         assert len(params) > 0, "Args must have at least one argument."
@@ -176,13 +176,14 @@ class LogEvent:
                 param["type"] = (param["type"],)
 
             assert all(
-                issubclass(t, (str, int, float, bool))
+                issubclass(t, (str, int, float, bool, ContractingDecimal))
                 for t in param["type"]
-            ), "Each type in args must be str, int, float, or bool."
+            ), "Each type in args must be str, int, float, decimal or bool."
+
 
     def write_event(self, event_data):
-
-        # Check that the number of arguments matches
+        contract = rt.context.this
+        caller = rt.context.caller
         assert len(event_data) == len(
             self._params
         ), "Event Data must have the same number of arguments as specified in the event."
@@ -210,12 +211,12 @@ class LogEvent:
             assert (
                 value_size <= 1024
             ), f"Argument {arg} is too large ({value_size} bytes). Max is 1024 bytes."
-
+        
         event = {
-            "contract": self._contract,
+            "contract": contract,
             "event": self._event,
-            "signer": rt.context.signer,
-            "caller": rt.context.caller,
+            "signer": self._signer,
+            "caller": caller,
             "data_indexed": {
                 arg: event_data[arg]
                 for arg in self._params
@@ -228,7 +229,6 @@ class LogEvent:
             },
         }
 
-        # breakpoint()
 
         for arg, value in event["data_indexed"].items():
             assert isinstance(
@@ -248,26 +248,3 @@ class LogEvent:
 
     def __call__(self, data):
         self.write_event(data)
-
-
-"""
-Usage:
-
-TransferEvent = LogEvent(
-    name="Transfer",
-    args={
-        "from": {"type": str, "idx": True},
-        "to": {"type": str, "idx": True},
-        "amount": {"type": (int, float, ContractingDecimal)}
-    },
-)
-
-
-@export
-def transfer(self, from_address, to_address, amount):
-    # Perform the transfer logic
-    # ...
-
-    # Log the transfer event
-    TransferEvent({"from": from_address, "to": to_address, "amount": amount})
-"""
