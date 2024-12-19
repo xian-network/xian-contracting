@@ -103,7 +103,7 @@ class Linter(ast.NodeVisitor):
     def visit_Assign(self, node):
         # resource_names, func_name = Assert.valid_assign(node, Parser.parser_scope)
         if isinstance(node.value, ast.Name):
-            if node.value.id == 'Hash' or node.value.id == 'Variable':
+            if node.value.id == 'Hash' or node.value.id == 'Variable' or node.value.id == 'LogEvent':
                 self._is_success = False
                 str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[13]
                 self._violations.append(str)
@@ -112,7 +112,7 @@ class Linter(ast.NodeVisitor):
             isinstance(node.value.func, ast.Attribute) and
             node.value.func.id in constants.ORM_CLASS_NAMES):
 
-            if node.value.func.id in ['Variable', 'Hash']:
+            if node.value.func.id in ['Variable', 'Hash', 'LogEvent']:
                 kwargs = [k.arg for k in node.value.keywords]
                 if 'contract' in kwargs or 'name' in kwargs:
                     self._is_success = False
