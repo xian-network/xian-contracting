@@ -77,9 +77,8 @@ class DatabaseFinder:
     driver = Driver()
 
     def find_spec(self, fullname, path=None, target=None):
-        if MODULE_CACHE.get(self) is None:
-            if DatabaseFinder.driver.get_contract(self) is None:
-                return None
+        if DatabaseFinder.driver.get_contract(self) is None:
+            return None
         return ModuleSpec(self, DatabaseLoader(DatabaseFinder.driver))
 
 
@@ -95,18 +94,14 @@ class DatabaseLoader(Loader):
 
     def exec_module(self, module):
         # fetch the individual contract
-        code = MODULE_CACHE.get(module.__name__)
+        code = self.d.get_compiled(module.__name__)
+        if code is None:
+            raise ImportError("Module {} not found".format(module.__name__))
 
-        if MODULE_CACHE.get(module.__name__) is None:
-            code = self.d.get_compiled(module.__name__)
-            if code is None:
-                raise ImportError("Module {} not found".format(module.__name__))
+        if type(code) != bytes:
+            code = bytes.fromhex(code)
 
-            if type(code) != bytes:
-                code = bytes.fromhex(code)
-
-            code = marshal.loads(code)
-            MODULE_CACHE[module.__name__] = code
+        code = marshal.loads(code)
 
         if code is None:
             raise ImportError("Module {} not found".format(module.__name__))
