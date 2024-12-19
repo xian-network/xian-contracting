@@ -2,7 +2,7 @@ from unittest import TestCase
 from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
 from contracting.compilation.compiler import ContractingCompiler
-
+import os
 
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories
@@ -34,7 +34,9 @@ class TestExecutor(TestCase):
         self.d = Driver()
         self.d.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.d.set_contract(name='submission',
@@ -87,7 +89,9 @@ def d():
         self.assertEqual(output['status_code'], 0)
 
     def test_kwarg_helper(self):
-        k = submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py')
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
+
+        k = submission_kwargs_for_file(test_orm_variable_contract_path)
 
         code = '''v = Variable()
 
@@ -100,52 +104,60 @@ def get_v():
     return v.get()
 '''
 
-        self.assertEqual(k['name'], 'con_test_orm_variable_contract')
+        self.assertEqual(k['name'], 'con_orm_variable_contract')
         self.assertEqual(k['code'], code)
 
     def test_orm_variable_sets_in_contract(self):
         e = Executor(metering=False)
 
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py'), auto_commit=True)
+                  kwargs=submission_kwargs_for_file(test_orm_variable_contract_path), auto_commit=True)
 
-        e.execute('stu', 'con_test_orm_variable_contract', 'set_v', kwargs={'i': 1000}, auto_commit=True)
+        e.execute('stu', 'con_orm_variable_contract', 'set_v', kwargs={'i': 1000}, auto_commit=True)
 
-        i = self.d.get('con_test_orm_variable_contract.v')
+        i = self.d.get('con_orm_variable_contract.v')
         self.assertEqual(i, 1000)
 
     def test_orm_variable_gets_in_contract(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py'))
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
 
-        res = e.execute('stu', 'con_test_orm_variable_contract', 'get_v', kwargs={})
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                    kwargs=submission_kwargs_for_file(test_orm_variable_contract_path))
+
+        res = e.execute('stu', 'con_orm_variable_contract', 'get_v', kwargs={})
 
         self.assertEqual(res['result'], None)
 
     def test_orm_variable_gets_and_sets_in_contract(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py'))
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
 
-        e.execute('stu', 'con_test_orm_variable_contract', 'set_v', kwargs={'i': 1000})
-        res = e.execute('stu', 'con_test_orm_variable_contract', 'get_v', kwargs={})
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_variable_contract_path))
+
+        e.execute('stu', 'con_orm_variable_contract', 'set_v', kwargs={'i': 1000})
+        res = e.execute('stu', 'con_orm_variable_contract', 'get_v', kwargs={})
 
         self.assertEqual(res['result'], 1000)
 
     def test_orm_hash_sets_in_contract(self):
         e = Executor(metering=False)
 
+        test_orm_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_hash_contract.s.py")
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_hash_contract.s.py'), auto_commit=True)
+                  kwargs=submission_kwargs_for_file(test_orm_hash_contract_path), auto_commit=True)
 
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234}, auto_commit=True)
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999}, auto_commit=True)
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234}, auto_commit=True)
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999}, auto_commit=True)
 
-        key1 = self.d.get('con_test_orm_hash_contract.h:key1')
-        another_key = self.d.get('con_test_orm_hash_contract.h:another_key')
+        key1 = self.d.get('con_orm_hash_contract.h:key1')
+        another_key = self.d.get('con_orm_hash_contract.h:another_key')
 
         self.assertEqual(key1, 1234)
         self.assertEqual(another_key, 9999)
@@ -153,24 +165,28 @@ def get_v():
     def test_orm_hash_gets_in_contract(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_hash_contract.s.py'))
+        test_orm_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_hash_contract.s.py")
 
-        res = e.execute('stu', 'con_test_orm_hash_contract', 'get_h', kwargs={'k': 'test'})
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_hash_contract_path))
+
+        res = e.execute('stu', 'con_orm_hash_contract', 'get_h', kwargs={'k': 'test'})
 
         self.assertEqual(res['result'], None)
 
     def test_orm_hash_gets_and_sets_in_contract(self):
         e = Executor(metering=False)
 
+        test_orm_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_hash_contract.s.py")
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_hash_contract.s.py'))
+                  kwargs=submission_kwargs_for_file(test_orm_hash_contract_path))
 
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234})
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999})
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234})
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999})
 
-        key1 = e.execute('stu', 'con_test_orm_hash_contract', 'get_h', kwargs={'k': 'key1'})
-        another_key = e.execute('stu', 'con_test_orm_hash_contract', 'get_h', kwargs={'k': 'another_key'})
+        key1 = e.execute('stu', 'con_orm_hash_contract', 'get_h', kwargs={'k': 'key1'})
+        another_key = e.execute('stu', 'con_orm_hash_contract', 'get_h', kwargs={'k': 'another_key'})
 
         self.assertEqual(key1['result'], 1234)
         self.assertEqual(another_key['result'], 9999)
@@ -178,51 +194,60 @@ def get_v():
     def test_orm_foreign_variable_sets_in_contract_doesnt_work(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py'))
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_foreign_key_contract.s.py'))
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
+        test_orm_foreign_key_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_foreign_key_contract.s.py")
 
-        e.execute('stu', 'con_test_orm_variable_contract', 'set_v', kwargs={'i': 1000})
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_variable_contract_path))
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_foreign_key_contract_path))
+
+        e.execute('stu', 'con_orm_variable_contract', 'set_v', kwargs={'i': 1000})
 
         # this should fail
-        status = e.execute('stu', 'test_orm_foreign_key_contract', 'set_fv', kwargs={'i': 999})
+        status = e.execute('stu', 'con_orm_foreign_key_contract', 'set_fv', kwargs={'i': 999})
 
         self.assertEqual(status['status_code'], 1)
 
-        i = e.execute('stu', 'con_test_orm_variable_contract', 'get_v', kwargs={})
+        i = e.execute('stu', 'con_orm_variable_contract', 'get_v', kwargs={})
         self.assertEqual(i['result'], 1000)
 
     def test_orm_foreign_variable_gets_in_contract(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_variable_contract.s.py'))
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_foreign_key_contract.s.py'))
+        test_orm_variable_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_variable_contract.s.py")
+        test_orm_foreign_key_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_foreign_key_contract.s.py")
 
-        e.execute('stu', 'con_test_orm_variable_contract', 'set_v', kwargs={'i': 424242})
+        e.execute(**TEST_SUBMISSION_KWARGS, 
+                  kwargs=submission_kwargs_for_file(test_orm_variable_contract_path))
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_foreign_key_contract_path))
+
+        e.execute('stu', 'con_orm_variable_contract', 'set_v', kwargs={'i': 424242})
         # this should fail
-        i = e.execute('stu', 'con_test_orm_foreign_key_contract', 'get_fv', kwargs={})
+        i = e.execute('stu', 'con_orm_foreign_key_contract', 'get_fv', kwargs={})
 
         self.assertEqual(i['result'], 424242)
 
     def test_orm_foreign_hash_sets_in_contract_doesnt_work(self):
         e = Executor(metering=False)
 
+        test_orm_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_hash_contract.s.py")
+        test_orm_foreign_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_foreign_hash_contract.s.py")  
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_hash_contract.s.py'), auto_commit=True)
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_foreign_hash_contract.s.py'), auto_commit=True)
+                  kwargs=submission_kwargs_for_file(test_orm_hash_contract_path), auto_commit=True)
+        e.execute(**TEST_SUBMISSION_KWARGS, 
+                  kwargs=submission_kwargs_for_file(test_orm_foreign_hash_contract_path), auto_commit=True)
 
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234}, auto_commit=True)
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999}, auto_commit=True)
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234}, auto_commit=True)
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999}, auto_commit=True)
 
-        status_1 = e.execute('stu', 'con_test_orm_foreign_hash_contract', 'set_fh', kwargs={'k': 'key1', 'v': 5555}, auto_commit=True)
-        status_2 = e.execute('stu', 'con_test_orm_foreign_hash_contract', 'set_fh', kwargs={'k': 'another_key', 'v': 1000}, auto_commit=True)
+        status_1 = e.execute('stu', 'con_orm_foreign_hash_contract', 'set_fh', kwargs={'k': 'key1', 'v': 5555}, auto_commit=True)
+        status_2 = e.execute('stu', 'con_orm_foreign_hash_contract', 'set_fh', kwargs={'k': 'another_key', 'v': 1000}, auto_commit=True)
 
-        key1 = self.d.get('con_test_orm_hash_contract.h:key1')
-        another_key = self.d.get('con_test_orm_hash_contract.h:another_key')
+        key1 = self.d.get('con_orm_hash_contract.h:key1')
+        another_key = self.d.get('con_orm_hash_contract.h:another_key')
 
         self.assertEqual(key1, 1234)
         self.assertEqual(another_key, 9999)
@@ -232,17 +257,20 @@ def get_v():
     def test_orm_foreign_hash_gets_and_sets_in_contract(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_hash_contract.s.py'))
+        test_orm_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_hash_contract.s.py")
+        test_orm_foreign_hash_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_foreign_hash_contract.s.py")  
 
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/test_orm_foreign_hash_contract.s.py'))
+                  kwargs=submission_kwargs_for_file(test_orm_hash_contract_path))
 
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234})
-        e.execute('stu', 'con_test_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999})
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(test_orm_foreign_hash_contract_path))
 
-        key1 = e.execute('stu', 'con_test_orm_foreign_hash_contract', 'get_fh', kwargs={'k': 'key1'})
-        another_key = e.execute('stu', 'con_test_orm_foreign_hash_contract', 'get_fh', kwargs={'k': 'another_key'})
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'key1', 'v': 1234})
+        e.execute('stu', 'con_orm_hash_contract', 'set_h', kwargs={'k': 'another_key', 'v': 9999})
+
+        key1 = e.execute('stu', 'con_orm_foreign_hash_contract', 'get_fh', kwargs={'k': 'key1'})
+        another_key = e.execute('stu', 'con_orm_foreign_hash_contract', 'get_fh', kwargs={'k': 'another_key'})
 
         self.assertEqual(key1['result'], 1234)
         self.assertEqual(another_key['result'], 9999)
@@ -250,29 +278,36 @@ def get_v():
     def test_orm_contract_not_accessible(self):
         e = Executor(metering=False)
 
-        output = e.execute(**TEST_SUBMISSION_KWARGS,
-            kwargs=submission_kwargs_for_file('./test_contracts/test_orm_no_contract_access.s.py'))
+        test_orm_no_contract_access_path = os.path.join(os.path.dirname(__file__), "test_contracts", "orm_no_contract_access.s.py")
 
-        self.assertEqual(output['result'], 'Line 31: Exception (["Line 1 : S2- Illicit use of \'_\' before variable : __Contract"])')
+        output = e.execute(**TEST_SUBMISSION_KWARGS,
+            kwargs=submission_kwargs_for_file(test_orm_no_contract_access_path))
+
+        self.assertEqual(str(output['result']) , '["Line 1 : S2- Illicit use of \'_\' before variable : __Contract"]')
 
     def test_construct_function_sets_properly(self):
         e = Executor(metering=False)
 
-        r = e.execute(**TEST_SUBMISSION_KWARGS,
-            kwargs=submission_kwargs_for_file('./test_contracts/test_construct_function_works.s.py'))
+        test_construct_function_works_path = os.path.join(os.path.dirname(__file__), "test_contracts", "construct_function_works.s.py")
 
-        output = e.execute('stu', 'con_test_construct_function_works', 'get', kwargs={})
+        r = e.execute(**TEST_SUBMISSION_KWARGS,
+            kwargs=submission_kwargs_for_file(test_construct_function_works_path))
+
+        output = e.execute('stu', 'con_construct_function_works', 'get', kwargs={})
 
         self.assertEqual(output['result'], 42)
 
     def test_import_exported_function_works(self):
         e = Executor(metering=False)
 
-        e.execute(**TEST_SUBMISSION_KWARGS,
-                        kwargs=submission_kwargs_for_file('./test_contracts/import_this.s.py'))
+        import_this_path = os.path.join(os.path.dirname(__file__), "test_contracts", "import_this.s.py")
+        importing_that_path = os.path.join(os.path.dirname(__file__), "test_contracts", "importing_that.s.py")
 
         e.execute(**TEST_SUBMISSION_KWARGS,
-                        kwargs=submission_kwargs_for_file('./test_contracts/importing_that.s.py'))
+                  kwargs=submission_kwargs_for_file(import_this_path))
+
+        e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(importing_that_path))
 
         output = e.execute('stu', 'con_importing_that', 'test', kwargs={})
         self.assertEqual(output['result'], 12345 - 1000)
@@ -280,8 +315,10 @@ def get_v():
     def test_arbitrary_environment_passing_works_via_executor(self):
         e = Executor(metering=False)
 
+        i_use_env_path = os.path.join(os.path.dirname(__file__), "test_contracts", "i_use_env.s.py")
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/i_use_env.s.py'))
+                  kwargs=submission_kwargs_for_file(i_use_env_path))
 
         this_is_a_passed_in_variable = 555
 
@@ -294,8 +331,10 @@ def get_v():
     def test_arbitrary_environment_passing_fails_if_not_passed_correctly(self):
         e = Executor(metering=False)
 
+        i_use_env_path = os.path.join(os.path.dirname(__file__), "test_contracts", "i_use_env.s.py")
+
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/i_use_env.s.py'))
+                  kwargs=submission_kwargs_for_file(i_use_env_path))
 
         this_is_a_passed_in_variable = 555
 

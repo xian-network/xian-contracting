@@ -4,7 +4,7 @@ from contracting.execution.executor import Executor
 from contracting.constants import STAMPS_PER_TAU
 
 import contracting
-
+import os
 
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories
@@ -37,7 +37,9 @@ class TestMetering(TestCase):
         self.d = Driver()
         self.d.flush_full()
 
-        with open(contracting.__path__[0] + '/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.d.set_contract(name='submission',
@@ -46,8 +48,9 @@ class TestMetering(TestCase):
 
         # Execute the currency contract with metering disabled
         self.e = Executor(driver=self.d, currency_contract='con_currency')
+        currency_path = os.path.join(os.path.dirname(__file__), "test_contracts", "currency.s.py")
         self.e.execute(**TEST_SUBMISSION_KWARGS,
-                       kwargs=submission_kwargs_for_file('./test_contracts/currency.s.py'), metering=False, auto_commit=True)
+                       kwargs=submission_kwargs_for_file(currency_path), metering=False, auto_commit=True)
 
     def tearDown(self):
         self.d.flush_full()
@@ -92,9 +95,11 @@ class TestMetering(TestCase):
 
         prior_balance *= STAMPS_PER_TAU
 
+        inf_loop_path = os.path.join(os.path.dirname(__file__), "test_contracts", "inf_loop.s.py")
+
         res = self.e.execute(
             **TEST_SUBMISSION_KWARGS,
-            kwargs=submission_kwargs_for_file('./test_contracts/inf_loop.s.py'),
+            kwargs=submission_kwargs_for_file(inf_loop_path),
             stamps=prior_balance,
             
             metering=True, auto_commit=True
@@ -111,8 +116,9 @@ class TestMetering(TestCase):
 
         print(prior_balance)
 
+        erc20_clone_path = os.path.join(os.path.dirname(__file__), "test_contracts", "erc20_clone.s.py")
         output = self.e.execute(**TEST_SUBMISSION_KWARGS,
-                                                kwargs=submission_kwargs_for_file('./test_contracts/erc20_clone.s.py'), auto_commit=True
+                                                kwargs=submission_kwargs_for_file(erc20_clone_path), auto_commit=True
                                                 )
         print(output)
 
@@ -125,8 +131,9 @@ class TestMetering(TestCase):
     def test_pending_writes_has_deducted_stamp_amount_prior_to_auto_commit(self):
         prior_balance = self.d.get('con_currency.balances:stu')
 
+        erc20_clone_path = os.path.join(os.path.dirname(__file__), "test_contracts", "erc20_clone.s.py")
         output = self.e.execute(**TEST_SUBMISSION_KWARGS,
-                                kwargs=submission_kwargs_for_file('./test_contracts/erc20_clone.s.py'), auto_commit=False
+                                kwargs=submission_kwargs_for_file(erc20_clone_path), auto_commit=False
                                 )
         self.assertNotEquals(self.e.driver.pending_writes['con_currency.balances:stu'], prior_balance)
 

@@ -2,7 +2,7 @@ from unittest import TestCase
 import secrets
 from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
-
+import os
 
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories
@@ -34,7 +34,10 @@ class TestSandbox(TestCase):
         self.d = Driver()
         self.d.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        submission_path = os.path.join(self.script_dir, "test_contracts", "submission.s.py")
+        with open(submission_path) as f:
             contract = f.read()
 
         self.d.set_contract(name='submission',
@@ -50,7 +53,7 @@ class TestSandbox(TestCase):
         e = Executor()
 
         e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('../integration/test_contracts/erc20_clone.s.py'))
+                  kwargs=submission_kwargs_for_file(os.path.join(self.script_dir, "test_contracts", "erc20_clone.s.py")))
 
         for r in self.recipients:
             e.execute(sender='stu',

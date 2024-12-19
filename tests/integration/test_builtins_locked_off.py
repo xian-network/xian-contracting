@@ -1,6 +1,6 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
-
+import os
 
 class TestBuiltinsLockedOff(TestCase):
     def setUp(self):
@@ -9,8 +9,11 @@ class TestBuiltinsLockedOff(TestCase):
     def tearDown(self):
         self.c.raw_driver.flush_full()
 
+
     def test_if_builtin_can_be_submitted(self):
-        with open('./test_contracts/builtin_lib.s.py') as f:
+        builtin_path = os.path.join(os.path.dirname(__file__), "test_contracts", "builtin_lib.s.py")
+
+        with open(builtin_path) as f:
             contract = f.read()
 
         with self.assertRaises(Exception):
@@ -28,7 +31,9 @@ class TestMathBuiltinsLockedOff(TestCase):
         self.c.raw_driver.flush_full()
 
     def test_if_builtin_can_be_submitted(self):
-        with open('./test_contracts/mathtime.s.py') as f:
+        mathtime_path = os.path.join(os.path.dirname(__file__), "test_contracts", "mathtime.s.py")
+
+        with open(mathtime_path) as f:
             contract = f.read()
 
         with self.assertRaises(Exception):
@@ -43,19 +48,18 @@ class TestDatabaseLoaderLoadsFirst(TestCase):
         self.c.raw_driver.flush_full()
 
     def test_if_builtin_can_be_submitted(self):
-        with open('./test_contracts/contracting.s.py') as f:
+        contracting_path = os.path.join(os.path.dirname(__file__), "test_contracts", "contracting.s.py")
+
+        with open(contracting_path) as f:
             contract = f.read()
             self.c.submit(contract, name='con_contracting')
 
-        with open('./test_contracts/import_test.s.py') as f:
+        import_test_path = os.path.join(os.path.dirname(__file__), "test_contracts", "import_test.s.py")
+
+        with open(import_test_path) as f:
             contract = f.read()
             with self.assertRaises(ImportError):
                 self.c.submit(contract, name='con_import_test')
-
-        # import_test = self.c.get_contract('import_test')
-        #
-        # with self.assertRaises(ImportError):
-        #     import_test.woo()
 
 
 class TestDynamicImport(TestCase):
@@ -66,7 +70,9 @@ class TestDynamicImport(TestCase):
         self.c.raw_driver.flush_full()
 
     def test_if_builtin_can_be_submitted(self):
-        with open('./test_contracts/dynamic_import.s.py') as f:
+        dynamic_import_path = os.path.join(os.path.dirname(__file__), "test_contracts", "dynamic_import.s.py")
+
+        with open(dynamic_import_path) as f:
             contract = f.read()
             self.c.submit(contract, name='con_dynamic_import')
 
@@ -84,7 +90,9 @@ class TestFloatIssue(TestCase):
         self.c.raw_driver.flush_full()
 
     def test_if_builtin_can_be_submitted(self):
-        with open('./test_contracts/float_issue.s.py') as f:
+        float_issue_path = os.path.join(os.path.dirname(__file__), "test_contracts", "float_issue.s.py")
+
+        with open(float_issue_path) as f:
             contract = f.read()
             self.c.submit(contract, name='con_float_issue')
 

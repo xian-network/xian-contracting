@@ -2,13 +2,16 @@ from unittest import TestCase
 from contracting.stdlib.bridge import imports
 from types import ModuleType
 from contracting.storage.orm import Hash, Variable
-
+import os
 
 class TestImports(TestCase):
     def setUp(self):
         scope = {}
+        
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        compiled_token_file_path = os.path.join(self.script_dir, "precompiled", "compiled_token.py")
 
-        with open('./precompiled/compiled_token.py') as f:
+        with open(compiled_token_file_path) as f:
             code = f.read()
 
         exec(code, scope)
