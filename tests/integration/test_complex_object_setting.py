@@ -1,6 +1,6 @@
 from contracting.client import ContractingClient
 from unittest import TestCase
-
+import os
 
 def contract():
     storage = Hash()

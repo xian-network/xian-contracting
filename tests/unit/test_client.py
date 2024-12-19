@@ -9,8 +9,10 @@ class TestClient(TestCase):
         self.client = None
 
         self.driver = Driver()
+        
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        submission_file_path = f'{Path.cwd().parent.parent}/src/contracting/contracts/submission.s.py'
+        submission_file_path = os.path.join(self.script_dir, "contracts", "submission.s.py")
         with open(submission_file_path) as f:
             self.submission_contract_file = f.read()
 
@@ -23,9 +25,12 @@ class TestClient(TestCase):
         self.client.flush()
 
         submission_1_code = self.client.raw_driver.get('submission.__code__')
-
+        
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        submission_file_path = os.path.join(self.script_dir, "precompiled", "updated_submission.py")
+        
         self.driver.flush_full()
-        self.client.set_submission_contract(filename='./precompiled/updated_submission.py')
+        self.client.set_submission_contract(filename=submission_file_path)
 
         submission_2_code = self.client.raw_driver.get('submission.__code__')
 

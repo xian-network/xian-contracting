@@ -1,12 +1,14 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
-
+import os
 
 class TestRunPrivateFunction(TestCase):
     def setUp(self):
         self.client = ContractingClient()
 
-        with open('./test_contracts/private_methods.s.py') as f:
+        private_methods_path = os.path.join(os.path.dirname(__file__), "test_contracts", "private_methods.s.py")
+
+        with open(private_methods_path) as f:
             code = f.read()
 
         self.client.submit(code, name='private_methods')

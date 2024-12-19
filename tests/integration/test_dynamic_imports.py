@@ -1,14 +1,16 @@
 from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
-
+import os
 
 class TestDynamicImports(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract)
@@ -16,19 +18,27 @@ class TestDynamicImports(TestCase):
         self.c.raw_driver.commit()
 
         # submit erc20 clone
-        with open('./test_contracts/stubucks.s.py') as f:
+        stubucks_path = os.path.join(os.path.dirname(__file__), "test_contracts", "stubucks.s.py")
+
+        with open(stubucks_path) as f:
             code = f.read()
             self.c.submit(code, name='con_stubucks')
 
-        with open('./test_contracts/tejastokens.s.py') as f:
+        tejastokens_path = os.path.join(os.path.dirname(__file__), "test_contracts", "tejastokens.s.py")
+
+        with open(tejastokens_path) as f:
             code = f.read()
             self.c.submit(code, name='con_tejastokens')
 
-        with open('./test_contracts/bastardcoin.s.py') as f:
+        bastardcoin_path = os.path.join(os.path.dirname(__file__), "test_contracts", "bastardcoin.s.py")
+
+        with open(bastardcoin_path) as f:
             code = f.read()
             self.c.submit(code, name='con_bastardcoin')
 
-        with open('./test_contracts/dynamic_importing.s.py') as f:
+        dynamic_importing_path = os.path.join(os.path.dirname(__file__), "test_contracts", "dynamic_importing.s.py")
+
+        with open(dynamic_importing_path) as f:
             code = f.read()
             self.c.submit(code, name='con_dynamic_importing')
 
@@ -95,7 +105,9 @@ class TestDynamicImports(TestCase):
             stu = self.dynamic_importing.only_erc20(tok='con_bastardcoin', account='stu')
 
     def test_owner_of_returns_default(self):
-        with open('./test_contracts/owner_stuff.s.py') as f:
+        owner_stuff_path = os.path.join(os.path.dirname(__file__), "test_contracts", "owner_stuff.s.py")
+
+        with open(owner_stuff_path) as f:
             code = f.read()
             self.c.submit(code, name='con_owner_stuff', owner='poo')
 
@@ -105,7 +117,9 @@ class TestDynamicImports(TestCase):
         self.assertEqual(owner_stuff.get_owner(s='con_owner_stuff', signer='poo'), 'poo')
 
     def test_ctx_owner_works(self):
-        with open('./test_contracts/owner_stuff.s.py') as f:
+        owner_stuff_path = os.path.join(os.path.dirname(__file__), "test_contracts", "owner_stuff.s.py")
+
+        with open(owner_stuff_path) as f:
             code = f.read()
             self.c.submit(code, name='con_owner_stuff', owner='poot')
 
@@ -114,7 +128,9 @@ class TestDynamicImports(TestCase):
         self.assertEqual(owner_stuff.owner_of_this(signer='poot'), 'poot')
 
     def test_incorrect_owner_prevents_function_call(self):
-        with open('./test_contracts/owner_stuff.s.py') as f:
+        owner_stuff_path = os.path.join(os.path.dirname(__file__), "test_contracts", "owner_stuff.s.py")
+
+        with open(owner_stuff_path) as f:
             code = f.read()
             self.c.submit(code, name='con_owner_stuff', owner='poot')
 
@@ -123,11 +139,15 @@ class TestDynamicImports(TestCase):
             owner_stuff.owner_of_this()
 
     def test_delegate_call_with_owner_works(self):
-        with open('./test_contracts/parent_test.s.py') as f:
+        parent_test_path = os.path.join(os.path.dirname(__file__), "test_contracts", "parent_test.s.py")
+
+        with open(parent_test_path) as f:
             code = f.read()
             self.c.submit(code, name='con_parent_test')
 
-        with open('./test_contracts/child_test.s.py') as f:
+        child_test_path = os.path.join(os.path.dirname(__file__), "test_contracts", "child_test.s.py")
+
+        with open(child_test_path) as f:
             code = f.read()
             self.c.submit(code, name='con_child_test', owner='con_parent_test')
 
@@ -138,11 +158,15 @@ class TestDynamicImports(TestCase):
         self.assertEqual(val, 'good')
 
     def test_delegate_with_wrong_owner_does_not_work(self):
-        with open('./test_contracts/parent_test.s.py') as f:
+        parent_test_path = os.path.join(os.path.dirname(__file__), "test_contracts", "parent_test.s.py")
+
+        with open(parent_test_path) as f:
             code = f.read()
             self.c.submit(code, name='con_parent_test')
 
-        with open('./test_contracts/child_test.s.py') as f:
+        child_test_path = os.path.join(os.path.dirname(__file__), "test_contracts", "child_test.s.py")
+
+        with open(child_test_path) as f:
             code = f.read()
             self.c.submit(code, name='con_child_test', owner='blorg')
 
