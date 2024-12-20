@@ -84,18 +84,18 @@ class TestTokenHacks(TestCase):
             # Should fail when stamp_limit of 200 is reached
             con_hack.double_spend(receiver='colin', stamps=200)
 
+        # Since the above call failed, the balance should be the same as before and NOT balance + tx_amount
+
         post_hack_balance_stu = float(str(self.c.get_var('con_erc20', "balances", arguments=["stu"])))
         post_hack_balance_colin = float(str(self.c.get_var('con_erc20', "balances", arguments=["colin"])))
-        # !!! IMPORTANT NODE !!!
-        # In the Lamden Implementation there would be a "rollback" of state after the error.
-        # Contracting does not do this itself and instead you get the status_code set to 1 and all the tx info returned.
+        # Contracting will revert the state if the stamps run out and the transaction fails, which previously was not the case
 
         # Stu's POST balance should be less than the pre balance (less the tx_amount) because stamps were also deducted
         self.assertLess(post_hack_balance_stu, pre_hack_balance_stu + tx_amount)
 
-        # Colin's balance will be + tx_amount
+        # Colin's balance will not change because the transaction failed and the state was not updated
         # Assert greater because some of the balance is lost to stamps
-        self.assertEqual(pre_hack_balance_colin + tx_amount, post_hack_balance_colin)
+        self.assertEqual(pre_hack_balance_colin, post_hack_balance_colin)
 
 
     def test_stamp_fails_when_calling_infinate_loop_from_another_contract(self):
