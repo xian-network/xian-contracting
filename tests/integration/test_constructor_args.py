@@ -1,14 +1,16 @@
 from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
-
+import os
 
 class TestSenecaClientReplacesExecutor(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract)
@@ -16,7 +18,9 @@ class TestSenecaClientReplacesExecutor(TestCase):
         self.c.raw_driver.commit()
 
         # submit erc20 clone
-        with open('./test_contracts/constructor_args_contract.s.py') as f:
+        constructor_args_contract_path = os.path.join(os.path.dirname(__file__), "test_contracts", "constructor_args_contract.s.py")
+
+        with open(constructor_args_contract_path) as f:
             self.code = f.read()
 
     def test_custom_args_works(self):

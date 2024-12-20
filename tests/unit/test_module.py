@@ -3,7 +3,7 @@ from contracting.execution.module import *
 from contracting.storage.driver import Driver
 import types
 import glob
-
+import os
 
 class TestDatabase(TestCase):
     def setUp(self):
@@ -103,7 +103,9 @@ class TestModuleLoadingIntegration(TestCase):
     def setUp(self):
         sys.meta_path.append(DatabaseFinder)
         driver.flush_full()
-        contracts = glob.glob('./test_sys_contracts/*.py')
+
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        contracts = glob.glob(os.path.join(self.script_dir, "test_sys_contracts", "*.py"))
         for contract in contracts:
             name = contract.split('/')[-1]
             name = name.split('.')[0]
