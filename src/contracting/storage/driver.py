@@ -437,3 +437,36 @@ class Driver:
 
     def clear_events(self):
         self.log_events.clear()
+
+
+class ReadOnlyDriver(Driver):
+    """
+    Only the get() method is allowed.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def set(self, key, value, is_txn_write=False):
+        # Prevent any writes
+        pass
+
+    def delete(self, key):
+        # Prevent any deletes
+        pass
+
+    def set_contract(self, name, code, owner=None, overwrite=False, timestamp=None, developer=None):
+        # Prevent contract creation
+        pass
+
+    def delete_contract(self, name):
+        # Prevent contract deletion
+        pass
+
+    def commit(self):
+        # Prevent commits
+        pass
+
+    def clear_transaction_writes(self):
+        # Clear transaction writes
+        self.transaction_writes.clear()

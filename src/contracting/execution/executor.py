@@ -194,3 +194,22 @@ class Executor:
 
         disable_restricted_imports()
         return output
+
+
+class ReadOnlyExecutor(Executor):
+    def execute(self, sender, contract_name, function_name, kwargs, environment=None, **ignored):
+        environment = environment or {}
+
+        # Execute without metering, stamps, or auto commits
+        result = super().execute(
+            sender=sender,
+            contract_name=contract_name,
+            function_name=function_name,
+            kwargs=kwargs,
+            environment=environment,
+            auto_commit=False,
+            stamps=0,
+            metering=False
+        )
+
+        return str(result['result'])
