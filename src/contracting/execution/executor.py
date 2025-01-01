@@ -201,7 +201,7 @@ class ReadOnlyExecutor(Executor):
         environment = environment or {}
 
         # Execute without metering, stamps, or auto commits
-        result = super().execute(
+        return super().execute(
             sender=sender,
             contract_name=contract_name,
             function_name=function_name,
@@ -211,5 +211,3 @@ class ReadOnlyExecutor(Executor):
             stamps=0,
             metering=False
         )
-
-        return str(result['result'])
