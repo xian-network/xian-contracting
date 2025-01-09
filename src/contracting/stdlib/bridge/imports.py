@@ -99,7 +99,7 @@ def call_function(module_name: str, function_name: str, kwargs: dict):
     - kwargs: Arguments to pass to the function
     """
     # Validate function name first
-    if function_name.startswith('__'):
+    if function_name.startswith(PRIVATE_METHOD_PREFIX):
         raise ImportError('Access to internal functions is forbidden')
     
     # Reuse existing import logic to get the module
@@ -119,7 +119,7 @@ def call_function(module_name: str, function_name: str, kwargs: dict):
     if not isinstance(fn, FunctionType):
         raise ImportError(f"{function_name} is not a callable function")
 
-    if fn.__name__.startswith('__'):
+    if fn.__name__.startswith(PRIVATE_METHOD_PREFIX):
         raise ImportError('Access to internal functions is forbidden')
 
     # Call the function with provided arguments
