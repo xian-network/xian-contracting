@@ -27,15 +27,43 @@ class Linter(ast.NodeVisitor):
 
         self.builtins = list(set(list(sys.stdlib_module_names) + list(sys.builtin_module_names)))
 
+
+    # --------------------------------------------------------------------------------
+    # Minimal helper to safely handle different annotation node types (e.g. Subscript)
+    # --------------------------------------------------------------------------------
+    def _get_annotation_name(self, ann):
+        if isinstance(ann, ast.Name):
+            # e.g. `int`
+            return ann.id
+        elif isinstance(ann, ast.Attribute):
+            # e.g. `typing.List` (ann.value.id = 'typing', ann.attr = 'List')
+            try:
+                return ann.value.id + '.' + ann.attr
+            except:
+                return ann.attr
+        elif isinstance(ann, ast.Subscript):
+            # e.g. `list[int]`, `dict[str, int]`
+            base = self._get_annotation_name(ann.value)
+            # Simple approach for the slice:
+            if hasattr(ann.slice, "id"):
+                slice_part = ann.slice.id
+            elif hasattr(ann.slice, "value") and hasattr(ann.slice.value, "id"):
+                slice_part = ann.slice.value.id
+            else:
+                slice_part = "?"
+            return f"{base}[{slice_part}]"
+        return None
+
+
     def ast_types(self, t, lnum):
         if type(t) not in ALLOWED_AST_TYPES:
-            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[0] + " : {}" .format(type(t).__name__)
+            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[0] + " : {}".format(type(t).__name__)
             self._violations.append(str)
             self._is_success = False
 
     def not_system_variable(self, v, lnum):
         if v.startswith('_') or v.endswith('_'):
-            str = "Line {} : ".format(lnum) + VIOLATION_TRIGGERS[1] + " : {}" .format(v)
+            str = "Line {} : ".format(lnum) + VIOLATION_TRIGGERS[1] + " : {}".format(v)
             self._violations.append(str)
             self._is_success = False
 
@@ -84,7 +112,6 @@ class Linter(ast.NodeVisitor):
         self._violations.append(str)
         self._is_success = False
 
-    # TODO: Why are we even doing any logic instead of just failing on visiting these?
     def visit_ClassDef(self, node):
         str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[5]
         self._violations.append(str)
@@ -209,21 +236,17 @@ class Linter(ast.NodeVisitor):
             self.visited_args.add((a.arg, node.lineno))
             if export_decorator:
                 if a.annotation is not None:
-                    try:
-                        self.arg_types.add((a.annotation.id, node.lineno))
-                    except AttributeError:
-                        arg = a.annotation.value.id + '.' + a.annotation.attr
-                        self.arg_types.add((arg, node.lineno))
+                    # -- FIX: Safely get annotation name, including Subscript --
+                    annotation_name = self._get_annotation_name(a.annotation)
+                    self.arg_types.add((annotation_name, node.lineno))
                 else:
                     self.arg_types.add((None, node.lineno))
 
         if export_decorator:
             if node.returns is not None:
-                try:
-                    self.arg_types.add((a.annotation.id, node.lineno))
-                except AttributeError:
-                    arg = a.annotation.value.id + '.' + a.annotation.attr
-                    self.arg_types.add((arg, node.lineno))
+                # -- FIX: Safely get return annotation, including Subscript --
+                annotation_name = self._get_annotation_name(node.returns)
+                self.arg_types.add((annotation_name, node.lineno))
             else:
                 self.return_annotation.add((None, node.lineno))
 
@@ -232,17 +255,30 @@ class Linter(ast.NodeVisitor):
 
     def annotation_types(self, t, lnum):
         if t is None:
-            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[16]
-            self._violations.append(str)
+            str_msg = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[16]
+            self._violations.append(str_msg)
             self._is_success = False
-        elif t not in ALLOWED_ANNOTATION_TYPES:
-            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[15] + " : {}" .format(t)
-            self._violations.append(str)
-            self._is_success = False
+
+        else:
+            # If it's something like "list[int]" or "dict[str,int]"
+            # then let's extract everything before the first "[".
+            if "[" in t:
+                base_type = t.split("[", 1)[0]
+                # base_type == 'list', 'dict', 'typing.List', 'typing.Dict', etc.
+                if base_type in ALLOWED_ANNOTATION_TYPES:
+                    # We consider this valid, so just return.
+                    return
+                # If the base_type is not in ALLOWED_ANNOTATION_TYPES, then it fails below.
+
+            # Otherwise, if it's not subscripted, we check directly.
+            if t not in ALLOWED_ANNOTATION_TYPES:
+                str_msg = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[15] + " : {}".format(t)
+                self._violations.append(str_msg)
+                self._is_success = False
 
     def check_return_types(self, t, lnum):
         if t is not None:
-            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[17] + " : {}" .format(t)
+            str = "Line {}".format(lnum) + " : " + VIOLATION_TRIGGERS[17] + " : {}".format(t)
             self._violations.append(str)
             self._is_success = False
 
@@ -293,7 +329,6 @@ class Linter(ast.NodeVisitor):
         self.visit(ast_tree)
         self._final_checks()
         if self._is_success is False:
-            #print(self.dump_violations())
             return self._violations
         else:
             return None
