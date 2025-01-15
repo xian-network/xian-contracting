@@ -266,7 +266,7 @@ class Linter(ast.NodeVisitor):
                 self._is_success = False
 
         if not self._is_one_export:
-            str = "Line 0: " + VIOLATION_TRIGGERS[12]
+            str = "Line {}: ".format(lineno) + VIOLATION_TRIGGERS[12]
             self._violations.append(str)
             self._is_success = False
 
