@@ -70,6 +70,19 @@ class TestVariable(TestCase):
 
         self.assertEqual(_v, 1000)
 
+    def test_default_value(self):
+        contract = 'stustu'
+        name = 'balance'
+
+        v = Variable(contract, name, driver=driver, default_value=999)
+        self.assertEqual(v.get(), 999)
+
+        v.set(123)
+        self.assertEqual(v.get(), 123)
+
+        v.set(None)
+        self.assertIsNone(v.get())
+
 
 class TestHash(TestCase):
     def setUp(self):
