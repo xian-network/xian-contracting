@@ -3,14 +3,16 @@ from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
 from contracting.storage.driver import Driver
-
+import os
 
 class TestTransactionWrites(TestCase):
     def setUp(self):
         self.c = ContractingClient()
         self.c.flush()
 
-        with open("./test_contracts/currency.s.py") as f:
+        currency_path = os.path.join(os.path.dirname(__file__), "test_contracts", "currency.s.py")
+
+        with open(currency_path) as f:
             contract = f.read()
 
         self.c.submit(contract, name="currency")

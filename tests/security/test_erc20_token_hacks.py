@@ -1,12 +1,15 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
-
+import os
 class TestTokenHacks(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
+        
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        submission_path = os.path.join(self.script_dir, "contracts", "submission.s.py")
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract)
@@ -17,7 +20,7 @@ class TestTokenHacks(TestCase):
         self.c.signer = 'stu'
 
         # submit erc20 clone
-        with open('../integration/test_contracts/erc20_clone.s.py') as f:
+        with open(os.path.join(self.script_dir, "contracts", "erc20_clone.s.py")) as f:
             code = f.read()
             self.c.submit(code, name='con_erc20', metering=False)
 
@@ -33,7 +36,7 @@ class TestTokenHacks(TestCase):
 
         pre_hack_balance = self.c.raw_driver.get_var('con_erc20', "balances", arguments=["stu"])
 
-        with open('./contracts/hack_tokens.s.py') as f:
+        with open(os.path.join(self.script_dir, "contracts", "hack_tokens.s.py")) as f:
             code = f.read()
             self.c.submit(code, name='con_token_hack', signer="stu")
 
@@ -50,7 +53,7 @@ class TestTokenHacks(TestCase):
         pre_hack_balance = self.c.raw_driver.get_var('con_erc20', "balances", arguments=["stu"])
 
         with self.assertRaises(Exception):
-            with open('./contracts/builtin_hack_token.s.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "builtin_hack_token.s.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='token_hack')
 
@@ -68,7 +71,7 @@ class TestTokenHacks(TestCase):
         # Approve the "hack" contract to spend stu's tokens
         tx_amount=10000
         token.approve(amount=tx_amount, to='con_hack', stamps=200)
-        with open('./contracts/double_spend_gas_attack.s.py') as f:
+        with open(os.path.join(self.script_dir, "contracts", "double_spend_gas_attack.s.py")) as f:
             code = f.read()
             self.c.submit(code, name='con_hack', metering=True)
         # Test the double_spend contract
@@ -81,27 +84,26 @@ class TestTokenHacks(TestCase):
             # Should fail when stamp_limit of 200 is reached
             con_hack.double_spend(receiver='colin', stamps=200)
 
+        # Since the above call failed, the balance should be the same as before and NOT balance + tx_amount
+
         post_hack_balance_stu = float(str(self.c.get_var('con_erc20', "balances", arguments=["stu"])))
         post_hack_balance_colin = float(str(self.c.get_var('con_erc20', "balances", arguments=["colin"])))
-
-        # !!! IMPORTANT NODE !!!
-        # In the Lamden Implementation there would be a "rollback" of state after the error.
-        # Contracting does not do this itself and instead you get the status_code set to 1 and all the tx info returned.
+        # Contracting will revert the state if the stamps run out and the transaction fails, which previously was not the case
 
         # Stu's POST balance should be less than the pre balance (less the tx_amount) because stamps were also deducted
         self.assertLess(post_hack_balance_stu, pre_hack_balance_stu + tx_amount)
 
-        # Colin's balance will be + tx_amount
+        # Colin's balance will not change because the transaction failed and the state was not updated
         # Assert greater because some of the balance is lost to stamps
-        self.assertEqual(pre_hack_balance_colin + tx_amount, post_hack_balance_colin)
+        self.assertEqual(pre_hack_balance_colin, post_hack_balance_colin)
 
 
     def test_stamp_fails_when_calling_infinate_loop_from_another_contract(self):
-        with open('./contracts/infinate_loop.s.py') as f:
+        with open(os.path.join(self.script_dir, "contracts", "infinate_loop.s.py")) as f:
             code = f.read()
             self.c.submit(code, name='con_infinate_loop')
 
-        with open('./contracts/call_infinate_loop.s.py') as f:
+        with open(os.path.join(self.script_dir, "contracts", "call_infinate_loop.s.py")) as f:
             code = f.read()
             self.c.submit(code, name='con_call_infinate_loop', metering=True)
 
@@ -112,13 +114,13 @@ class TestTokenHacks(TestCase):
 
     def test_constructor_with_infinate_loop_fails(self):
         with self.assertRaises(AssertionError):
-            with open('./contracts/constructor_infinate_loop.s.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "constructor_infinate_loop.s.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='con_constructor_infinate_loop', metering=True)
 
     def test_infinate_loop_of_writes_undos_everything(self):
         with self.assertRaises(AssertionError):
-            with open('./contracts/con_inf_writes.s.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "con_inf_writes.s.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='con_inf_writes', metering=True)
 
@@ -128,7 +130,7 @@ class TestTokenHacks(TestCase):
         pre_hack_balance_stu = self.c.raw_driver.get_var('con_erc20', "balances", arguments=["stu"])
 
         try:
-            with open('./contracts/import_hash_from_contract.s.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "import_hash_from_contract.s.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='import_hash_from_contract', metering=False)
         except:
@@ -146,7 +148,7 @@ class TestTokenHacks(TestCase):
 
         #with self.assertRaises(Exception):
         try:
-            with open('./contracts/get_set_driver.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "get_set_driver.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='token_hack', metering=False)
         except Exception as err:
@@ -169,7 +171,7 @@ class TestTokenHacks(TestCase):
 
         #with self.assertRaises(Exception):
         try:
-            with open('./contracts/get_set_driver_2.py') as f:
+            with open(os.path.join(self.script_dir, "contracts", "get_set_driver_2.py")) as f:
                 code = f.read()
                 self.c.submit(code, name='token_hack', metering=False)
         except Exception as err:

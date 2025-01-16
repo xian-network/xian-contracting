@@ -49,19 +49,30 @@ class MyTestCase(unittest.TestCase):
         self.d = self.c.raw_driver
         self.d.flush_full()
 
-        with open(contracting.__path__[0] + '/contracts/submission.s.py') as f:
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        submission_file_path = os.path.join(self.script_dir, "contracts", "submission.s.py")
+
+        with open(submission_file_path) as f:
             contract = f.read()
 
         self.d.set_contract(name='submission', code=contract)
+        
+        currency_file_path = os.path.join(self.script_dir, "contracts", "currency.s.py")
 
-        with open('./integration/test_contracts/currency.s.py') as f:
+        with open(currency_file_path) as f:
             contract = f.read()
         self.d.set_contract(name='currency', code=contract)
 
-        self.c.executor.execute(**TEST_SUBMISSION_KWARGS, kwargs=submission_kwargs_for_file('./integration/test_contracts/currency.s.py'), metering=False, auto_commit=True)
+        self.c.executor.execute(**TEST_SUBMISSION_KWARGS, kwargs=submission_kwargs_for_file(currency_file_path), metering=False, auto_commit=True)
+
+        exception_file_path = os.path.join(self.script_dir, "contracts", "exception.s.py")
+
+        with open(exception_file_path) as f:
+            contract = f.read()
+        self.d.set_contract(name='exception', code=contract)
 
         self.c.executor.execute(**TEST_SUBMISSION_KWARGS,
-                       kwargs=submission_kwargs_for_file('./integration/test_contracts/exception.py'), 
+                       kwargs=submission_kwargs_for_file(exception_file_path), 
                        metering=False, auto_commit=True)
         self.d.commit()
 

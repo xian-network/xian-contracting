@@ -3,7 +3,7 @@ from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
 from contracting.storage.driver import Driver
-
+import os
 
 def too_many_writes():
     v = Variable()
@@ -59,7 +59,9 @@ class TestMiscContracts(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -71,11 +73,15 @@ class TestMiscContracts(TestCase):
         self.c.submit(too_many_writes, name="con_too_many_writes")
 
         # submit erc20 clone
-        with open('./test_contracts/thing.s.py') as f:
+        thing_path = os.path.join(os.path.dirname(__file__), "test_contracts", "thing.s.py")
+
+        with open(thing_path) as f:
             code = f.read()
             self.c.submit(code, name='con_thing')
 
-        with open('./test_contracts/foreign_thing.s.py') as f:
+        foreign_thing_path = os.path.join(os.path.dirname(__file__), "test_contracts", "foreign_thing.s.py")
+
+        with open(foreign_thing_path) as f:
             code = f.read()
             self.c.submit(code, name='con_foreign_thing')
 
@@ -160,7 +166,9 @@ class TestPassHash(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -170,11 +178,15 @@ class TestPassHash(TestCase):
         submission = self.c.get_contract('submission')
 
         # submit erc20 clone
-        with open('./test_contracts/pass_hash.s.py') as f:
+        pass_hash_path = os.path.join(os.path.dirname(__file__), "test_contracts", "pass_hash.s.py")
+
+        with open(pass_hash_path) as f:
             code = f.read()
             self.c.submit(code, name='con_pass_hash')
 
-        with open('./test_contracts/test_pass_hash.s.py') as f:
+        test_pass_hash_path = os.path.join(os.path.dirname(__file__), "test_contracts", "con_pass_hash.s.py")
+
+        with open(test_pass_hash_path) as f:
             code = f.read()
             self.c.submit(code, name='con_test_pass_hash')
 
@@ -212,7 +224,9 @@ class TestDeveloperSubmission(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -273,7 +287,9 @@ class TestFloatThing(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -402,7 +418,9 @@ class TestHackThing(TestCase):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -469,7 +487,9 @@ class TestFixed(TestCase):
         self.c = ContractingClient(signer='stu', driver=Driver())
         self.c.raw_driver.flush_full()
 
-        with open('../../src/contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)

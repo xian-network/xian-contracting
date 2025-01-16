@@ -19,7 +19,7 @@ from .storage.orm import Hash
 
 
 class AbstractContract:
-    def __init__(self, name, signer, environment, executor: Executor, funcs):
+    def __init__(self, name, signer, environment, executor: Executor, funcs, return_full_output=False):
         self.name = name
         self.signer = signer
         self.environment = environment
@@ -42,6 +42,7 @@ class AbstractContract:
                                         contract_name=self.name,
                                         executor=self.executor,
                                         func=func,
+                                        return_full_output=return_full_output,
                                         # environment=self.environment,
                                         **default_kwargs))
 
@@ -152,6 +153,7 @@ class AbstractContract:
             stamps=constants.DEFAULT_STAMPS,
             metering=None,
             now=None,
+            return_full_output=False,
             **kwargs
     ):
 
@@ -179,9 +181,8 @@ class AbstractContract:
             executor.sandbox.terminate()
 
         if output['status_code'] == 1:
-            raise output['result']
-
-        return output['result']
+            raise output['result'] if not return_full_output else output
+        return output['result'] if not return_full_output else output
 
 
 class ContractingClient:
@@ -202,7 +203,6 @@ class ContractingClient:
         self.compiler = compiler
         self.submission_filename = submission_filename
         self.environment = environment
-
         # Get submission contract from file
         if submission_filename is not None:
             # Seed the genesis contracts into the instance
@@ -267,7 +267,7 @@ class ContractingClient:
             signer=self.signer,
             environment=self.environment,
             executor=self.executor,
-            funcs=funcs
+            funcs=funcs,
         )
 
     def closure_to_code_string(self, f):

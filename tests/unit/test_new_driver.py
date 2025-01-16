@@ -1,5 +1,5 @@
 import unittest
-from pathlib import Path
+import os
 from shutil import rmtree
 from datetime import datetime
 from contracting.storage.driver import Driver
@@ -109,7 +109,7 @@ class TestDriver(unittest.TestCase):
     def test_transaction_writes(self):
         key = 'test_key'
         value = 'test_value'
-        self.driver.set(key, value)
+        self.driver.set(key, value, is_txn_write=True)
         # self.driver.commit()
         transaction_writes = self.driver.transaction_writes
         self.assertIn(key, transaction_writes)

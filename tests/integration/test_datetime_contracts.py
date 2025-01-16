@@ -1,14 +1,16 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
 from contracting.stdlib.bridge.time import Datetime
-
+import os
 
 class TestSenecaClientReplacesExecutor(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.flush()
 
-        with open('test_contracts/dater.py') as f:
+        dater_path = os.path.join(os.path.dirname(__file__), "test_contracts", "dater.py")
+
+        with open(dater_path) as f:
             self.c.submit(f=f.read(), name='con_dater')
 
         self.dater = self.c.get_contract('con_dater')

@@ -1,14 +1,16 @@
 from unittest import TestCase
 from contracting.stdlib.bridge.time import Datetime
 from contracting.client import ContractingClient
-
+import os
 
 class TestSenecaClientReplacesExecutor(TestCase):
     def setUp(self):
         self.c = ContractingClient(signer='stu')
         self.c.raw_driver.flush_full()
 
-        with open('../../contracting/contracts/submission.s.py') as f:
+        submission_path = os.path.join(os.path.dirname(__file__), "test_contracts", "submission.s.py")
+
+        with open(submission_path) as f:
             contract = f.read()
 
         self.c.raw_driver.set_contract(name='submission', code=contract,)
@@ -18,11 +20,15 @@ class TestSenecaClientReplacesExecutor(TestCase):
         submission = self.c.get_contract('submission')
 
         # submit erc20 clone
-        with open('./test_contracts/erc20_clone.s.py') as f:
+        erc20_clone_path = os.path.join(os.path.dirname(__file__), "test_contracts", "erc20_clone.s.py")
+
+        with open(erc20_clone_path) as f:
             code = f.read()
             self.c.submit(code, name='con_erc20_clone')
 
-        with open('./test_contracts/atomic_swaps.s.py') as f:
+        atomic_swaps_path = os.path.join(os.path.dirname(__file__), "test_contracts", "atomic_swaps.s.py")
+
+        with open(atomic_swaps_path) as f:
             code = f.read()
             self.c.submit(code, name='con_atomic_swaps')
 

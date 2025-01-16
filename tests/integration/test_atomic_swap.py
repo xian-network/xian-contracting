@@ -3,7 +3,7 @@ from contracting.storage.driver import Driver
 from contracting.execution.executor import Executor
 from contracting.stdlib.bridge.time import Datetime
 import contracting
-
+import os
 def submission_kwargs_for_file(f):
     # Get the file name only by splitting off directories
     split = f.split('/')
@@ -45,11 +45,16 @@ class TestAtomicSwapContract(TestCase):
 
         environment = {'now': Datetime(2019, 1, 1)}
 
-        self.e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/erc20_clone.s.py'), environment=environment)
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        token_path = os.path.join(self.script_dir, "test_contracts", "erc20_clone.s.py")
+        atomic_swaps_path = os.path.join(self.script_dir, "test_contracts", "atomic_swaps.s.py")
 
         self.e.execute(**TEST_SUBMISSION_KWARGS,
-                  kwargs=submission_kwargs_for_file('./test_contracts/atomic_swaps.s.py'))
+                  kwargs=submission_kwargs_for_file(token_path), environment=environment)
+
+        self.e.execute(**TEST_SUBMISSION_KWARGS,
+                  kwargs=submission_kwargs_for_file(atomic_swaps_path))
 
     def tearDown(self):
         self.e.bypass_privates = False
@@ -66,7 +71,7 @@ class TestAtomicSwapContract(TestCase):
         })
 
         self.assertEqual(output['status_code'], 1)
-        self.assertIn("AssertionError", str(output['result']))
+        self.assertIn("You cannot initiate an atomic swap without allowing 'con_atomic_swaps' at least 5000000 coins. You have only allowed 1000000 coins", str(output['result']))
 
     def test_initiate_transfers_coins_correctly(self):
         self.e.execute('stu', 'con_erc20_clone', 'approve', kwargs={'amount': 1000000, 'to': 'con_atomic_swaps'})

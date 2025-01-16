@@ -5,7 +5,7 @@ from contracting import constants
 
 import re
 import astor
-
+import os
 
 class TestSenecaCompiler(TestCase):
     def test_visit_assign_variable(self):
@@ -158,10 +158,11 @@ def goodbye():
         code_str = astor.to_source(comp)
 
     def test_token_contract_parses_correctly(self):
+        currency_path = os.path.join(os.path.dirname(__file__), "test_contracts", "currency.s.py")
 
-        f = open('./test_contracts/currency.s.py')
-        code = f.read()
-        f.close()
+        with open(currency_path) as f:
+            code = f.read()
+
 
         c = ContractingCompiler()
         comp = c.parse(code, lint=False)
