@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "xian-contracting"
+version = "1.0.1"
+description = "Xian Network Python Contracting Engine"
+authors = ["Xian <info@xian.org>"]
+readme = "README.md"
+packages = [{include = "contracting", from = "src"}]
+license = "GPL-3.0-only"
+repository = "https://github.com/xian-network/xian-contracting"
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Development Status :: 5 - Production/Stable",
+]
+
+[tool.poetry.dependencies]
+python = "~=3.11.0"
+astor = "0.8.1"
+pycodestyle = "2.10.0"
+autopep8 = "1.5.7"
+iso8601 = "*"
+h5py = "*"
+cachetools = "*"
+loguru = "*"
+pynacl = "*"
+psutil = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
