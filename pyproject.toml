@@ -2,11 +2,12 @@
 name = "xian-contracting"
 version = "1.0.1"
 description = "Xian Network Python Contracting Engine"
-authors = ["Xian <info@xian.org>"]
+authors = ["Xian Network <info@xian.org>"]
 readme = "README.md"
 packages = [{include = "contracting", from = "src"}]
 license = "GPL-3.0-only"
 repository = "https://github.com/xian-network/xian-contracting"
+keywords = ["blockchain", "xian", "contracting", "python"]
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
