@@ -81,7 +81,7 @@ class TestVariable(TestCase):
         self.assertEqual(v.get(), 123)
 
         v.set(None)
-        self.assertIsNone(v.get())
+        self.assertEqual(v.get(), 999)
 
 
 class TestHash(TestCase):

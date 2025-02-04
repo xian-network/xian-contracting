@@ -362,7 +362,7 @@ def wont_work():
         c = ast.parse(code)
         chk = self.l.check(c)
         self.l.dump_violations()
-        self.assertEqual(chk[0], 'Line 3: S8- Invalid decorator used: valid list: contracting_invalid')
+        self.assertEqual(chk[1], 'Line 3: S8- Invalid decorator used: valid list: contracting_invalid')
 
     def test_multiple_constructors_fails(self):
         code = '''
@@ -371,16 +371,19 @@ def seed_1():
     pass
     
 @construct
-def seed_2():
+def seed_1():
+    pass
+    
+@export
+def seed_5():
     pass
 '''
 
         c = ast.parse(code)
         chk = self.l.check(c)
         self.l.dump_violations()
-
-        self.assertEqual(len(chk),2)
-        self.assertEqual(self.l._violations, [chk[0], 'Line 0: S13- No valid contracting decorator found'])
+        self.assertEqual(len(chk),1)
+        self.assertEqual(self.l._violations, ['Line 7: S9- Multiple use of constructors detected'])
 
     def test_function_str_annotation(self):
         code = '''
@@ -470,4 +473,36 @@ def greeting(name):
 #        chk = self.l.check(c)
 #
 #        self.assertEqual(['Line 2 : S18- Illegal use of return annotation : str'], chk)
+
+    def test_violations_sorted_by_line_number(self):
+        code = '''
+class Illegal1:  # Line 2
+    pass
+
+@export
+def good_function():
+    pass
+
+from something import stuff  # Line 8
+
+class Illegal2:  # Line 10
+    pass
+    '''
+
+        c = ast.parse(code)
+        violations = self.l.check(c)
+
+        self.assertIsNotNone(violations)
+        self.assertEqual(len(violations), 5)
+
+        line_numbers = [int(v.split(':')[0].split()[1]) for v in violations]
+        
+
+        self.assertEqual(line_numbers, sorted(line_numbers))
+
+        self.assertTrue(violations[0].startswith('Line 2'))  # No export decorator
+        self.assertTrue(violations[1].startswith('Line 2'))  # First class definition
+        self.assertTrue(violations[2].startswith('Line 9'))  # ImportFrom
+        self.assertTrue(violations[3].startswith('Line 11'))  # Second class definition
+        self.assertTrue(violations[4].startswith('Line 11'))  # Second class definition
 
