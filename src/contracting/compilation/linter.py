@@ -293,8 +293,7 @@ class Linter(ast.NodeVisitor):
         self.visit(ast_tree)
         self._final_checks()
         if self._is_success is False:
-            #print(self.dump_violations())
-            return self._violations
+            return sorted(self._violations, key=lambda x: int(x.split(':')[0].split()[1]))
         else:
             return None
 
