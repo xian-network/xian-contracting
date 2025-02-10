@@ -211,9 +211,9 @@ class LogEvent(Datum):
                 f"Expected {self._params[arg]['type']}, got {type(event_data[arg])}."
             )
 
-            # Convert ContractingDecimal to float
-            if isinstance(event_data[arg], ContractingDecimal):
-                event_data[arg] = float(event_data[arg])
+            # Convert float to ContractingDecimal
+            if isinstance(event_data[arg], float):
+                event_data[arg] = ContractingDecimal(event_data[arg])
 
             # Check the size of the argument
             value_size = len(str(event_data[arg]).encode("utf-8"))
