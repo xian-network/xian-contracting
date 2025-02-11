@@ -246,7 +246,7 @@ class LogEvent(Datum):
                 value, self._params[arg]["type"]
             ), f"Non-indexed argument {arg} is the wrong type! Expected {self._params[arg]['type']}, got {type(value)}."
             encoded = encode_kv(arg, value)
-            rt.deduct_write(*encoded, multiplier=0.5)
+            rt.deduct_write(*encoded)
 
         self._driver.set_event(event)
 
