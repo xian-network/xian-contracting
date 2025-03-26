@@ -66,6 +66,8 @@ class Tracer:
         if self.cost > self.stamp_supplied or self.cost > MAX_STAMPS:
             self.stop()
             raise AssertionError("The cost has exceeded the stamp supplied!")
+        print(f'adding cost: {new_cost}')
+        print(f'cost: {self.cost}')
 
     def get_stamp_used(self):
         return self.cost

@@ -134,15 +134,11 @@ class Runtime:
     @classmethod
     def deduct_write(cls, key, value):
         if key is not None and cls.tracer.is_started():
-            print(f"value: {value}")
-            print(f"key: {key}")
             cost = len(key) + len(value)
-            print(f"cost: {cost}")
             cls.writes += cost
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE
-            print(f"stamp_cost: {stamp_cost}")
             cls.tracer.add_cost(stamp_cost)
 
 
