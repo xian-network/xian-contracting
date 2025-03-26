@@ -239,14 +239,11 @@ class LogEvent(Datum):
             assert isinstance(
                 value, self._params[arg]["type"]
             ), f"Indexed argument {arg} is the wrong type! Expected {self._params[arg]['type']}, got {type(value)}."
-            encoded = encode_kv(arg, value)
-            rt.deduct_write(*encoded)
+
         for arg, value in event["data"].items():
             assert isinstance(
                 value, self._params[arg]["type"]
             ), f"Non-indexed argument {arg} is the wrong type! Expected {self._params[arg]['type']}, got {type(value)}."
-            encoded = encode_kv(arg, value)
-            rt.deduct_write(*encoded)
 
         self._driver.set_event(event)
 
