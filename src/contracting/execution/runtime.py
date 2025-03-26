@@ -5,6 +5,7 @@ import contracting
 import sys
 import os
 import math
+import inspect
 
 
 class Context:
@@ -129,6 +130,11 @@ class Runtime:
         if cls.tracer.is_started():
             cost = len(key) + len(value)
             cost *= constants.READ_COST_PER_BYTE
+        
+            caller_frame = inspect.currentframe().f_back
+            caller_info = f"{caller_frame.f_code.co_filename}:{caller_frame.f_code.co_name}:{caller_frame.f_lineno}"
+            print(f"DEBUG: deduct_read called by {caller_info} - key: {key}, value len: {len(value)}, cost: {cost}")
+            
             cls.tracer.add_cost(cost)
 
     @classmethod
@@ -136,6 +142,11 @@ class Runtime:
         if key is not None and cls.tracer.is_started():
             cost = len(key) + len(value)
             cls.writes += cost
+            
+            caller_frame = inspect.currentframe().f_back
+            caller_info = f"{caller_frame.f_code.co_filename}:{caller_frame.f_code.co_name}:{caller_frame.f_lineno}"
+            print(f"DEBUG: deduct_read called by {caller_info} - key: {key}, value len: {len(value)}, cost: {cost}")   
+                     
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE
