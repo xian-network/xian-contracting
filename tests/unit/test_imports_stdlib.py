@@ -11,6 +11,7 @@ class TestImports(TestCase):
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         compiled_token_file_path = os.path.join(self.script_dir, "precompiled", "compiled_token.py")
 
+
         with open(compiled_token_file_path) as f:
             code = f.read()
 
@@ -168,3 +169,53 @@ class TestImports(TestCase):
         ]
 
         self.assertTrue(imports.enforce_interface(self.module, interface))
+
+    def test_call_function_works_with_public_function(self):
+        # Should successfully call a public function
+        result = imports.call_function(self.module, 'transfer', {'amount': 100, 'to': 'someone'})
+        self.assertIsNotNone(result)
+
+    def test_call_function_fails_with_private_function(self):
+        # Should raise ImportError when trying to call a private function
+        with self.assertRaises(ImportError):
+            imports.call_function(self.module, '__private_func', {})
+
+    def test_call_function_fails_with_nonexistent_function(self):
+        # Should raise ImportError when function doesn't exist
+        with self.assertRaises(ImportError):
+            imports.call_function(self.module, 'nonexistent_function', {})
+
+    def test_call_function_fails_with_non_function_attribute(self):
+        # Should raise ImportError when trying to call a variable/non-function
+        with self.assertRaises(ImportError):
+            imports.call_function(self.module, 'supply', {})
+
+    def test_call_function_fails_with_system_attribute(self):
+        # Should raise ImportError when trying to access system attributes
+        with self.assertRaises(ImportError):
+            imports.call_function(self.module, '__name__', {})
+
+    def test_call_function_fails_with_dunder_prefix(self):
+        # Should raise ImportError when function name starts with __
+        with self.assertRaises(ImportError):
+            imports.call_function(self.module, '__dict__', {})
+
+    def test_call_function_with_correct_arguments(self):
+        # Should successfully call function with correct arguments
+        result = imports.call_function(self.module, 'balance_of', {'account': 'someone'})
+        self.assertIsNotNone(result)
+
+    def test_call_function_with_incorrect_arguments(self):
+        # Should raise TypeError when wrong arguments are provided
+        with self.assertRaises(TypeError):
+            imports.call_function(self.module, 'transfer', {'wrong_arg': 'value'})
+
+    def test_call_function_with_empty_arguments(self):
+        # Should successfully call function that expects no arguments
+        result = imports.call_function(self.module, 'total_supply', {})
+        self.assertIsNotNone(result)
+
+    def test_call_function_fails_with_invalid_module(self):
+        # Should raise ImportError when module is None
+        with self.assertRaises(ImportError):
+            imports.call_function(None, 'some_function', {})
