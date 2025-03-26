@@ -134,6 +134,8 @@ class Runtime:
     @classmethod
     def deduct_write(cls, key, value):
         if key is not None and cls.tracer.is_started():
+            print(f"value: {value}")
+            print(f"key: {key}")
             cost = len(key) + len(value)
             cls.writes += cost
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
