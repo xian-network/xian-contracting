@@ -142,6 +142,7 @@ class Runtime:
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
             stamp_cost = cost * constants.WRITE_COST_PER_BYTE
+            print(f"stamp_cost: {stamp_cost}")
             cls.tracer.add_cost(stamp_cost)
 
 
