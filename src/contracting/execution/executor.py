@@ -153,6 +153,7 @@ class Executor:
 
         # Deduct the stamps if that is enabled
         stamps_used = runtime.rt.tracer.get_stamp_used()
+        raw_compute_cost = runtime.rt.tracer.get_stamp_used()
 
         stamps_used = stamps_used // 1000
         stamps_used += 5
@@ -187,6 +188,7 @@ class Executor:
             'status_code': status_code,
             'result': result,
             'stamps_used': stamps_used,
+            'raw_compute_cost': raw_compute_cost,
             'writes': transaction_writes,
             'reads': driver.pending_reads,
             'events': events
