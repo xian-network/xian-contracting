@@ -137,6 +137,7 @@ class Runtime:
             print(f"value: {value}")
             print(f"key: {key}")
             cost = len(key) + len(value)
+            print(f"cost: {cost}")
             cls.writes += cost
             assert cls.writes < WRITE_MAX, 'You have exceeded the maximum write capacity per transaction!'
 
