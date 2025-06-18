@@ -25,6 +25,7 @@ cachetools = "*"
 loguru = "*"
 pynacl = "*"
 psutil = "*"
+ecdsa = "0.19.1"
 
 [build-system]
 requires = ["poetry-core"]
