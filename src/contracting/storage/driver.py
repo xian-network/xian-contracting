@@ -84,8 +84,8 @@ class Driver:
         print(f"DEBUG: get called - key: {key}, value {value}")
         if save and self.pending_reads.get(key) is None:
             self.pending_reads[key] = value
-        if value is not None:
-            rt.deduct_read(*encode_kv(key, value))
+        # if value is not None:
+        #     rt.deduct_read(*encode_kv(key, value))
         return value
 
 
