@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 from datetime import timedelta as td
 from types import ModuleType
+from contracting.stdlib.bridge.decimal import ContractingDecimal
 
 
 # Redefine a controlled datetime object that feels like a regular Python datetime object but is restricted so that we
@@ -104,6 +105,46 @@ class Datetime:
     def strptime(cls, date_string, format):
         d = dt.strptime(date_string, format)
         return cls._from_datetime(d)
+
+    @classmethod
+    def fromtimestamp(cls, timestamp):
+        """Create Datetime from Unix timestamp using consensus-safe integer arithmetic"""
+        # Explicitly reject bool even though it's a subclass of int
+        if isinstance(timestamp, bool):
+            raise TypeError(f"fromtimestamp only accepts int or ContractingDecimal, got {type(timestamp)}")
+        # Only accept int or ContractingDecimal - reject floats for consensus safety
+        elif isinstance(timestamp, int):
+            timestamp = ContractingDecimal(str(timestamp))
+        elif isinstance(timestamp, ContractingDecimal):
+            # Already the correct type
+            pass
+        else:
+            raise TypeError(f"fromtimestamp only accepts int or ContractingDecimal, got {type(timestamp)}")
+        
+        # Validate range to prevent overflow/underflow
+        min_ts = ContractingDecimal('0')  # 1970-01-01
+        max_ts = ContractingDecimal('2147483647')  # 2038-01-19 (32-bit limit)
+        
+        if timestamp < min_ts or timestamp > max_ts:
+            raise ValueError(f"Timestamp {timestamp} out of safe range [0, 2147483647]")
+        
+        # Split into seconds and microseconds using integer arithmetic
+        seconds = int(timestamp)  # Truncate to get whole seconds
+        fractional = timestamp - ContractingDecimal(str(seconds))
+        microseconds = int(fractional * ContractingDecimal('1000000'))
+        
+        # Create datetime from Unix epoch (1970-01-01 00:00:00 UTC)
+        epoch = dt(1970, 1, 1)
+        
+        # Add seconds and microseconds using timedelta (integer-based)
+        target_dt = epoch + td(seconds=seconds, microseconds=microseconds)
+        
+        return cls._from_datetime(target_dt)
+
+    def timestamp(self):
+        """Return POSIX timestamp as ContractingDecimal"""
+        ts = self._datetime.timestamp()
+        return ContractingDecimal(str(ts))
 
 class Timedelta:
     def __init__(self, weeks=0,
