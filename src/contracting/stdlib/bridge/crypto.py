@@ -126,6 +126,101 @@ def ecdsa_verify(public_key: str, message: str, signature: str, curve: str = 'se
     except Exception:
         return False
 
+
+def keccak256(hex_str: str) -> str:
+    """
+    Compute keccak256 hash (Ethereum/Wormhole standard).
+    This is different from SHA-3 - it's the original Keccak algorithm.
+    Costs 1 stamp base cost.
+    
+    Args:
+        hex_str: Hex-encoded string or regular string to hash
+    
+    Returns:
+        str: Hex-encoded keccak256 hash (64 hex chars)
+    """
+    # Cost tracking for hashing operation
+    _add_cost(1 * 1000)  # 1 stamp base cost
+    
+    try:
+        from Crypto.Hash import keccak
+        
+        # Try to decode as hex first, fallback to UTF-8 encoding
+        try:
+            byte_str = bytes.fromhex(hex_str)
+        except ValueError:
+            byte_str = hex_str.encode('utf-8')
+        
+        # Compute keccak256 hash
+        hash_obj = keccak.new(digest_bits=256)
+        hash_obj.update(byte_str)
+        
+        return hash_obj.hexdigest()
+        
+    except Exception:
+        return ""
+
+
+def ecdsa_recover(message_hash: str, signature: str, curve: str = 'secp256k1') -> str:
+    """
+    Recover the public key from an ECDSA signature using secp256k1 library.
+    This is essential for Wormhole VAA verification.
+    Costs 4 stamps base cost.
+    
+    Args:
+        message_hash: Hex-encoded hash of the message that was signed (32 bytes)
+        signature: Hex-encoded signature in format (r + s + recovery_id) - 65 bytes total
+        curve: Curve name ('secp256k1' only for now)
+    
+    Returns:
+        str: Hex-encoded uncompressed public key (130 hex chars), or empty string on failure
+    """
+    # Cost tracking for recovery operation
+    _add_cost(4 * 1000)  # 4 stamps base cost
+    
+    try:
+        from secp256k1 import PrivateKey, PublicKey
+        
+        # Only support secp256k1 for now (used by Ethereum/Wormhole)
+        if curve != 'secp256k1':
+            return ""
+        
+        # Decode inputs
+        message_hash_bytes = bytes.fromhex(message_hash)
+        signature_bytes = bytes.fromhex(signature)
+        
+        # Message hash should be 32 bytes
+        if len(message_hash_bytes) != 32:
+            return ""
+        
+        # Signature should be 65 bytes (r + s + recovery_id)
+        if len(signature_bytes) != 65:
+            return ""
+        
+        # Extract recovery_id (last byte)
+        recovery_id = signature_bytes[64]
+        signature_64_bytes = signature_bytes[:64]  # r + s (64 bytes)
+        
+        # Recovery ID should be 0 or 1
+        if recovery_id not in [0, 1]:
+            return ""
+        
+        # Use secp256k1 library for recovery (same as our demo)
+        dummy_key = PrivateKey()
+        recover_sig = dummy_key.ecdsa_recoverable_deserialize(signature_64_bytes, recovery_id)
+        pubkey_raw = dummy_key.ecdsa_recover(message_hash_bytes, recover_sig, raw=True)
+        
+        # Convert to PublicKey object and serialize
+        pubkey = PublicKey()
+        pubkey.public_key = pubkey_raw
+        pubkey_bytes = pubkey.serialize(compressed=False)  # 65 bytes: 0x04 + x + y
+        
+        # Return uncompressed public key without 0x04 prefix (130 hex chars)
+        return pubkey_bytes[1:].hex()
+        
+    except Exception:
+        return ""
+
 # ============================================================================
 # MODULE EXPORTS (Simple and Clean)
 # ============================================================================
@@ -136,6 +231,8 @@ crypto_module = ModuleType('crypto')
 crypto_module.verify = verify
 crypto_module.key_is_valid = key_is_valid
 crypto_module.ecdsa_verify = ecdsa_verify
+crypto_module.keccak256 = keccak256
+crypto_module.ecdsa_recover = ecdsa_recover
 
 exports = {
     'crypto': crypto_module
