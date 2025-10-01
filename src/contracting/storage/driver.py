@@ -367,6 +367,16 @@ class Driver:
         Save the current state to disk and L1 cache and clear the L2 cache.
         """
 
+        # Guard against type inconsistencies for deterministic ordering
+        try:
+            assert isinstance(nanos, int), "nanos must be int"
+        except AssertionError:
+            # Best-effort cast if a string was passed
+            try:
+                nanos = int(nanos)
+            except Exception:
+                raise
+
         deltas = {}
         for k, v in self.pending_writes.items():
             current = self.pending_reads.get(k)
@@ -382,19 +392,24 @@ class Driver:
 
         # Run through the sorted HCLs from oldest to newest applying each one
         to_delete = []
-        for _nanos, _deltas in sorted(self.pending_deltas.items()):
-            # Run through all state changes, taking the second value, which is the post delta
-            for key, delta in _deltas["writes"].items():
-                # Parse the key before applying to HDF5
-                filename, variable = self.__parse_key(key)
-                hdf5.set_value_to_disk(self.__filename_to_path(filename), variable, delta[1], nanos)
+        try:
+            for _nanos, _deltas in sorted(self.pending_deltas.items()):
+                # Run through all state changes, taking the second value, which is the post delta
+                for key, delta in _deltas["writes"].items():
+                    # Parse the key before applying to HDF5
+                    filename, variable = self.__parse_key(key)
+                    # Delete keys when value is None; otherwise persist with the delta's timestamp
+                    if delta[1] is None:
+                        hdf5.delete_key_from_disk(self.__filename_to_path(filename), variable)
+                    else:
+                        hdf5.set_value_to_disk(self.__filename_to_path(filename), variable, delta[1], _nanos)
 
-            to_delete.append(_nanos)
-            if _nanos == nanos:
-                break
-
-        # Remove the deltas from the set
-        [self.pending_deltas.pop(key) for key in to_delete]
+                to_delete.append(_nanos)
+                if _nanos == nanos:
+                    break
+        finally:
+            # Remove the deltas from the set even if an exception occurs mid-apply for processed entries
+            [self.pending_deltas.pop(key, None) for key in to_delete]
 
 
     def get_all_contract_state(self):
