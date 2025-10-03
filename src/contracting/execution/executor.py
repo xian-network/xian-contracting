@@ -11,13 +11,15 @@ import decimal
 
 
 def _snapshot_driver_state(driver: Driver):
+    """Capture lightweight copies of the driver's mutable state."""
+
     return {
-        'pending_writes': deepcopy(driver.pending_writes),
-        'pending_reads': deepcopy(driver.pending_reads),
+        'pending_writes': driver.pending_writes.copy(),
+        'pending_reads': driver.pending_reads.copy(),
         'pending_deltas': deepcopy(driver.pending_deltas),
-        'transaction_writes': deepcopy(driver.transaction_writes),
-        'log_events': deepcopy(driver.log_events),
-        'cache_items': [(k, driver._clone_value(v)) for k, v in driver.cache.items()],
+        'transaction_writes': driver.transaction_writes.copy(),
+        'log_events': list(driver.log_events),
+        'cache_items': list(driver.cache.items()),
     }
 
 
@@ -27,6 +29,7 @@ def _restore_driver_state(driver: Driver, snapshot):
     driver.pending_deltas = snapshot['pending_deltas']
     driver.transaction_writes = snapshot['transaction_writes']
     driver.log_events = snapshot['log_events']
+
     driver.cache.clear()
     driver.cache.update(snapshot['cache_items'])
 
