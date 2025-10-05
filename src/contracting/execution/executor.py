@@ -49,8 +49,9 @@ class Executor:
                 metering=None) -> dict:
 
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
-        current_driver_pending_reads = deepcopy(self.driver.pending_reads)
-        current_driver_cache = deepcopy(self.driver.cache)
+        if environment['block_num'] > 900000 and environment['chain_id'] == 'xian-1':
+            current_driver_pending_reads = deepcopy(self.driver.pending_reads)
+            current_driver_cache = deepcopy(self.driver.cache)
         self.driver.clear_transaction_writes()
         self.driver.clear_events()
 
@@ -141,8 +142,9 @@ class Executor:
             status_code = 1
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
-            driver.pending_reads = current_driver_pending_reads
-            driver.cache = deepcopy(current_driver_cache)
+            if environment['block_num'] > 900000 and environment['chain_id'] == 'xian-1':
+                driver.pending_reads = current_driver_pending_reads
+                driver.cache = deepcopy(current_driver_cache)
             transaction_writes = {}
             events = []
             if auto_commit:
