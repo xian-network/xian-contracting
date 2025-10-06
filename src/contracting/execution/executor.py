@@ -49,7 +49,7 @@ class Executor:
                 metering=None) -> dict:
 
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
-        if (environment['block_num'] > 900000 and environment['block_num'] < 1000000) or environment['block_num'] > 1028000:
+        if (environment['block_num'] > 900000 and environment['block_num'] < 1000000):
             if environment['chain_id'] == 'xian-1':
                 current_driver_pending_reads = deepcopy(self.driver.pending_reads)
                 current_driver_cache = deepcopy(self.driver.cache)
@@ -143,7 +143,7 @@ class Executor:
             status_code = 1
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
-            if (environment['block_num'] > 900000 and environment['block_num'] < 1000000) or environment['block_num'] > 1028000:
+            if (environment['block_num'] > 900000 and environment['block_num'] < 1000000):
                 if environment['chain_id'] == 'xian-1':
                     driver.pending_reads = current_driver_pending_reads
                     driver.cache = deepcopy(current_driver_cache)
