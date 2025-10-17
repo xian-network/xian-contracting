@@ -49,9 +49,6 @@ class Executor:
                 metering=None) -> dict:
 
         current_driver_pending_writes = deepcopy(self.driver.pending_writes)
-        # Below code was added as a fix for an edge case where the driver was not being reverted properly
-        current_driver_pending_reads = deepcopy(self.driver.pending_reads)
-        current_driver_cache = deepcopy(self.driver.cache)
         self.driver.clear_transaction_writes()
         self.driver.clear_events()
 
@@ -142,9 +139,6 @@ class Executor:
             status_code = 1
             # Revert the writes if the transaction fails
             driver.pending_writes = current_driver_pending_writes
-            # Below code was added as a fix for an edge case where the driver was not being reverted properly
-            driver.pending_reads = current_driver_pending_reads
-            driver.cache = deepcopy(current_driver_cache)
             transaction_writes = {}
             events = []
             if auto_commit:

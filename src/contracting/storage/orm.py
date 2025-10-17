@@ -3,7 +3,6 @@ from contracting.execution.runtime import rt
 from contracting import constants
 from contracting.stdlib.bridge.decimal import ContractingDecimal
 from contracting.storage.encoder import encode_kv
-from copy import deepcopy
 
 driver = rt.env.get("__Driver") or Driver()
 
@@ -38,15 +37,6 @@ class Variable(Datum):
         value = self._driver.get(self._key)
         if value is None:
             return self._default_value
-
-        if type(value) == float or type(value) == ContractingDecimal:
-            return ContractingDecimal(str(value))
-
-        if type(value) == list:
-            return deepcopy(value)
-
-        if type(value) == dict:
-            return deepcopy(value)
         return value
 
 class Hash(Datum):
@@ -67,12 +57,6 @@ class Hash(Datum):
 
         if type(value) == float or type(value) == ContractingDecimal:
             return ContractingDecimal(str(value))
-
-        # Store deep copies of lists and dicts to avoid mutation issues
-        if type(value) == list:
-            return deepcopy(value)
-        if type(value) == dict:
-            return deepcopy(value)
 
         return value
 
