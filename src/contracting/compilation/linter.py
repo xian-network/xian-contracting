@@ -185,23 +185,24 @@ class Linter(ast.NodeVisitor):
             self._is_success = False
         export_decorator = False
         for d in node.decorator_list:
-            # Only allow decorators from the allowed set.
-            if d.id not in constants.VALID_DECORATORS:
-                str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[7] + \
-                      ": valid list: {}".format(d.id, constants.VALID_DECORATORS)
-                self._violations.append(str)
-                self._is_success = False
-
-            if d.id == constants.EXPORT_DECORATOR_STRING:
-                self._is_one_export = True
-                export_decorator = True
-
-            if d.id == constants.INIT_DECORATOR_STRING:
-                if self._constructor_visited:
-                    str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[8]
+            if hasattr(d, "id"):
+                # Only allow decorators from the allowed set.
+                if d.id not in constants.VALID_DECORATORS:
+                    str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[7] + \
+                        ": valid list: {}".format(constants.VALID_DECORATORS)
                     self._violations.append(str)
                     self._is_success = False
-                self._constructor_visited = True
+
+                if d.id == constants.EXPORT_DECORATOR_STRING:
+                    self._is_one_export = True
+                    export_decorator = True
+
+                if d.id == constants.INIT_DECORATOR_STRING:
+                    if self._constructor_visited:
+                        str = "Line {}: ".format(node.lineno) + VIOLATION_TRIGGERS[8]
+                        self._violations.append(str)
+                        self._is_success = False
+                    self._constructor_visited = True
 
         # Add argument names to set to make sure that no ORM variable names are being reused in function def args
         arguments = node.args
@@ -265,7 +266,7 @@ class Linter(ast.NodeVisitor):
                 self._is_success = False
 
         if not self._is_one_export:
-            str = "Line 0: " + VIOLATION_TRIGGERS[12]
+            str = "Line {}: ".format(lineno) + VIOLATION_TRIGGERS[12]
             self._violations.append(str)
             self._is_success = False
 
