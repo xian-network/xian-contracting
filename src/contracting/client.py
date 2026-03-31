@@ -181,8 +181,8 @@ class AbstractContract:
         if executor.production:
             executor.sandbox.terminate()
 
-        if output['status_code'] == 1:
-            raise output['result'] if not return_full_output else output
+        if output['status_code'] == 1 and not return_full_output:
+            raise output['result']
         return output['result'] if not return_full_output else output
 
 
