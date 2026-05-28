@@ -41,6 +41,8 @@ class Variable(Datum):
             if isinstance(dv, (list, dict)):
                 return deepcopy(dv)
             return dv
+        if isinstance(value, (list, dict)):
+            return deepcopy(value)
         return value
 
 class Hash(Datum):
