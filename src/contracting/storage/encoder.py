@@ -119,6 +119,11 @@ def as_object(d):
     return dict(d)
 
 
+class StorageDecodeError(Exception):
+    """Raised when stored data cannot be decoded from JSON."""
+    pass
+
+
 # Decode has a hook for JSON objects, which are just Python dictionaries. You have to specify the logic in this hook.
 # This is not uniform, but this is how Python made it.
 def decode(data):
@@ -126,6 +131,15 @@ def decode(data):
         return None
 
     if isinstance(data, bytes):
+        data = data.decode()
+
+    try:
+        return json.loads(data, object_hook=as_object)
+    except json.decoder.JSONDecodeError as e:
+        raise StorageDecodeError(
+            f"Failed to decode stored value. Data repr: {safe_repr(data)}. Error: {e}"
+        ) from e
+s):
         data = data.decode()
 
     try:
